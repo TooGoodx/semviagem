@@ -5,8 +5,8 @@ const redirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI || (
 );
 
 // Auth0 configuration using environment variables
-const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN || 'dev-jbjzcnwlhqzgtcpp.us.auth0.com';
-const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID || 'n3Q1wYJ3jAVdmLEy1QX2MvH3S88Jg1Sw';
+const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN || 'dev-ji84kb6qzqv5nkd8.us.auth0.com';
+const auth0ClientId = import.meta.env.VITE_AUTH0_CLIENT_ID || 'SfN7paQtf9vBWAh21GEhCN7vVC1mxxV8';
 const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE || `https://${auth0Domain}/api/v2/`;
 
 export const auth0Config = {
