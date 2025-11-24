@@ -1,7 +1,8 @@
-const redirectUri =
+const redirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI || (
   typeof window !== 'undefined'
-    ? `${window.location.origin}/auth/callback`
-    : 'https://extraordinary-starship-9103ce.netlify.app/auth/callback';
+    ? `${window.location.origin}/area-logada`
+    : 'https://extraordinary-starship-9103ce.netlify.app/area-logada'
+);
 
 // Auth0 configuration using environment variables
 const auth0Domain = import.meta.env.VITE_AUTH0_DOMAIN || 'dev-jbjzcnwlhqzgtcpp.us.auth0.com';
