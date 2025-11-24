@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "Bash(tree:*)",
+      "Bash(node --version:*)",
+      "Read(//usr/local/bin/**)",
+      "Bash(/usr/local/bin/node:*)",
+      "Bash(/usr/local/bin/npm --version)",
+      "Bash(export PATH=\"/usr/local/bin:$PATH\")",
+      "Bash(npm run dev:*)",
+      "Bash(open http://localhost:5174/)",
+      "Bash(claude mcp add:*)",
+      "Bash(echo:*)",
+      "Read(//Users/bruno/Library/**)",
+      "Bash(curl:*)",
+      "Bash(claude auth status:*)",
+      "Bash(python3 -m pip install playwright --quiet)",
+      "Bash(python3 -m playwright install chromium --quiet)",
+      "Bash(python3 -m playwright install chromium)",
+      "Bash(python3 -m pip install playwright)",
+      "Bash(python3 extract_design_detailed.py)",
+      "Bash(STREAMLIT_SERVER_HEADLESS=true streamlit run:*)",
+      "Bash(open http://localhost:8501)",
+      "Bash(npx tsc:*)",
+      "Bash(node -c:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(pkill:*)",
+      "Bash(open http://localhost:5173/)",
+      "Bash(npm run build:*)",
+      "Bash(npm ls:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(done)",
+      "Bash(cat:*)",
+      "Bash(unzip:*)",
+      "Bash(netlify:*)",
+      "Bash(git init:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

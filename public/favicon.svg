@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Camada_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 104.76 87.18">
+  <!-- Generator: Adobe Illustrator 29.7.1, SVG Export Plug-In . SVG Version: 2.1.1 Build 8)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #01070f;
+      }
+
+      .st1 {
+        fill: #f0c72f;
+      }
+
+      .st2 {
+        fill: #fdfdfd;
+      }
+    </style>
+  </defs>
+  <rect class="st1" x="14.1" y="5.31" width="76.55" height="76.55" rx="5.62" ry="5.62"/>
+  <circle class="st2" cx="51.49" cy="42.1" r="30.34"/>
+  <circle class="st0" cx="52.38" cy="43.59" r="30.34"/>
+  <g>
+    <rect class="st2" x="34.96" y="26.09" width="8.53" height="8.33" transform="translate(-9.9 36.6) rotate(-45)"/>
+    <rect class="st2" x="46.91" y="26.02" width="8.33" height="8.33" transform="translate(-6.38 44.96) rotate(-45)"/>
+    <rect class="st2" x="58.52" y="49.65" width="8.53" height="8.33" transform="translate(-19.66 60.16) rotate(-45)"/>
+    <polygon class="st2" points="62.86 36.07 57.03 41.9 51.14 36.01 33.04 54.11 39.01 59.92 56.97 41.96 62.86 47.85 68.75 41.96 62.86 36.07"/>
+    <rect class="st2" x="58.69" y="26.02" width="8.33" height="8.33" transform="translate(-2.93 53.29) rotate(-45)"/>
+  </g>
+</svg>

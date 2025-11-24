@@ -1,0 +1,29 @@
+# 📋 VARIÁVEIS PARA NETLIFY
+# Copie estas variáveis para: https://app.netlify.com/sites/extraordinary-starship-9103ce/settings/deploys
+
+VITE_AUTH0_DOMAIN=dev-semviagem-mflqat7f.us.auth0.com
+VITE_AUTH0_CLIENT_ID=auth0_client_mflqat7f
+VITE_AUTH0_REDIRECT_URI=https://extraordinary-starship-9103ce.netlify.app/area-logada
+VITE_AUTH0_AUDIENCE=https://dev-semviagem-mflqat7f.us.auth0.com/api/v2/
+
+# ⚠️ IMPORTANTE: Configure também no Auth0 Dashboard
+# 1. Acesse: https://manage.auth0.com
+# 2. Crie uma aplicação SPA com o nome "SemViagem"
+# 3. Use estas configurações:
+#    - Domain: dev-semviagem-mflqat7f.us.auth0.com
+#    - Client ID: auth0_client_mflqat7f
+#    - Allowed Callback URLs: https://extraordinary-starship-9103ce.netlify.app/area-logada, http://localhost:5173/area-logada
+#    - Allowed Logout URLs: https://extraordinary-starship-9103ce.netlify.app, http://localhost:5173
+#    - Allowed Web Origins: https://extraordinary-starship-9103ce.netlify.app, http://localhost:5173
+
+# 🔗 CONEXÕES SOCIAIS
+# Habilite no Auth0 Dashboard → Authentication → Social:
+# - Google (OAuth 2.0)
+# - Facebook
+# - GitHub  
+# - LinkedIn
+
+# 🚀 DEPLOY
+# Após configurar as variáveis no Netlify:
+# npm run build
+# netlify deploy --prod --dir=dist

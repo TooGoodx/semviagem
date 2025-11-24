@@ -1,0 +1,26 @@
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://*.auth0.com https://cdn.auth0.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.auth0.com https://*.supabase.co https://api.moblix.com.br https://js.stripe.com wss://*.supabase.co; frame-src 'self' https://js.stripe.com https://*.auth0.com
+
+/assets/*.js
+  Content-Type: text/javascript; charset=utf-8
+
+/assets/*.mjs
+  Content-Type: text/javascript; charset=utf-8
+
+/assets/*.css
+  Content-Type: text/css; charset=utf-8
+
+/*.js
+  Content-Type: text/javascript; charset=utf-8
+
+/*.mjs
+  Content-Type: text/javascript; charset=utf-8
+
+*.js
+  Content-Type: text/javascript; charset=utf-8
+
+**/*.js
+  Content-Type: text/javascript; charset=utf-8

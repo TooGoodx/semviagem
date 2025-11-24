@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SemViagem - a maior plataforma de passagens aéreas baratas do Brasil</title>
+    <meta name="description" content="Encontre passagens aéreas com preços transparentes e sem taxas escondidas. Democratizando viagens com impacto social positivo." />
+    
+    <!-- Permissions Policy for Payment -->
+    <meta http-equiv="Permissions-Policy" content="payment=*, encrypted-media=*, microphone=*, camera=*, geolocation=*, fullscreen=*" />
+    
+    <!-- Preconnect para otimização -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/logo.svg">
+    <link rel="alternate icon" type="image/png" href="/logo.svg">
+    
+    <!-- Meta tags para SEO e Social -->
+    <meta property="og:title" content="SemViagem - Passagens Aéreas com Preço Justo e Transparente">
+    <meta property="og:description" content="Encontre passagens aéreas com preços transparentes e sem taxas escondidas. Democratizando viagens com impacto social positivo.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="keywords" content="passagens aéreas, viagens, voos baratos, sem taxas escondidas, preços transparentes, semviagem, impacto social">
+    <meta name="author" content="SemViagem">
+  </head>
+  <body class="font-sans antialiased m-0 p-0 w-full overflow-x-hidden">
+    <style>
+      /* Reset de margens e padding */
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      
+      /* Garantir que o html e body ocupem toda a tela */
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+    </style>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+  </body>
+</html>

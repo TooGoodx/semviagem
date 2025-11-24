@@ -1,0 +1,42 @@
+{
+  "google": {
+    "name": "google-oauth2",
+    "strategy": "google-oauth2",
+    "enabled": true,
+    "options": {
+      "client_id": "GOOGLE_CLIENT_ID_PLACEHOLDER",
+      "client_secret": "GOOGLE_CLIENT_SECRET_PLACEHOLDER",
+      "allowed_audiences": [
+        "https://extraordinary-starship-9103ce.netlify.app",
+        "http://localhost:5173"
+      ]
+    }
+  },
+  "facebook": {
+    "name": "facebook",
+    "strategy": "facebook",
+    "enabled": true,
+    "options": {
+      "client_id": "FACEBOOK_APP_ID_PLACEHOLDER",
+      "client_secret": "FACEBOOK_APP_SECRET_PLACEHOLDER"
+    }
+  },
+  "github": {
+    "name": "github",
+    "strategy": "github",
+    "enabled": true,
+    "options": {
+      "client_id": "GITHUB_CLIENT_ID_PLACEHOLDER",
+      "client_secret": "GITHUB_CLIENT_SECRET_PLACEHOLDER"
+    }
+  },
+  "linkedin": {
+    "name": "linkedin",
+    "strategy": "linkedin",
+    "enabled": true,
+    "options": {
+      "client_id": "LINKEDIN_CLIENT_ID_PLACEHOLDER",
+      "client_secret": "LINKEDIN_CLIENT_SECRET_PLACEHOLDER"
+    }
+  }
+}

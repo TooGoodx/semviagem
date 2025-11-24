@@ -1,0 +1,307 @@
+{
+	"info": {
+		"_postman_id": "moblix-api-collection",
+		"name": "Moblix API Collection",
+		"description": "Collection for Moblix flight search API requests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					""
+				],
+				"type": "text/javascript"
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"exec": [
+					""
+				],
+				"type": "text/javascript"
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://api.moblix.com.br",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "TooGood",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "23a01acf223df93bbd08843a27d1fe7a873321ed13e4268a0a09aca9e92cc4c7",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Get Authentication Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test if request was successful",
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Extract token and save to collection variable",
+							"if (pm.response.code === 200) {",
+							"    const responseJson = pm.response.json();",
+							"    if (responseJson.access_token) {",
+							"        pm.collectionVariables.set(\"access_token\", responseJson.access_token);",
+							"        console.log(\"Token saved:\", responseJson.access_token);",
+							"    }",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					},
+					{
+						"key": "Origin",
+						"value": "externo"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/api/Token",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"Token"
+					]
+				},
+				"description": "Get authentication token for Moblix API access"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Search Airports (Method 1)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Log response for analysis",
+							"console.log(\"Response:\", pm.response.text());"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/aereo/api/aeroporto?filtro=nova",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"aereo",
+						"api",
+						"aeroporto"
+					],
+					"query": [
+						{
+							"key": "filtro",
+							"value": "nova"
+						}
+					]
+				},
+				"description": "Search airports using GET method with filter"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Search Airports (Method 2)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Log response for analysis",
+							"console.log(\"Response:\", pm.response.text());"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/moblix-api/api/ConsultaAereo/Aeroportos?filtro=nova",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"moblix-api",
+						"api",
+						"ConsultaAereo",
+						"Aeroportos"
+					],
+					"query": [
+						{
+							"key": "filtro",
+							"value": "nova"
+						}
+					]
+				},
+				"description": "Search airports using POST method"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get All Airports (No Filter)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Parse and display all airports",
+							"if (pm.response.code === 200) {",
+							"    const responseJson = pm.response.json();",
+							"    console.log(\"Total airports found:\", responseJson.length || 'Unknown');",
+							"    console.log(\"Airports:\", JSON.stringify(responseJson, null, 2));",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/aereo/api/aeroporto",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"aereo",
+						"api",
+						"aeroporto"
+					]
+				},
+				"description": "Get all airports without any filter"
+			},
+			"response": []
+		}
+	]
+}

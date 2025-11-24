@@ -1,0 +1,18 @@
+{
+  "name": "SemViagem",
+  "app_type": "spa",
+  "client_id": "auth0_client_mflqat7f",
+  "domain": "dev-semviagem-mflqat7f.us.auth0.com",
+  "callbacks": [
+    "https://extraordinary-starship-9103ce.netlify.app/area-logada",
+    "http://localhost:5173/area-logada"
+  ],
+  "logout_urls": [
+    "https://extraordinary-starship-9103ce.netlify.app",
+    "http://localhost:5173"
+  ],
+  "web_origins": [
+    "https://extraordinary-starship-9103ce.netlify.app",
+    "http://localhost:5173"
+  ]
+}
