@@ -12,15 +12,11 @@ const auth0Audience = import.meta.env.VITE_AUTH0_AUDIENCE || `https://${auth0Dom
 export const auth0Config = {
   domain: auth0Domain,
   clientId: auth0ClientId,
-  redirectUri,
-  audience: auth0Audience,
-  scope: 'openid profile email',
   authorizationParams: {
     redirect_uri: redirectUri,
     audience: auth0Audience,
-    scope: 'openid profile email',
+    scope: 'openid profile email offline_access',
   },
 };
 
-// Exportar também como AUTH0_CONFIG para compatibilidade
 export const AUTH0_CONFIG = auth0Config;
