@@ -74,6 +74,7 @@
     "react-router-dom": "^7.8.1",
     "recharts": "2.15.4",
     "side-channel": "^1.1.0",
+    "side-channel-list": "^1.0.0",
     "sonner": "^1.7.4",
     "stripe": "^18.5.0",
     "tailwind-merge": "^2.5.5",
