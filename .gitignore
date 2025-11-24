@@ -41,3 +41,4 @@ voos-estruturados.json
 todos-voos-ida-volta.json
 last-response-*.json
 resposta-*.json
+.DS_Store
