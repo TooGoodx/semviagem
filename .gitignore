@@ -42,3 +42,8 @@ todos-voos-ida-volta.json
 last-response-*.json
 resposta-*.json
 .DS_Store
+
+# Ignore lovable and mirror directories
+lovable-launchpad/
+semviagem-mirror.git/
+*.git/
