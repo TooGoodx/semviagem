@@ -19,3 +19,11 @@ export const auth0Config = {
 };
 
 export const AUTH0_CONFIG = auth0Config;
+
+// Debug log to verify correct configuration is loaded
+console.log('🔐 Auth0 Configuration Loaded:', {
+  domain: auth0Config.domain,
+  clientId: auth0Config.clientId,
+  redirectUri: auth0Config.authorizationParams.redirect_uri,
+  audience: auth0Config.authorizationParams.audience,
+});
