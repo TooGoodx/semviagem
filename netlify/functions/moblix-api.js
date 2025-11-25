@@ -1,10 +1,10 @@
 const https = require('https');
 const querystring = require('querystring');
 
-// Credenciais atualizadas da API Moblix
+// Credenciais da API Moblix
 const AUTH_CREDENTIALS = {
-  username: 'TooGood',
-  password: '23a01acf223df93bbd08843a27d1fe7a873321ed13e4268a0a09aca9e92cc4c7'
+  username: process.env.MOBLIX_USERNAME || 'TooGood',
+  password: process.env.MOBLIX_PASSWORD || '23a01acf223df93bbd08843a27d1fe7a873321ed13e4268a0a09aca9e92cc4c7'
 };
 
 // Cache para armazenar token temporariamente
@@ -15,8 +15,8 @@ let tokenCache = {
 
 // Função para obter token de autenticação
 async function getAuthToken() {
-  // Verifica se o token em cache ainda é válido (com margem de 5 minutos)
   const now = new Date().getTime();
+  
   if (tokenCache.access_token && tokenCache.expires_at && now < (tokenCache.expires_at - 300000)) {
     console.log('🔑 Usando token em cache');
     return tokenCache.access_token;
@@ -54,9 +54,8 @@ async function getAuthToken() {
         try {
           const response = JSON.parse(data);
           if (response.access_token) {
-            // Cacheia o token com tempo de expiração
             tokenCache.access_token = response.access_token;
-            tokenCache.expires_at = now + (response.expires_in * 1000); // expires_in em segundos
+            tokenCache.expires_at = now + (response.expires_in * 1000);
             console.log('✅ Token obtido com sucesso');
             resolve(response.access_token);
           } else {
@@ -102,7 +101,6 @@ async function makeApiRequest(endpoint, method, requestData, authToken) {
       }
     };
     
-    // Só adiciona Content-Type e Content-Length para POST
     if (method === 'POST' && bodyData) {
       options.headers['Content-Type'] = 'application/json';
       options.headers['Content-Length'] = Buffer.byteLength(bodyData);
@@ -128,7 +126,6 @@ async function makeApiRequest(endpoint, method, requestData, authToken) {
           }
         } catch (error) {
           console.error('❌ Erro ao processar resposta JSON:', error);
-          console.error('❌ Dados recebidos:', data);
           reject(error);
         }
       });
@@ -144,7 +141,7 @@ async function makeApiRequest(endpoint, method, requestData, authToken) {
       reject(new Error('Timeout na requisição à API Moblix'));
     });
     
-    req.setTimeout(30000); // 30 segundos timeout (aumentado)
+    req.setTimeout(30000);
     
     if (method === 'POST' && bodyData) {
       req.write(bodyData);
@@ -155,10 +152,8 @@ async function makeApiRequest(endpoint, method, requestData, authToken) {
 }
 
 exports.handler = async (event, context) => {
-  // Configurar timeout maior para aguardar a API Moblix
   context.callbackWaitsForEmptyEventLoop = false;
   
-  // Allow CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, Origin, X-Requested-With',
@@ -166,7 +161,6 @@ exports.handler = async (event, context) => {
     'Content-Type': 'application/json'
   };
 
-  // Handle preflight requests
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -182,49 +176,30 @@ exports.handler = async (event, context) => {
       queryParams: event.queryStringParameters
     });
     
-    // Extrai o caminho da API removendo o prefixo da função Netlify
     let apiPath = event.path.replace('/.netlify/functions/moblix-api', '');
     
-    // Se o caminho for especificamente da API de consulta de voos
+    // BUSCA DE VOOS
     if (apiPath.includes('/api/ConsultaAereo/Consultar')) {
       console.log('📡 Processando busca de voos...');
       
-      // Parse do body da requisição
+      // Parse do body
       let requestData;
       try {
-        console.log('📥 Recebido event.body:', typeof event.body, event.body);
-        
-        // Handle structured request from React app: {path, method, body}
         if (event.body) {
-          let parsedBody;
+          let parsedBody = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
           
-          if (typeof event.body === 'string') {
-            parsedBody = JSON.parse(event.body);
-          } else {
-            parsedBody = event.body;
-          }
-          
-          // Check if it's the structured format from FlightResults.tsx
+          // Structured format from React
           if (parsedBody.path && parsedBody.method && parsedBody.body) {
-            console.log('📨 Structured request detected from React app');
-            console.log('   Path:', parsedBody.path);
-            console.log('   Method:', parsedBody.method);
-            
-            // Extract the actual flight search data
-            if (typeof parsedBody.body === 'string') {
-              requestData = JSON.parse(parsedBody.body);
-            } else {
-              requestData = parsedBody.body;
-            }
+            console.log('📨 Structured request detected');
+            requestData = typeof parsedBody.body === 'string' ? JSON.parse(parsedBody.body) : parsedBody.body;
           } else {
-            // Direct request format
             requestData = parsedBody;
           }
         } else {
           requestData = {};
         }
         
-        console.log('📋 Parâmetros da busca processados:', requestData);
+        console.log('📋 Parâmetros recebidos:', requestData);
       } catch (parseError) {
         console.error('❌ Erro de parsing JSON:', parseError);
         return {
@@ -232,16 +207,16 @@ exports.handler = async (event, context) => {
           headers,
           body: JSON.stringify({
             error: 'Invalid JSON',
-            message: `Erro ao processar JSON: ${parseError.message}`
+            message: parseError.message
           })
         };
       }
       
-      // Obter token de autenticação
+      // Obter token
       let authToken;
       try {
         authToken = await getAuthToken();
-        console.log('🔑 Token obtido com sucesso');
+        console.log('🔑 Token obtido');
       } catch (error) {
         console.error('❌ Erro ao obter token:', error);
         return {
@@ -254,100 +229,77 @@ exports.handler = async (event, context) => {
         };
       }
       
-      // Se Companhia = -1 (buscar todas), usar parâmetros REAIS do usuário
-      if (requestData.Companhia === -1) {
-        console.log('🔍 Buscando todas as companhias com parâmetros do usuário...');
+      // ✅ NORMALIZAR PARÂMETROS - APENAS campos que a Moblix ACEITA
+      const finalRequestData = {
+        Origem: (requestData.Origem || requestData.origem || '').toUpperCase(),
+        Destino: (requestData.Destino || requestData.destino || '').toUpperCase(),
+        Ida: requestData.Ida || requestData.ida,
+        Adultos: parseInt(requestData.Adultos || requestData.adultos || 1),
+        Criancas: parseInt(requestData.Criancas || requestData.criancas || 0),
+        Bebes: parseInt(requestData.Bebes || requestData.bebes || 0),
+        Companhia: parseInt(requestData.Companhia !== undefined ? requestData.Companhia : (requestData.companhia !== undefined ? requestData.companhia : -1))
+      };
 
-        // ✅ USAR DADOS REAIS DO USUÁRIO
-        const finalRequestData = {
-          Origem: requestData.Origem || requestData.origem,
-          Destino: requestData.Destino || requestData.destino,
-          Ida: requestData.Ida || requestData.ida,
-          Volta: requestData.Volta || requestData.volta || null,
-          Adultos: requestData.Adultos || requestData.adultos || 1,
-          Criancas: requestData.Criancas || requestData.criancas || 0,
-          Bebes: requestData.Bebes || requestData.bebes || 0,
-          Companhia: -1,
-          Classe: requestData.Classe || requestData.classe || 0,
-          internacional: requestData.internacional || false
-        };
-
-        console.log('🎯 Parâmetros REAIS da busca:', JSON.stringify(finalRequestData, null, 2));
-
-        try {
-          const result = await makeApiRequest('/api/ConsultaAereo/Consultar', 'POST', finalRequestData, authToken);
-
-          console.log('📡 Resposta da API Moblix:', {
-            Success: result.Success,
-            HasResult: result.HasResult,
-            TotalItens: result.TotalItens,
-            DataLength: result.Data?.length || 0
-          });
-
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(result)
-          };
-        } catch (error) {
-          console.error('❌ Erro na busca:', error);
-          return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({
-              error: 'API Error',
-              message: error.message
-            })
-          };
-        }
-      } else {
-        // Busca para uma companhia específica
-        console.log(`🔍 Buscando companhia específica: ID ${requestData.Companhia}`);
-        
-        try {
-          // USAR OS PARÂMETROS REAIS DO USUÁRIO - NÃO HARDCODED!
-          const finalRequestData = {
-            Origem: requestData.Origem || requestData.origem,
-            Destino: requestData.Destino || requestData.destino,
-            Ida: requestData.DataIda || requestData.dataIda || requestData.Ida || requestData.ida,
-            Volta: requestData.DataVolta || requestData.dataVolta || requestData.Volta || requestData.volta,
-            Adultos: requestData.Adultos || requestData.adultos || 1,
-            Criancas: requestData.Criancas || requestData.criancas || 0,
-            Bebes: requestData.Bebes || requestData.bebes || 0,
-            Companhia: requestData.Companhia || requestData.companhia,
-            Classe: requestData.Classe || requestData.classe || 0,
-            internacional: requestData.internacional || false
-          };
-          
-          console.log('🎯 Usando parâmetros REAIS do usuário:', finalRequestData);
-          
-          const result = await makeApiRequest('/api/ConsultaAereo/Consultar', 'POST', finalRequestData, authToken);
-          
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify(result)
-          };
-        } catch (error) {
-          console.error('❌ Erro na busca específica:', error);
-          return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({
-              error: 'API Error',
-              message: error.message
-            })
-          };
-        }
+      // ✅ ADICIONAR VOLTA SOMENTE SE EXISTIR
+      const volta = requestData.Volta || requestData.volta;
+      if (volta && volta.trim() !== '' && volta !== 'undefined' && volta !== 'null') {
+        finalRequestData.Volta = volta;
       }
-    } else if (apiPath.includes('/api/Token')) {
-      // Rota de autenticação - não precisa de token existente
+
+      console.log('🎯 Parâmetros LIMPOS:', JSON.stringify(finalRequestData, null, 2));
+      console.log('🔍 Volta incluída?', !!finalRequestData.Volta);
+
+      // Validações
+      if (!finalRequestData.Origem || !finalRequestData.Destino || !finalRequestData.Ida) {
+        console.error('❌ Parâmetros obrigatórios faltando');
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({
+            error: 'Missing required parameters',
+            message: 'Origem, Destino e Ida são obrigatórios',
+            received: finalRequestData
+          })
+        };
+      }
+
+      try {
+        console.log('🌐 Fazendo requisição para Moblix...');
+        const result = await makeApiRequest('/api/ConsultaAereo/Consultar', 'POST', finalRequestData, authToken);
+
+        console.log('📊 Resultado:', {
+          Success: result.Success,
+          HasResult: result.HasResult,
+          HasError: !!result.ExErro,
+          ErrorDetail: result.ExErro?.Detail || 'none',
+          TotalItens: result.TotalItens
+        });
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify(result)
+        };
+      } catch (error) {
+        console.error('❌ Erro na busca:', error);
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({
+            error: 'API Error',
+            message: error.message
+          })
+        };
+      }
+    }
+    
+    // TOKEN ENDPOINT
+    else if (apiPath.includes('/api/Token')) {
       console.log('🔑 Processando solicitação de token...');
       
-      // Parse do body como form-urlencoded para tokens
       const formData = querystring.parse(event.body || '');
       
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         const bodyData = querystring.stringify({
           grant_type: formData.grant_type || 'password',
           username: formData.username || AUTH_CREDENTIALS.username,
@@ -402,28 +354,19 @@ exports.handler = async (event, context) => {
         req.write(bodyData);
         req.end();
       });
-    } else if (apiPath.includes('/aereo/api/aeroporto')) {
-      // Endpoint para busca de aeroportos
+    }
+    
+    // BUSCA DE AEROPORTOS
+    else if (apiPath.includes('/aereo/api/aeroporto')) {
       console.log('🛫 Processando busca de aeroportos...');
-      console.log('📍 Path completo:', event.path);
-      console.log('🔍 Query params:', event.queryStringParameters);
       
       const filtro = event.queryStringParameters?.filtro || '';
-      console.log('🔍 Filtro de busca:', filtro);
       
       try {
-        console.log('🔑 Obtendo token de autenticação...');
         const authToken = await getAuthToken();
-        console.log('🔑 Token obtido:', authToken ? 'SIM' : 'NÃO');
-        
         const endpoint = `/aereo/api/aeroporto?filtro=${encodeURIComponent(filtro)}`;
-        console.log('📡 Endpoint final:', endpoint);
-        
-        // Fazer requisição GET para o endpoint correto de aeroportos da API Moblix
-        console.log('🌐 Fazendo requisição para API Moblix...');
         const result = await makeApiRequest(endpoint, 'GET', null, authToken);
         
-        console.log('📊 Resultado da API:', result);
         console.log('✅ Aeroportos encontrados:', result?.Data?.length || 0);
         
         return {
@@ -432,24 +375,21 @@ exports.handler = async (event, context) => {
           body: JSON.stringify(result)
         };
       } catch (error) {
-        console.error('❌ Erro detalhado ao buscar aeroportos:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        });
+        console.error('❌ Erro ao buscar aeroportos:', error);
         return {
           statusCode: 500,
           headers,
           body: JSON.stringify({
             error: 'Airport Search Error',
-            message: error.message,
-            details: error.stack
+            message: error.message
           })
         };
       }
-    } else {
-      // Para outras rotas da API, faz proxy direto
-      console.log('📡 Fazendo proxy direto para:', apiPath);
+    }
+    
+    // PROXY GENÉRICO
+    else {
+      console.log('📡 Proxy direto para:', apiPath);
       
       const authToken = await getAuthToken();
       const result = await makeApiRequest(apiPath, event.httpMethod, event.body, authToken);
@@ -462,7 +402,7 @@ exports.handler = async (event, context) => {
     }
 
   } catch (error) {
-    console.error('Function error:', error);
+    console.error('❌ Function error:', error);
     return {
       statusCode: 500,
       headers,
