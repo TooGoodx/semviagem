@@ -254,93 +254,43 @@ exports.handler = async (event, context) => {
         };
       }
       
-      // Se Companhia = -1 (buscar todas), testar com companhia específica primeiro
+      // Se Companhia = -1 (buscar todas), usar parâmetros REAIS do usuário
       if (requestData.Companhia === -1) {
-        console.log('🔍 Testando busca com companhia específica primeiro...');
-        
-        // Testar primeiro com LATAM (ID: 1) para verificar se a API está funcionando
-        const testLatam = {
-          Origem: "GRU",
-          Destino: "GIG",
-          Ida: "2025-09-10", // Data futura
-          Adultos: 1,
-          Criancas: 0,
-          Bebes: 0,
-          Companhia: 1 // LATAM
+        console.log('🔍 Buscando todas as companhias com parâmetros do usuário...');
+
+        // ✅ USAR DADOS REAIS DO USUÁRIO
+        const finalRequestData = {
+          Origem: requestData.Origem || requestData.origem,
+          Destino: requestData.Destino || requestData.destino,
+          Ida: requestData.Ida || requestData.ida,
+          Volta: requestData.Volta || requestData.volta || null,
+          Adultos: requestData.Adultos || requestData.adultos || 1,
+          Criancas: requestData.Criancas || requestData.criancas || 0,
+          Bebes: requestData.Bebes || requestData.bebes || 0,
+          Companhia: -1,
+          Classe: requestData.Classe || requestData.classe || 0,
+          internacional: requestData.internacional || false
         };
-        
-        console.log('🧪 Testando LATAM (ID: 1):', JSON.stringify(testLatam, null, 2));
-        
+
+        console.log('🎯 Parâmetros REAIS da busca:', JSON.stringify(finalRequestData, null, 2));
+
         try {
-          console.log('🔑 Token de autenticação:', authToken ? 'Presente' : 'Ausente');
-          console.log('🌐 Fazendo requisição para LATAM...');
-          
-          const latamResult = await makeApiRequest('/api/ConsultaAereo/Consultar', 'POST', testLatam, authToken);
-          
-          console.log('📡 Status da resposta LATAM:', latamResult ? 'Recebida' : 'Nula');
-          console.log('📡 Resultado LATAM completo:', JSON.stringify(latamResult, null, 2));
-          
-          if (latamResult) {
-            console.log('✅ Success LATAM:', latamResult.Success);
-            console.log('📊 HasResult LATAM:', latamResult.HasResult);
-            console.log('📈 TotalItens LATAM:', latamResult.TotalItens);
-            console.log('🗂️ Data length LATAM:', latamResult.Data?.length || 0);
-            console.log('❌ ExErro LATAM:', latamResult.ExErro);
-          }
-          
-          if (latamResult && latamResult.Success && latamResult.Data && latamResult.Data.length > 0) {
-            const idaFlights = latamResult.Data[0]?.Ida || [];
-            const voltaFlights = latamResult.Data[0]?.Volta || [];
-            console.log(`✅ LATAM funcionou: ${idaFlights.length} ida, ${voltaFlights.length} volta`);
-            
-            // Se LATAM funcionou, agora testar com Companhia: -1
-            console.log('🔍 LATAM funcionou, testando agora com Companhia: -1...');
-            const consolidatedTest = { ...testLatam, Companhia: -1 };
-            const result = await makeApiRequest('/api/ConsultaAereo/Consultar', 'POST', consolidatedTest, authToken);
-            
-            console.log('📡 Status da resposta consolidada:', result ? 'Recebida' : 'Nula');
-            console.log('📡 Resposta consolidada da API Moblix:', JSON.stringify(result, null, 2));
-            
-            if (result && result.Success) {
-              const totalFlights = result.Data?.reduce((total, item) => {
-                const idaCount = item.Ida?.length || 0;
-                const voltaCount = item.Volta?.length || 0;
-                return total + idaCount + voltaCount;
-              }, 0) || 0;
-              
-              console.log(`✅ Busca consolidada: ${result.Data?.length || 0} grupos, ${totalFlights} voos`);
-              
-              return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify(result)
-              };
-            } else {
-              console.log('⚠️ Companhia: -1 não funcionou, retornando resultado da LATAM');
-              return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify(latamResult)
-              };
-            }
-          } else {
-            console.log('❌ LATAM não retornou voos, problema com API ou autenticação');
-            return {
-              statusCode: 200,
-              headers,
-              body: JSON.stringify({
-                RequestId: null,
-                Success: true,
-                HasResult: false,
-                ExErro: null,
-                Data: [],
-                Completed: true,
-                TotalItens: 0
-              })
-            };
-          }
+          const result = await makeApiRequest('/api/ConsultaAereo/Consultar', 'POST', finalRequestData, authToken);
+
+          console.log('📡 Resposta da API Moblix:', {
+            Success: result.Success,
+            HasResult: result.HasResult,
+            TotalItens: result.TotalItens,
+            DataLength: result.Data?.length || 0
+          });
+
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify(result)
+          };
         } catch (error) {
-          console.error('❌ Erro no teste:', error);
+          console.error('❌ Erro na busca:', error);
           return {
             statusCode: 500,
             headers,
