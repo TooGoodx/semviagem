@@ -1356,11 +1356,13 @@ const Home: React.FC = () => {
         <div className="container mx-auto relative z-20 pb-12 pt-20">
           <div className="flex justify-center items-center">
             <div className="text-center max-w-4xl">
-              <h1 className="hero__title">
-                A forma mais simples e honesta de viajar com milhas — sem truques, sem taxas, sem viagem.
+              <h1 className="hero__title text-3xl md:text-4xl lg:text-5xl font-semibold mb-3" style={{lineHeight: '1.2', letterSpacing: '-0.02em'}}>
+                <span style={{color: '#F0C72F'}}>Tudo</span> o que você precisa para viver <span style={{color: '#4896C7'}}>mais o mundo</span><span style={{color: '#FFFFFF'}}>!</span>
               </h1>
-              <p className="hero__subtitle">
-                Viaje pagando quase nada. Busque, ative alertas e aproveite o poder real das milhas.
+              <p className="hero__subtitle text-base md:text-lg font-light mb-6" style={{lineHeight: '1.7', color: 'rgba(255,255,255,0.95)'}}>
+                Porque viajar é encontro — não labirinto de taxas. Busque, aprenda, receba alertas e transforme milhas em experiências.
+                <br /><br />
+                <strong className="font-bold">Viva o leve da vida, <span style={{color: '#F0C72F'}}>Sem</span> <span style={{color: '#4896C7'}}>Viagem</span>!</strong>
               </p>
 
               {/* Search Form - Posicionado para ficar metade na hero e metade na próxima seção */}
@@ -1370,37 +1372,29 @@ const Home: React.FC = () => {
                     <form onSubmit={handleFormSubmit}>
                       {/* Header com tipo de viagem */}
                       <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Encontrar meu próximo destino</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center" style={{fontSize: '17px'}}>Encontrar minha próxima experiência pelo mundo</h3>
                         
                         {/* Toggle Ida e Volta / Somente Ida */}
                         <div className="flex items-center space-x-4 mb-4">
                           <button
                             type="button"
                             onClick={() => setSearchParams(prev => ({ ...prev, soIda: false }))}
-                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                              !searchParams.soIda 
-                                ? 'text-white border-2' 
-                                : 'text-white hover:opacity-80'
+                            className={`px-6 py-3 h-[44px] rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                              !searchParams.soIda
+                                ? 'text-white border-2 bg-[#F0C72F] border-[#F0C72F]'
+                                : 'text-white bg-[#4896C7] border-2 border-[#4896C7] hover:opacity-80'
                             }`}
-                            style={{
-                              backgroundColor: !searchParams.soIda ? '#F0C72F' : '#4896C7',
-                              borderColor: !searchParams.soIda ? '#F0C72F' : '#4896C7'
-                            }}
                           >
                             ✓ Ida e volta
                           </button>
                           <button
                             type="button"
                             onClick={() => setSearchParams(prev => ({ ...prev, soIda: true, volta: '' }))}
-                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                              searchParams.soIda 
-                                ? 'text-white border-2' 
-                                : 'text-white hover:opacity-80'
+                            className={`px-6 py-3 h-[44px] rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                              searchParams.soIda
+                                ? 'text-white border-2 bg-[#F0C72F] border-[#F0C72F]'
+                                : 'text-white bg-[#4896C7] border-2 border-[#4896C7] hover:opacity-80'
                             }`}
-                            style={{
-                              backgroundColor: searchParams.soIda ? '#F0C72F' : '#4896C7',
-                              borderColor: searchParams.soIda ? '#F0C72F' : '#4896C7'
-                            }}
                           >
                             Somente ida
                           </button>
@@ -1429,7 +1423,7 @@ const Home: React.FC = () => {
                                 
                                 setTimeout(() => searchAirportsWithValue('origin', currentValue), 100);
                               }}
-                              className="pl-10 h-12 text-base border-gray-300 rounded-lg transition-all duration-200"
+                              className="pl-10 h-[52px] text-base border-gray-300 rounded-xl transition-all duration-200"
                               style={{
                                 borderColor: '#d1d5db'
                               }}
@@ -1489,7 +1483,7 @@ const Home: React.FC = () => {
                                 
                                 setTimeout(() => searchAirportsWithValue('destination', currentValue), 100);
                               }}
-                              className="pl-10 h-12 text-base border-gray-300 rounded-lg transition-all duration-200"
+                              className="pl-10 h-[52px] text-base border-gray-300 rounded-xl transition-all duration-200"
                               style={{
                                 borderColor: '#d1d5db'
                               }}
@@ -1547,7 +1541,7 @@ const Home: React.FC = () => {
                                     const newConfig = {type: 'ida' as 'ida' | 'volta', show: true, title: 'Selecionar data de ida'};
                                     setCalendarConfig(newConfig);
                                   }}
-                                  className="relative w-full px-4 py-3 pl-10 h-12 text-base bg-white border border-gray-300 rounded-l-lg rounded-r-none border-r-0 cursor-pointer hover:border-blue-400 transition-colors flex items-center"
+                                  className="relative w-full px-4 py-3 pl-10 h-[52px] text-base bg-white border border-gray-300 rounded-xl cursor-pointer hover:border-blue-400 transition-colors flex items-center"
                                 >
                                   <span className="text-gray-900 text-sm">
                                     {searchParams.ida ? formatDisplayDate(searchParams.ida) : 'dd/mm/aaaa'}
@@ -1569,9 +1563,9 @@ const Home: React.FC = () => {
                                       setCalendarConfig({type: 'volta', show: true, title: 'Selecionar data de volta'});
                                     }
                                   }}
-                                  className={`relative w-full px-4 py-3 pl-10 h-12 text-base border border-gray-300 rounded-none border-r-0 transition-colors flex items-center ${
-                                    searchParams.soIda 
-                                      ? 'bg-gray-100 cursor-not-allowed' 
+                                  className={`relative w-full px-4 py-3 pl-10 h-[52px] text-base border border-gray-300 rounded-xl transition-colors flex items-center ${
+                                    searchParams.soIda
+                                      ? 'bg-gray-100 cursor-not-allowed'
                                       : 'bg-white cursor-pointer hover:border-blue-400'
                                   }`}
                                 >
@@ -1593,7 +1587,7 @@ const Home: React.FC = () => {
                                 <select 
                                   value={searchParams.adultos}
                                   onChange={(e) => setSearchParams(prev => ({ ...prev, adultos: Number(e.target.value) }))}
-                                  className="w-full pl-10 pr-4 h-12 text-base border border-gray-300 rounded-r-lg rounded-l-none focus:border-blue-500 focus:ring-blue-500 bg-white appearance-none"
+                                  className="w-full pl-10 pr-4 h-[52px] text-base border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-blue-500 bg-white appearance-none"
                                 >
                                   <option value={1}>1 adulto</option>
                                   <option value={2}>2 adultos</option>
@@ -1615,7 +1609,7 @@ const Home: React.FC = () => {
                                 <select 
                                   value={searchParams.classe}
                                   onChange={(e) => setSearchParams(prev => ({ ...prev, classe: e.target.value as 'economica' | 'executiva' | 'primeira' }))}
-                                  className="w-full pl-10 pr-4 h-12 text-base border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-blue-500 bg-white appearance-none"
+                                  className="w-full pl-10 pr-4 h-[52px] text-base border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-blue-500 bg-white appearance-none"
                                 >
                                   <option value="economica">Economica</option>
                                   <option value="executiva">Executiva</option>
@@ -1648,7 +1642,7 @@ const Home: React.FC = () => {
                             type="submit"
                             size="lg"
                             disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-red-300 disabled:to-red-400 text-white font-bold py-4 text-lg rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
+                            className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-red-300 disabled:to-red-400 text-white font-bold py-4 h-[56px] text-lg rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
                           >
                             {isLoading ? (
                               <>

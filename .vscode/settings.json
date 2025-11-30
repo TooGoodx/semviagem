@@ -1,3 +1,5 @@
 {
-    "claude-code.environmentVariables": []
+    "claude-code.environmentVariables": [],
+    "claudeCode.useTerminal": true,
+    "claudeCode.disableLoginPrompt": false
 }

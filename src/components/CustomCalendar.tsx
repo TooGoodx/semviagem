@@ -134,26 +134,26 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
     return (
       <div className="flex-1">
         {/* Month header */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-6">
           <h3 className="text-lg font-semibold text-gray-800">
             {months[month]} {year}
           </h3>
         </div>
 
         {/* Week days header */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
+        <div className="grid grid-cols-7 gap-1 mb-2 place-items-center">
           {weekDays.map(day => (
-            <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
+            <div key={day} className="text-center text-xs font-medium text-gray-500 w-10 h-8 flex items-center justify-center">
               {day}
             </div>
           ))}
         </div>
 
-        {/* Calendar days */}
-        <div className="grid grid-cols-7 gap-1">
+        {/* Calendar days - Grid perfeito com células fixas */}
+        <div className="grid grid-cols-7 gap-1 place-items-center">
           {days.map((day, index) => {
             if (day === null) {
-              return <div key={index} className="h-8"></div>;
+              return <div key={index} className="w-10 h-10"></div>;
             }
 
             const disabled = isDateDisabled(year, month, day);
@@ -169,13 +169,13 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
                 onMouseLeave={() => setHoveredDate(null)}
                 disabled={disabled}
                 className={`
-                  h-8 w-8 rounded text-sm transition-all duration-200 flex items-center justify-center relative
+                  w-10 h-10 rounded-md text-sm transition-all duration-200 flex items-center justify-center
                   ${disabled
                     ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-gray-700 cursor-pointer'
+                    : 'text-gray-700 cursor-pointer hover:bg-gray-50'
                   }
                   ${selected
-                    ? 'bg-red-500 text-white hover:bg-red-600 font-medium border-2 border-red-600'
+                    ? 'bg-blue-500 text-white hover:bg-blue-600 border-2 border-blue-600'
                     : ''
                   }
                   ${todayDate && !selected
@@ -199,11 +199,11 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
         {/* Main content container */}
         <div className="relative">
           {/* Navigation header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <button
               onClick={() => navigateMonth('prev')}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -212,7 +212,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            
+
             <div className="text-sm text-gray-500 font-medium">{title}</div>
 
             <div className="flex items-center gap-4">
@@ -224,7 +224,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
-              
+
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-red-100 rounded-full transition-colors"
@@ -238,7 +238,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
           </div>
 
           {/* Two months side by side (desktop) or one month (mobile) */}
-          <div className="flex flex-col md:flex-row p-4 md:p-6 gap-4 md:gap-8">
+          <div className="flex flex-col md:flex-row p-6 gap-4 md:gap-8">
             {renderMonth(0)}
             <div className="hidden md:block">
               {renderMonth(1)}
@@ -246,7 +246,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
           </div>
 
           {/* Bottom section with search button */}
-          <div className="p-4 border-t border-gray-100">
+          <div className="p-6 border-t border-gray-100">
             <div className="flex justify-end">
               <button
                 onClick={onClose}

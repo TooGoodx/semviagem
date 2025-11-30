@@ -6,6 +6,8 @@ import ReturnFlightModal from './ReturnFlightModal';
 import { useSelection } from '../context/SelectionContext';
 import { useNavigate } from 'react-router-dom';
 import { getAirlineLogo, getDisplayAirlineName } from '../utils/airlineLogos';
+import CompactFlightCard from './CompactFlightCard';
+import moblixApiService from '../services/moblixApiService';
 
 // Interfaces
 interface Airport {
@@ -166,10 +168,15 @@ const FlightResults: React.FC<FlightResultsProps> = ({
   const [isLoadingMoreMoney, setIsLoadingMoreMoney] = useState(false);
   const [isLoadingMoreMiles, setIsLoadingMoreMiles] = useState(false);
   const itemsPerSection = 10; // 10 voos por seção (milhas ou dinheiro)
-  
+
   // Ref para preservar scroll ao alterar filtros
   const scrollPositionRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // ✅ NOVOS ESTADOS PARA PRE-FETCH DE VOOS DE VOLTA
+  const [voosVoltaPrefetched, setVoosVoltaPrefetched] = useState<Flight[]>([]);
+  const returnFlightsPrefetched = useRef(false);
+  const [isPrefetchingReturn, setIsPrefetchingReturn] = useState(false);
 
   // 🚀 AUTO MODAL: Desabilitado - usando inline replacement
   useEffect(() => {
@@ -330,6 +337,91 @@ const FlightResults: React.FC<FlightResultsProps> = ({
       }
     } catch {}
   }, [flights, selectedFlights.outbound, searchParams.tipoPagamento, showFinalSelection]); // removido isSelectingReturn para evitar loop
+
+  // ✅ PRE-FETCH AUTOMÁTICO: Buscar voos de volta em background
+  useEffect(() => {
+    const prefetchReturnFlights = async () => {
+      // Condições para executar pre-fetch:
+      // 1. Temos voos de ida carregados
+      // 2. É ida e volta (não somente ida)
+      // 3. Ainda não fizemos pre-fetch
+      // 4. Não estamos em seleção final
+      if (
+        flights.length > 0 &&
+        !searchParams.soIda &&
+        !returnFlightsPrefetched.current &&
+        !showFinalSelection
+      ) {
+        console.log('🔄 [PRE-FETCH] Iniciando busca automática de voos de volta em background...');
+        setIsPrefetchingReturn(true);
+
+        try {
+          // Extrair código IATA do formato "Cidade (IATA)"
+          const extractIATA = (cityString: string): string => {
+            if (!cityString) return '';
+            const parenMatch = cityString.match(/\(([A-Z]{3})\)/);
+            if (parenMatch && parenMatch[1]) {
+              return parenMatch[1].trim().toUpperCase();
+            }
+            if (cityString.includes(' - ')) {
+              return cityString.split(' - ')[0].trim().toUpperCase();
+            }
+            if (/^[A-Za-z]{3}$/.test(cityString.trim())) {
+              return cityString.trim().toUpperCase();
+            }
+            return cityString.trim().toUpperCase();
+          };
+
+          // Preparar parâmetros para voo de volta (INVERTER origem/destino)
+          const returnParams = {
+            origem: extractIATA(searchParams.destino), // INVERTIDO
+            destino: extractIATA(searchParams.origem),  // INVERTIDO
+            ida: searchParams.volta || searchParams.ida, // Data de volta como nova ida
+            adultos: searchParams.adultos || 1,
+            criancas: searchParams.criancas || 0,
+            bebes: searchParams.bebes || 0,
+            companhia: searchParams.companhia || -1,
+            classe: searchParams.classe || 'economica',
+            soIda: true // Buscar só ida (que será a volta)
+          };
+
+          console.log('🔄 [PRE-FETCH] Parâmetros invertidos:', returnParams);
+
+          // Buscar voos de volta com timeout de 10 segundos
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout')), 10000)
+          );
+
+          const apiPromise = moblixApiService.consultarVoos(returnParams);
+
+          const apiResponse = await Promise.race([apiPromise, timeoutPromise]);
+
+          if (apiResponse?.flights && Array.isArray(apiResponse.flights) && apiResponse.flights.length > 0) {
+            // Processar voos de volta
+            const processedReturnFlights = apiResponse.flights.map((flight: any, index: number) => ({
+              ...flight,
+              flightId: flight.flightId || `return_prefetch_${index}`,
+              flightDirection: 'return',
+              isReturnFlight: true
+            }));
+
+            console.log(`✅ [PRE-FETCH] ${processedReturnFlights.length} voos de volta pré-carregados com sucesso!`);
+            setVoosVoltaPrefetched(processedReturnFlights);
+            returnFlightsPrefetched.current = true;
+          } else {
+            console.warn('⚠️ [PRE-FETCH] API não retornou voos de volta');
+          }
+        } catch (error) {
+          console.warn('⚠️ [PRE-FETCH] Erro ao buscar voos de volta (não crítico):', error);
+          // Não bloquear UI - usuário poderá buscar manualmente depois
+        } finally {
+          setIsPrefetchingReturn(false);
+        }
+      }
+    };
+
+    prefetchReturnFlights();
+  }, [flights, searchParams.soIda, showFinalSelection]);
 
   // Format functions
   const formatCurrency = (value: number) => {
@@ -517,190 +609,84 @@ const FlightResults: React.FC<FlightResultsProps> = ({
 
   // Nova função para lidar com a escolha do voo de ida
   const handleChooseOutbound = async (flight: Flight) => {
-    
-    // Se a busca é SOMENTE IDA, não devemos iniciar nova busca de volta
+    console.log('✈️ [SELEÇÃO] Voo de ida escolhido:', flight);
+
+    // Se a busca é SOMENTE IDA
     if (searchParams.soIda) {
       setOutbound(flight);
       setReturn(null);
       setIsSelectingReturn(false);
       onFlightSelect?.(flight, 'outbound');
-      // Viagem só de ida -> ir ao resumo na one-page
       navigate('/#resumo');
-      return; // Evita qualquer nova busca
+      return;
     }
 
-    // Para ida e volta: selecionar voo de ida e buscar voos de volta
+    // Para IDA E VOLTA: selecionar voo de ida
     setOutbound(flight);
     setSelectedOutboundForReturn(flight);
-    
-    // Fechar qualquer modal que possa estar aberto
     setIsSelectionModalOpen(false);
     setSelectionModalFlight(null);
-    
-    // Buscar voos de volta dos dados já carregados ou do localStorage
-    let availableReturnFlights: Flight[] = [];
-    
-    try {
-      // Fazer requisição real para API Moblix para voos de volta
-      console.log('🔄 Fazendo requisição real para API Moblix - voos de volta');
-      
-      // Importar o serviço da API Moblix
-      const { default: moblixApiService } = await import('../services/moblixApiService');
-      
-      // Função para extrair código IATA do formato "Cidade (IATA)" ou outros formatos
-      const extractIATA = (cityString: string): string => {
-        if (!cityString) return '';
-        
-        // Padrão: "Cidade (IATA)" -> extrair apenas IATA
-        const parenMatch = cityString.match(/\(([A-Z]{3})\)/);
-        if (parenMatch && parenMatch[1]) {
-          return parenMatch[1].trim().toUpperCase();
-        }
-        
-        // Se o valor contém " - ", pega apenas a primeira parte (código IATA)
-        if (cityString.includes(' - ')) {
-          return cityString.split(' - ')[0].trim().toUpperCase();
-        }
-        
-        // Se for exatamente 3 letras, assume que já é IATA
-        if (/^[A-Za-z]{3}$/.test(cityString.trim())) {
-          return cityString.trim().toUpperCase();
-        }
-        
-        // Fallback: retorna o valor original
-        return cityString.trim().toUpperCase();
-      };
 
-      // Preparar parâmetros para voo de volta (inverter origem e destino)
-      const returnParams = {
-        origem: extractIATA(searchParams.destino), // Extrair IATA e inverter
-        destino: extractIATA(searchParams.origem), // Extrair IATA e inverter
-        ida: searchParams.volta || searchParams.ida, // Usar data de volta se disponível
-        adultos: searchParams.adultos || 1,
-        criancas: searchParams.criancas || 0,
-        bebes: searchParams.bebes || 0,
-        companhia: searchParams.companhia || -1,
-        classe: searchParams.classe || 'economica'
-      };
-      
-      console.log('🔄 DEBUG: Parâmetros de busca de volta:', returnParams);
-      console.log('🔄 DEBUG: Origem original:', searchParams.origem);
-      console.log('🔄 DEBUG: Destino original:', searchParams.destino);
-      console.log('🔄 DEBUG: Origem volta (era destino):', returnParams.origem);
-      console.log('🔄 DEBUG: Destino volta (era origem):', returnParams.destino);
-      
-      console.log('🛫 Buscando voos de volta com parâmetros:', returnParams);
-      
-      // Fazer requisição para API Moblix
-      const apiResponse = await moblixApiService.consultarVoos(returnParams);
-      
-      if (apiResponse?.flights && Array.isArray(apiResponse.flights) && apiResponse.flights.length > 0) {
-        // Processar voos de volta da API
-        availableReturnFlights = apiResponse.flights.map((flight: any, index: number) => {
-          // Detectar se é voo em milhas baseado nos dados da API
-          const hasPoints = flight.segments?.some((segment: any) => 
-            segment.PontosAdulto > 0 || segment.FidelityProgram
-          );
-          
-          // Criar duas versões do voo: uma em dinheiro e uma em milhas
-          const baseFlightData = {
-            ...flight,
-            flightId: `return_api_${index}`,
-            isReturnFlight: true,
-            flightDirection: 'return'
-          };
-          
-          return [
-            // Versão em dinheiro
-            {
-              ...baseFlightData,
-              flightId: `return_money_${index}`,
-              price: flight.fareGroup?.priceWithTax || flight.priceWithTax || flight.price || 0,
-              priceWithTax: flight.fareGroup?.priceWithTax || flight.priceWithTax || flight.price || 0,
-              totalPrice: flight.fareGroup?.priceWithTax || flight.priceWithTax || flight.price || 0,
-              isMiles: false,
-              // Garantir que dados de volta sejam únicos
-              segments: flight.segments,
-              validatingBy: flight.validatingBy,
-              fareGroup: flight.fareGroup
-            },
-            // Versão em milhas (apenas se tiver pontos)
-            ...(hasPoints ? [{
-              ...baseFlightData,
-              flightId: `return_miles_${index}`,
-              price: flight.segments?.[0]?.PontosAdulto || 0,
-              priceWithTax: flight.segments?.[0]?.PontosAdulto || 0,
-              totalPrice: flight.segments?.[0]?.PontosAdulto || 0,
-              isMiles: true,
-              // Garantir que dados de volta sejam únicos
-              segments: flight.segments,
-              validatingBy: flight.validatingBy,
-              fareGroup: flight.fareGroup
-            }] : [])
-          ];
-        }).flat();
-        
-        console.log('✅ Voos de volta obtidos da API Moblix:', availableReturnFlights.length);
-        console.log('🔍 DEBUG: Primeiro voo de volta:', availableReturnFlights[0]);
-        console.log('🔍 DEBUG: Rota do primeiro voo de volta:', availableReturnFlights[0]?.segments?.[0]?.origem, '→', availableReturnFlights[0]?.segments?.[availableReturnFlights[0]?.segments?.length - 1]?.destino);
-      } else {
-        console.log('⚠️ Nenhum voo de volta encontrado na API');
-      }
-    } catch (error) {
-      console.error('❌ Erro ao buscar voos de volta na API:', error);
-    }
-    
-    // Fallback: se não conseguiu da API, usar voos de ida como base para voos de volta
-    if (availableReturnFlights.length === 0) {
+    // ✅ TRANSIÇÃO INLINE: Usar voos de volta pré-carregados
+    if (voosVoltaPrefetched.length > 0) {
+      console.log(`⚡ [INLINE] Usando ${voosVoltaPrefetched.length} voos de volta PRÉ-CARREGADOS (instantâneo)`);
+
+      setReturnFlights(voosVoltaPrefetched);
+      setIsSelectingReturn(true);
+      setDisplayedFlights(voosVoltaPrefetched);
+
+      // Scroll suave para o topo
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+    } else {
+      console.log('🔄 [FALLBACK] Pre-fetch não disponível, buscando voos de volta agora...');
+
+      // Fallback: buscar voos de volta agora (comportamento original)
       try {
-        const storedReturnFlights = localStorage.getItem('returnFlightResults');
-        if (storedReturnFlights) {
-          availableReturnFlights = JSON.parse(storedReturnFlights);
-          console.log('📦 Usando voos de volta do localStorage:', availableReturnFlights.length);
+        const { default: moblixApiService } = await import('../services/moblixApiService');
+
+        const extractIATA = (cityString: string): string => {
+          if (!cityString) return '';
+          const parenMatch = cityString.match(/\(([A-Z]{3})\)/);
+          if (parenMatch && parenMatch[1]) return parenMatch[1].trim().toUpperCase();
+          if (cityString.includes(' - ')) return cityString.split(' - ')[0].trim().toUpperCase();
+          if (/^[A-Za-z]{3}$/.test(cityString.trim())) return cityString.trim().toUpperCase();
+          return cityString.trim().toUpperCase();
+        };
+
+        const returnParams = {
+          origem: extractIATA(searchParams.destino),
+          destino: extractIATA(searchParams.origem),
+          ida: searchParams.volta || searchParams.ida,
+          adultos: searchParams.adultos || 1,
+          criancas: searchParams.criancas || 0,
+          bebes: searchParams.bebes || 0,
+          companhia: searchParams.companhia || -1,
+          classe: searchParams.classe || 'economica',
+          soIda: true
+        };
+
+        const apiResponse = await moblixApiService.consultarVoos(returnParams);
+
+        if (apiResponse?.flights && apiResponse.flights.length > 0) {
+          const processedFlights = apiResponse.flights.map((f: any, i: number) => ({
+            ...f,
+            flightId: f.flightId || `return_fallback_${i}`,
+            flightDirection: 'return',
+            isReturnFlight: true
+          }));
+
+          setReturnFlights(processedFlights);
+          setIsSelectingReturn(true);
+          setDisplayedFlights(processedFlights);
         }
       } catch (error) {
-        console.log('⚠️ Erro ao ler voos de volta do localStorage:', error);
-      }
-      
-      // Se ainda não tem voos de volta, usar os voos de ida como fallback (invertendo origem/destino)
-      if (availableReturnFlights.length === 0 && displayedFlights.length > 0) {
-        console.log('🔄 Usando voos de ida como base para voos de volta (fallback)');
-        availableReturnFlights = displayedFlights.slice(0, 10).map((flight, index) => ({
-          ...flight,
-          flightId: `return_fallback_${index}`,
-          segments: flight.segments?.map(segment => ({
-            ...segment,
-            departure: segment.arrival || segment.destino,
-            arrival: segment.departure || segment.origem,
-            origem: segment.destino,
-            destino: segment.origem,
-            departureDate: searchParams.volta || searchParams.ida,
-            arrivalDate: searchParams.volta || searchParams.ida
-          })) || []
-        }));
-        console.log('✅ Criados', availableReturnFlights.length, 'voos de volta como fallback');
+        console.error('❌ [FALLBACK] Erro ao buscar voos de volta:', error);
       }
     }
-    
-    // Armazenar voos de volta e mudar para modo de seleção de volta
-    console.log('🔄 Definindo voos de volta no estado:', availableReturnFlights.length);
-    console.log('🔄 Estado ANTES da atualização - isSelectingReturn:', isSelectingReturn);
-    
-    // CRITICAL: Atualizar estados de forma síncrona
-    setReturnFlights(availableReturnFlights);
-    setIsSelectingReturn(true);
-    
-    // Forçar re-render após pequeno delay para garantir que estados sejam aplicados
-    setTimeout(() => {
-      setDisplayedFlights([...availableReturnFlights]);
-    }, 10);
-    
-    console.log('✅ Estado SOLICITADO - isSelectingReturn: true, returnFlights:', availableReturnFlights.length);
-    
-    // Notificar o componente pai para atualizar os voos exibidos
-    if (onFlightSelect) {
-      onFlightSelect(flight, 'outbound');
-    }
+
+    onFlightSelect?.(flight, 'outbound');
   };
 
   // Selecionar imediatamente a VOLTA ao clicar em "Escolher" (sem modal)
@@ -1127,38 +1113,6 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             </>
           ) : (
             <>
-              <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
-                <div>
-                  <h2 className="text-xl md:text-2xl font-bold text-[#060D1C] mb-2">
-                    {isSelectingReturn ? 'Voos de volta' : `${getCurrentFlights.length} voos encontrados`}
-                  </h2>
-                  <p className="text-sm md:text-base text-gray-600">
-                    {isSelectingReturn 
-                      ? `${searchParams.destino} → ${searchParams.origem} • ${searchParams.volta || searchParams.ida}`
-                      : `${searchParams.origem} → ${searchParams.destino} • ${searchParams.ida}`}
-                    {searchParams.volta && !isSelectingReturn && ` • Volta: ${searchParams.volta}`}
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  {(selectedFlights.outbound && !searchParams.soIda) && (
-                    <button
-                      onClick={resetSelection}
-                      className="px-4 md:px-6 py-2 md:py-3 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm md:text-base"
-                    >
-                      Recomeçar seleção
-                    </button>
-                  )}
-                  <button
-                    onClick={onNewSearch}
-                    className="px-4 md:px-6 py-2 md:py-3 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm md:text-base"
-                  >
-                    Nova Busca Completa
-                  </button>
-                </div>
-              </div>
-
-              {/* Condicional: Modal final OU Layout de duas colunas */}
               {selectedFlights.outbound && selectedFlights.return ? (
                 // Modal final integrado - substitui as colunas
                 <div className="space-y-6">
@@ -1203,15 +1157,65 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                   </div>
                 </div>
               ) : (
-                // Layout de duas colunas: Dinheiro e Milhas (quando ainda selecionando)
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                
-                {/* Coluna Dinheiro */}
-                <div className="bg-white rounded-lg shadow-lg p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-[#060D1C] flex items-center">
-                      Dinheiro
-                    </h3>
+                <>
+                  {/* Header com título e botões */}
+                  <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+                    <div>
+                      <h2 className="text-xl md:text-2xl font-bold text-[#060D1C] mb-2">
+                        {isSelectingReturn ? 'Voos de volta' : `${getCurrentFlights.length} voos encontrados`}
+                      </h2>
+                      <p className="text-sm md:text-base text-gray-600">
+                        {isSelectingReturn
+                          ? `${searchParams.destino} → ${searchParams.origem} • ${searchParams.volta || searchParams.ida}`
+                          : `${searchParams.origem} → ${searchParams.destino} • ${searchParams.ida}`}
+                        {searchParams.volta && !isSelectingReturn && ` • Volta: ${searchParams.volta}`}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      {(selectedFlights.outbound && !searchParams.soIda) && (
+                        <button
+                          onClick={resetSelection}
+                          className="px-4 md:px-6 py-2 md:py-3 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm md:text-base"
+                        >
+                          Recomeçar seleção
+                        </button>
+                      )}
+                      <button
+                        onClick={onNewSearch}
+                        className="px-4 md:px-6 py-2 md:py-3 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm md:text-base"
+                      >
+                        Nova Busca Completa
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ✅ CARD COMPACTO DO VOO DE IDA SELECIONADO */}
+                  {isSelectingReturn && !showFinalSelection && selectedFlights.outbound && (
+                    <div className="mb-6">
+                      <CompactFlightCard
+                        flight={selectedFlights.outbound}
+                        onChangeClick={resetSelection}
+                        fromLabel={getIata(searchParams.origem)}
+                        toLabel={getIata(searchParams.destino)}
+                      />
+
+                      {/* Título da seção de voos de volta */}
+                      <h2 className="text-2xl font-bold text-[#060D1C] mt-6 mb-4">
+                        Escolha um voo de volta
+                      </h2>
+                    </div>
+                  )}
+
+                  {/* Layout de duas colunas: Dinheiro e Milhas (quando ainda selecionando) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                  {/* Coluna Dinheiro */}
+                  <div className="bg-white rounded-lg shadow-lg p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-[#060D1C] flex items-center">
+                        Dinheiro
+                      </h3>
                     <span className="text-sm text-gray-600">
                       {getCurrentFlights.filter((f: any) => !f.isMiles).length} voos
                     </span>
@@ -1322,6 +1326,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                   )}
                 </div>
               </div>
+              </>
               )}
             </>
           )}

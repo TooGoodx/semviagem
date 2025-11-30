@@ -46,7 +46,12 @@
       "Bash(git config:*)",
       "Bash(git reset:*)",
       "Bash(git commit:*)",
-      "Bash(git filter-branch:*)"
+      "Bash(git filter-branch:*)",
+      "Bash(find:*)",
+      "Bash(git rm:*)",
+      "Bash(python3:*)",
+      "Bash(source:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []
