@@ -1819,211 +1819,68 @@ const Home: React.FC = () => {
           </div>
 
           {/* Three Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
 
-            {/* Box 1 - Busca Ilimitada */}
-            <div className="pricing-box bg-white flex flex-col relative overflow-hidden transition-all duration-200 hover:shadow-xl"
-                 style={{
-                   borderRadius: '16px',
-                   boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
-                   padding: '36px 36px',
-                   minHeight: '500px'
-                 }}>
-
-              {/* Icon */}
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{backgroundColor: 'var(--yellow)'}}>
-                  <svg className="w-10 h-10" fill="var(--navy)" viewBox="0 0 24 24">
-                    <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                  </svg>
-                </div>
-              </div>
-
-              {/* Title */}
-              <h3 className="pricing-title text-lg font-bold mb-2 text-center" style={{color: 'var(--navy)', lineHeight: '22px'}}>
-                Busca Ilimitada
-              </h3>
-
-              {/* Price */}
-              <p className="pricing-title text-base font-bold mb-3 text-center" style={{color: 'var(--navy)', lineHeight: '20px'}}>
-                R$ 9,90<span className="font-normal text-sm">/mês</span>
-              </p>
-
-              {/* Description */}
-              <p className="pricing-body text-sm mb-6 text-center" style={{color: 'rgba(11,19,43,0.85)', lineHeight: '18px'}}>
-                Encontre passagens baratas com milhas para onde e quando quiser.
-              </p>
-
-              {/* Bullets */}
-              <ul className="space-y-3 mb-8 flex-grow">
-                <li className="pricing-body flex items-start text-sm" style={{color: 'rgba(11,19,43,0.75)', lineHeight: '18px'}}>
-                  <span className="mr-2">•</span>
-                  <span>Busca ilimitada de voos com milhas e dinheiro</span>
-                </li>
-                <li className="pricing-body flex items-start text-sm" style={{color: 'rgba(11,19,43,0.75)', lineHeight: '18px'}}>
-                  <span className="mr-2">•</span>
-                  <span>Comparação automática de tarifas reais</span>
-                </li>
+            {/* CARD 1 - BUSCA ILIMITADA */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow relative">
+              <img src="/busca_voos.png" alt="Busca Ilimitada" className="w-24 h-24 mx-auto mb-6" />
+              <h3 className="text-2xl font-bold text-center mb-2" style={{color: '#060D1C'}}>Busca Ilimitada</h3>
+              <p className="text-xl text-center font-semibold mb-1" style={{color: '#060D1C'}}>R$ 9,90/mês</p>
+              <p className="text-sm text-gray-500 text-center mb-4">ou R$ 99/ano — economize 17%</p>
+              <p className="text-gray-600 text-center mb-6">Encontre passagens baratas com milhas para onde e quando quiser.</p>
+              <ul className="space-y-2 mb-6 text-sm text-gray-700">
+                <li>• Busca ilimitada de voos com milhas e dinheiro</li>
+                <li>• Comparação automática de tarifas reais</li>
               </ul>
-
-              {/* CTA */}
               <button
                 onClick={() => window.open('https://buy.stripe.com/00w8wR9gpgBRfjpcsFdMI04', '_blank')}
-                className="w-full py-3 px-4 rounded-lg font-semibold text-sm text-white transition-all duration-200"
-                style={{
-                  backgroundColor: 'var(--blue)',
-                  lineHeight: '18px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,119,182,0.25)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+                className="w-full bg-[#0033AA] text-white py-3 rounded-lg font-semibold shadow-md hover:bg-[#0055FF] transition-colors"
               >
                 Quero Buscar Passagens
               </button>
             </div>
 
-            {/* Box 2 - Alertas Inteligentes (MAIS POPULAR) */}
-            <div className="pricing-box flex flex-col relative overflow-hidden transition-all duration-200 hover:shadow-2xl"
-                 style={{
-                   backgroundColor: 'var(--yellow)',
-                   borderRadius: '16px',
-                   boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
-                   padding: '36px 36px',
-                   minHeight: '500px'
-                 }}>
-
-              {/* Badge MAIS POPULAR */}
-              <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold text-white"
-                   style={{backgroundColor: 'var(--blue)'}}>
+            {/* CARD 2 - ALERTAS INTELIGENTES (MAIS POPULAR) */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow relative">
+              <span className="absolute top-4 right-4 bg-[#0033AA] text-white text-xs px-3 py-1 rounded-full font-semibold">
                 MAIS POPULAR
-              </div>
-
-              {/* Icon */}
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center bg-white">
-                  <svg className="w-10 h-10" fill="var(--navy)" viewBox="0 0 24 24">
-                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12zm-7-5h2v2h-2zm0-6h2v4h-2z"/>
-                  </svg>
-                </div>
-              </div>
-
-              {/* Title */}
-              <h3 className="pricing-title text-lg font-bold mb-2 text-center" style={{color: 'var(--navy)', lineHeight: '22px'}}>
-                Alertas Inteligentes
-              </h3>
-
-              {/* Price */}
-              <p className="pricing-title text-base font-bold mb-3 text-center" style={{color: 'var(--navy)', lineHeight: '20px'}}>
-                R$ 19,90<span className="font-normal text-sm">/mês</span>
-              </p>
-
-              {/* Description */}
-              <p className="pricing-body text-sm mb-6 text-center" style={{color: 'rgba(11,19,43,0.85)', lineHeight: '18px'}}>
-                Configure seus destinos e datas e receba alertas assim que os preços caírem no WhatsApp.
-              </p>
-
-              {/* Bullets */}
-              <ul className="space-y-3 mb-8 flex-grow">
-                <li className="pricing-body flex items-start text-sm" style={{color: 'rgba(11,19,43,0.75)', lineHeight: '18px'}}>
-                  <span className="mr-2">•</span>
-                  <span>Alertas automáticos de queda de preço via WhatsApp</span>
-                </li>
-                <li className="pricing-body flex items-start text-sm" style={{color: 'rgba(11,19,43,0.75)', lineHeight: '18px'}}>
-                  <span className="mr-2">•</span>
-                  <span>Notificações diretas e imediatas</span>
-                </li>
+              </span>
+              <img src="/alertas_inteligentes.png" alt="Alertas Inteligentes" className="w-24 h-24 mx-auto mb-6" />
+              <h3 className="text-2xl font-bold text-center mb-2" style={{color: '#060D1C'}}>Alertas Inteligentes</h3>
+              <p className="text-xl text-center font-semibold mb-1" style={{color: '#060D1C'}}>R$ 19,90/mês</p>
+              <p className="text-sm text-gray-500 text-center mb-4">ou R$ 199/ano</p>
+              <p className="text-gray-600 text-center mb-6">Receba alertas em tempo real assim que os preços caírem</p>
+              <ul className="space-y-2 mb-4 text-sm text-gray-700">
+                <li>• Alertas automáticos de queda de preço (WhatsApp, E-mail e Push)</li>
+                <li>• Notificações diretas e instantâneas</li>
+                <li>• Sugestões de emissão com milhas ou dinheiro</li>
+                <li>• Acesso a promoções e transferências bonificadas exclusivas</li>
               </ul>
-
-              {/* CTA */}
+              <p className="text-sm text-gray-500 italic text-center mb-6">+30.000 alertas enviados neste mês</p>
               <button
                 onClick={() => window.open('https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02', '_blank')}
-                className="w-full py-3 px-4 rounded-lg font-semibold text-sm text-white transition-all duration-200"
-                style={{
-                  backgroundColor: 'var(--navy)',
-                  lineHeight: '18px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,29,61,0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+                className="w-full bg-[#0033AA] text-white py-3 rounded-lg font-semibold shadow-md hover:bg-[#0055FF] transition-colors"
               >
                 Ativar meus Alertas
               </button>
             </div>
 
-            {/* Box 3 - AI Concierge */}
-            <div className="pricing-box flex flex-col relative overflow-hidden transition-all duration-200"
-                 style={{
-                   backgroundColor: 'var(--navy)',
-                   borderRadius: '16px',
-                   boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
-                   padding: '36px 36px',
-                   minHeight: '500px'
-                 }}>
-
-              {/* Icon */}
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{backgroundColor: 'var(--yellow)'}}>
-                  <svg className="w-10 h-10" fill="var(--navy)" viewBox="0 0 24 24">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                  </svg>
-                </div>
-              </div>
-
-              {/* Title */}
-              <h3 className="pricing-title text-lg font-bold mb-2 text-center text-white" style={{lineHeight: '22px'}}>
-                AI Concierge
-              </h3>
-
-              {/* Price */}
-              <p className="pricing-title text-base font-bold mb-3 text-center text-white" style={{lineHeight: '20px'}}>
-                Em breve
-              </p>
-
-              {/* Description */}
-              <p className="pricing-body text-sm mb-6 text-center" style={{color: 'rgba(255,255,255,0.85)', lineHeight: '18px'}}>
-                Um assistente inteligente que planeja toda sua viagem — das milhas à hospedagem.
-              </p>
-
-              {/* Bullets */}
-              <ul className="space-y-3 mb-8 flex-grow">
-                <li className="pricing-body flex items-start text-sm" style={{color: 'rgba(255,255,255,0.75)', lineHeight: '18px'}}>
-                  <span className="mr-2">•</span>
-                  <span>Planejamento automatizado com IA</span>
-                </li>
-                <li className="pricing-body flex items-start text-sm" style={{color: 'rgba(255,255,255,0.75)', lineHeight: '18px'}}>
-                  <span className="mr-2">•</span>
-                  <span>Sugestões inteligentes de rotas, voos e hospedagens</span>
-                </li>
-                <li className="pricing-body flex items-start text-sm" style={{color: 'rgba(255,255,255,0.75)', lineHeight: '18px'}}>
-                  <span className="mr-2">•</span>
-                  <span>Agente pessoal 24h</span>
-                </li>
+            {/* CARD 3 - AI CONCIERGE */}
+            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow relative">
+              <img src="/agent_concierge.png" alt="AI Concierge" className="w-24 h-24 mx-auto mb-6" />
+              <h3 className="text-2xl font-bold text-center mb-2" style={{color: '#060D1C'}}>AI Concierge — Em breve</h3>
+              <p className="text-gray-600 text-center mb-6">Um assistente inteligente que planeja toda sua viagem — das milhas à hospedagem</p>
+              <ul className="space-y-2 mb-4 text-sm text-gray-700">
+                <li>• Planejamento automatizado com IA</li>
+                <li>• Sugestões personalizadas de voos e hotéis</li>
+                <li>• Agente pessoal 24h para emissões e resgates VIP</li>
               </ul>
-
-              {/* CTA */}
+              <p className="text-sm text-gray-500 italic text-center mb-6">Sem compromisso — avise-me quando lançar.</p>
               <button
                 onClick={() => navigate('/register')}
-                className="w-full py-3 px-4 rounded-lg font-semibold text-sm text-white transition-all duration-200"
-                style={{
-                  backgroundColor: 'var(--red)',
-                  lineHeight: '18px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.04)';
-                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(229,57,70,0.25)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
+                className="w-full bg-[#0033AA] text-white py-3 rounded-lg font-semibold shadow-md hover:bg-[#0055FF] transition-colors"
               >
-                Entrar na lista VIP!
+                Entrar na lista VIP
               </button>
             </div>
 
