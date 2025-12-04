@@ -55,6 +55,9 @@ const BuscarVoos: React.FC = () => {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // ✅ NOVO: AbortController para cancelar busca de voos
+  const searchAbortControllerRef = useRef<AbortController | null>(null);
+
   const [showAirportSuggestions, setShowAirportSuggestions] = useState<{
     origin: boolean;
     destination: boolean;
@@ -143,19 +146,13 @@ const BuscarVoos: React.FC = () => {
     if (type === 'ida') {
       setSearchParams(prev => ({ ...prev, ida: formattedDate }));
 
-      if (!searchParams.soIda && !searchParams.volta) {
-        const suggestedReturn = new Date(date);
-        suggestedReturn.setDate(suggestedReturn.getDate() + 7);
-        const suggestedReturnFormatted = suggestedReturn.toISOString().split('T')[0];
-        setSearchParams(prev => ({ ...prev, volta: suggestedReturnFormatted }));
-      }
-
+      // Se nova data de ida é posterior à volta, LIMPAR a volta
       if (!searchParams.soIda && searchParams.volta && formattedDate > searchParams.volta) {
-        const newReturn = new Date(date);
-        newReturn.setDate(newReturn.getDate() + 7);
-        const newReturnFormatted = newReturn.toISOString().split('T')[0];
-        setSearchParams(prev => ({ ...prev, volta: newReturnFormatted }));
-        toast('Data de volta ajustada automaticamente para ser posterior à ida.', { icon: '⚠️', duration: 4000 });
+        setSearchParams(prev => ({ ...prev, volta: '' }));
+        toast('Data de ida atualizada. Por favor, selecione uma nova data de volta.', {
+          icon: 'ℹ️',
+          duration: 3000
+        });
       }
 
       if (!searchParams.soIda) {
@@ -460,6 +457,15 @@ const BuscarVoos: React.FC = () => {
       return;
     }
 
+    // ✅ NOVO: Cancelar busca anterior se existir
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+    }
+
+    // ✅ NOVO: Criar novo AbortController para esta busca
+    searchAbortControllerRef.current = new AbortController();
+    const signal = searchAbortControllerRef.current.signal;
+
     setIsLoading(true);
     setShowLoadingSidebar(true);
 
@@ -478,7 +484,7 @@ const BuscarVoos: React.FC = () => {
           companhia: -1,
           tipoPagamento: params.tipoPagamento,
           classe: params.classe
-        });
+        }, signal); // ✅ NOVO: Passa signal para permitir cancelamento
 
         const rawOut = Array.isArray(resultIda?.flights) ? resultIda.flights :
                        Array.isArray(resultIda) ? resultIda :
@@ -509,7 +515,7 @@ const BuscarVoos: React.FC = () => {
           companhia: -1,
           tipoPagamento: params.tipoPagamento,
           classe: params.classe
-        }),
+        }, signal), // ✅ NOVO: Passa signal para permitir cancelamento
         moblixApiService.consultarVoos({
           origem: destinoIata,
           destino: origemIata,
@@ -520,7 +526,7 @@ const BuscarVoos: React.FC = () => {
           companhia: -1,
           tipoPagamento: params.tipoPagamento,
           classe: params.classe
-        })
+        }, signal) // ✅ NOVO: Passa signal para permitir cancelamento
       ]);
 
       const resultIda = outcomeIda.status === 'fulfilled' ? outcomeIda.value : null;
@@ -556,6 +562,13 @@ const BuscarVoos: React.FC = () => {
         toast.success('Resultados atualizados!');
       }
     } catch (error: any) {
+      // ✅ NOVO: Tratar cancelamento silenciosamente
+      if (error.name === 'AbortError' || error.code === 'ERR_CANCELED') {
+        console.log('🚫 Busca cancelada pelo usuário');
+        return; // Sair silenciosamente, sem toast
+      }
+
+      // Erro real - manter comportamento original
       console.error('❌ Erro na busca:', error);
       toast.error(`Erro ao buscar voos: ${error.message}`);
     } finally {
@@ -637,11 +650,11 @@ const BuscarVoos: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-white to-[#eef2f6] pb-16">
       {isLoading && <FlightLoadingOverlay />}
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="container mx-auto px-8 sm:px-12 lg:px-16 py-16">
+        <div className="max-w-7xl mx-auto">
           {/* Card de Busca */}
-          <Card className="bg-white shadow-xl border-0">
-            <CardContent className="p-6">
+          <Card className="bg-white shadow-2xl border-0 rounded-3xl">
+            <CardContent className="p-10 md:p-12">
               <form onSubmit={handleFormSubmit}>
                 {/* Header */}
                 <div className="mb-4">
@@ -683,10 +696,10 @@ const BuscarVoos: React.FC = () => {
                 </div>
 
                 {/* Primeira linha: Origem e Destino */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4" style={{textAlign: 'left'}}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6" style={{textAlign: 'left'}}>
                   {/* Origin */}
                   <div className="space-y-2" style={{textAlign: 'left'}}>
-                    <label className="text-sm font-medium text-gray-700" style={{textAlign: 'left'}}>De</label>
+                    <label className="block text-base font-semibold text-gray-700 mb-3" style={{textAlign: 'left'}}>De</label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                       <Input
@@ -694,6 +707,14 @@ const BuscarVoos: React.FC = () => {
                         key={`origin-${forceUpdateCounter}`}
                         placeholder="Insira uma origem"
                         value={searchParams.origem}
+                        onClick={() => {
+                          // ✅ NOVO: Cancelar busca ao clicar no campo
+                          if (searchAbortControllerRef.current) {
+                            searchAbortControllerRef.current.abort();
+                            setIsLoading(false);
+                            setShowLoadingSidebar(false);
+                          }
+                        }}
                         onChange={(e) => {
                           const currentValue = e.target.value;
                           setSearchParams(prev => ({ ...prev, origem: currentValue }));
@@ -704,7 +725,7 @@ const BuscarVoos: React.FC = () => {
 
                           setTimeout(() => searchAirportsWithValue('origin', currentValue), 100);
                         }}
-                        className="pl-10 h-12 text-base border-gray-300 rounded-lg transition-all duration-200"
+                        className="pl-12 pr-6 py-4 h-14 text-base border-gray-300 rounded-lg transition-all duration-200"
                         style={{
                           borderColor: '#d1d5db'
                         }}
@@ -746,7 +767,7 @@ const BuscarVoos: React.FC = () => {
 
                   {/* Destination */}
                   <div className="space-y-2" style={{textAlign: 'left'}}>
-                    <label className="text-sm font-medium text-gray-700" style={{textAlign: 'left'}}>Para</label>
+                    <label className="block text-base font-semibold text-gray-700 mb-3" style={{textAlign: 'left'}}>Para</label>
                     <div className="relative">
                       <Plane className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                       <Input
@@ -754,6 +775,14 @@ const BuscarVoos: React.FC = () => {
                         key={`destination-${forceUpdateCounter}`}
                         placeholder="Insira um destino"
                         value={searchParams.destino}
+                        onClick={() => {
+                          // ✅ NOVO: Cancelar busca ao clicar no campo
+                          if (searchAbortControllerRef.current) {
+                            searchAbortControllerRef.current.abort();
+                            setIsLoading(false);
+                            setShowLoadingSidebar(false);
+                          }
+                        }}
                         onChange={(e) => {
                           const currentValue = e.target.value;
                           setSearchParams(prev => ({ ...prev, destino: currentValue }));
@@ -764,7 +793,7 @@ const BuscarVoos: React.FC = () => {
 
                           setTimeout(() => searchAirportsWithValue('destination', currentValue), 100);
                         }}
-                        className="pl-10 h-12 text-base border-gray-300 rounded-lg transition-all duration-200"
+                        className="pl-12 pr-6 py-4 h-14 text-base border-gray-300 rounded-lg transition-all duration-200"
                         style={{
                           borderColor: '#d1d5db'
                         }}
@@ -809,19 +838,27 @@ const BuscarVoos: React.FC = () => {
                 {showFullForm && (
                   <>
                     {/* Segunda linha: Datas e Passageiros */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-0 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                       {/* Ida */}
                       <div className="md:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2" style={{textAlign: 'left'}}>Ida</label>
+                        <label className="block text-base font-semibold text-gray-700 mb-3" style={{textAlign: 'left'}}>Ida</label>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                           <div
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+
+                              // ✅ NOVO: Cancelar busca ao clicar no campo
+                              if (searchAbortControllerRef.current) {
+                                searchAbortControllerRef.current.abort();
+                                setIsLoading(false);
+                                setShowLoadingSidebar(false);
+                              }
+
                               setCalendarConfig({type: 'ida', show: true, title: 'Selecionar data de ida'});
                             }}
-                            className="relative w-full px-4 py-3 pl-10 h-12 text-base bg-white border border-gray-300 rounded-l-lg rounded-r-none border-r-0 cursor-pointer hover:border-blue-400 transition-colors flex items-center"
+                            className="relative w-full px-6 py-4 pl-12 h-14 text-base bg-white border border-gray-300 rounded-l-lg rounded-r-none border-r-0 cursor-pointer hover:border-blue-400 transition-colors flex items-center"
                           >
                             <span className="text-gray-900 text-sm">
                               {searchParams.ida ? formatDisplayDate(searchParams.ida) : 'dd/mm/aaaa'}
@@ -832,18 +869,26 @@ const BuscarVoos: React.FC = () => {
 
                       {/* Volta */}
                       <div className="md:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2" style={{textAlign: 'left'}}>Volta</label>
+                        <label className="block text-base font-semibold text-gray-700 mb-3" style={{textAlign: 'left'}}>Volta</label>
                         <div className="relative">
                           <Calendar className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                           <div
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+
+                              // ✅ NOVO: Cancelar busca ao clicar no campo
+                              if (searchAbortControllerRef.current) {
+                                searchAbortControllerRef.current.abort();
+                                setIsLoading(false);
+                                setShowLoadingSidebar(false);
+                              }
+
                               if (!searchParams.soIda) {
                                 setCalendarConfig({type: 'volta', show: true, title: 'Selecionar data de volta'});
                               }
                             }}
-                            className={`relative w-full px-4 py-3 pl-10 h-12 text-base border border-gray-300 rounded-none border-r-0 transition-colors flex items-center ${
+                            className={`relative w-full px-6 py-4 pl-12 h-14 text-base border border-gray-300 rounded-none border-r-0 transition-colors flex items-center ${
                               searchParams.soIda
                                 ? 'bg-gray-100 cursor-not-allowed'
                                 : 'bg-white cursor-pointer hover:border-blue-400'
@@ -861,13 +906,21 @@ const BuscarVoos: React.FC = () => {
 
                       {/* Passageiros */}
                       <div className="md:col-span-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-2" style={{textAlign: 'left'}}>Passageiros</label>
+                        <label className="block text-base font-semibold text-gray-700 mb-3" style={{textAlign: 'left'}}>Passageiros</label>
                         <div className="relative">
                           <Users className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                           <select
                             value={searchParams.adultos}
+                            onClick={() => {
+                              // ✅ NOVO: Cancelar busca ao clicar no campo
+                              if (searchAbortControllerRef.current) {
+                                searchAbortControllerRef.current.abort();
+                                setIsLoading(false);
+                                setShowLoadingSidebar(false);
+                              }
+                            }}
                             onChange={(e) => setSearchParams(prev => ({ ...prev, adultos: Number(e.target.value) }))}
-                            className="w-full pl-10 pr-4 h-12 text-base border border-gray-300 rounded-r-lg rounded-l-none focus:border-blue-500 focus:ring-blue-500 bg-white appearance-none"
+                            className="w-full pl-12 pr-6 py-4 h-14 text-base border border-gray-300 rounded-r-lg rounded-l-none focus:border-blue-500 focus:ring-blue-500 bg-white appearance-none"
                           >
                             <option value={1}>1 adulto</option>
                             <option value={2}>2 adultos</option>
@@ -880,15 +933,23 @@ const BuscarVoos: React.FC = () => {
                     </div>
 
                     {/* Terceira linha: Tipo de Voos */}
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-6 mb-6">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700" style={{textAlign: 'left'}}>Tipo de Voos</label>
+                        <label className="block text-base font-semibold text-gray-700 mb-3" style={{textAlign: 'left'}}>Tipo de Voos</label>
                         <div className="relative">
                           <Sparkles className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                           <select
                             value={searchParams.classe}
+                            onClick={() => {
+                              // ✅ NOVO: Cancelar busca ao clicar no campo
+                              if (searchAbortControllerRef.current) {
+                                searchAbortControllerRef.current.abort();
+                                setIsLoading(false);
+                                setShowLoadingSidebar(false);
+                              }
+                            }}
                             onChange={(e) => setSearchParams(prev => ({ ...prev, classe: e.target.value as 'economica' | 'executiva' | 'primeira' }))}
-                            className="w-full pl-10 pr-4 h-12 text-base border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-blue-500 bg-white appearance-none"
+                            className="w-full pl-12 pr-6 py-4 h-14 text-base border border-gray-300 rounded-xl focus:border-blue-500 focus:ring-blue-500 bg-white appearance-none"
                           >
                             <option value="economica">Economica</option>
                             <option value="executiva">Executiva</option>
@@ -904,6 +965,14 @@ const BuscarVoos: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={searchParams.tipoPagamento === 'ambos'}
+                          onClick={() => {
+                            // ✅ NOVO: Cancelar busca ao clicar no campo
+                            if (searchAbortControllerRef.current) {
+                              searchAbortControllerRef.current.abort();
+                              setIsLoading(false);
+                              setShowLoadingSidebar(false);
+                            }
+                          }}
                           onChange={(e) => {
                             if (e.target.checked) {
                               setSearchParams(prev => ({ ...prev, tipoPagamento: 'ambos' }));
@@ -921,7 +990,7 @@ const BuscarVoos: React.FC = () => {
                       type="submit"
                       size="lg"
                       disabled={isLoading}
-                      className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-red-300 disabled:to-red-400 text-white font-bold py-4 text-lg rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
+                      className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-red-300 disabled:to-red-400 text-white font-semibold px-10 py-5 h-auto text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
                     >
                       {isLoading ? (
                         <>
@@ -995,6 +1064,7 @@ const BuscarVoos: React.FC = () => {
             <CustomCalendar
               title={calendarConfig.title}
               selectedDate={calendarConfig.type === 'ida' ? searchParams.ida : searchParams.volta}
+              selectedDates={[searchParams.ida, searchParams.volta].filter(Boolean)} // ✅ NOVO: Passa ambas as datas
               onDateSelect={(date) => handleCalendarDateSelect(date, calendarConfig.type)}
               onClose={handleCalendarClose}
             />

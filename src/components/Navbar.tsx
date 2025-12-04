@@ -28,7 +28,7 @@ const Navbar: React.FC = () => {
   const menuLinks = [
     { label: 'Dashboard', path: '/dashboard' },
     { label: 'Buscar voos', path: '/buscarvoos' },
-    { label: 'Perfil', path: '/profile' },
+    { label: 'Perfil & Alertas', path: '/profile' },
   ];
 
   const userInitials = React.useMemo(() => {

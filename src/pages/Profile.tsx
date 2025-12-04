@@ -12,6 +12,7 @@ import { useAuth } from "../context/AuthContext"
 import { airportsByCountry } from "../data/airports"
 import CustomCalendar from "../components/CustomCalendar"
 import AlertConfigSection from "../components/alerts/AlertConfigSection"
+import { designSystem, componentClasses } from "../styles/designSystem"
 
 const formatCountryLabel = (country: string) =>
   country
@@ -233,11 +234,11 @@ const Profile: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-white to-[#eef2f6] pb-16">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-[#060D1C]">Meu perfil</h1>
-          <p className="text-sm text-[#060D1C]/60">Mantenha seus dados sempre atualizados para receber alertas personalizados.</p>
+          <h1 className="text-3xl font-bold" style={{ color: designSystem.colors.textPrimary }}>Meu perfil</h1>
+          <p className="text-sm" style={{ color: designSystem.colors.textMuted }}>Mantenha seus dados sempre atualizados para receber alertas personalizados.</p>
         </div>
 
-        <Card className="shadow-[0_30px_70px_rgba(6,13,28,0.12)] border-gray-100">
+        <Card className="shadow-2xl border-gray-100">
           <CardHeader className="flex flex-col gap-6 md:flex-row md:items-center">
             <label className="relative w-32 h-32 rounded-3xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 shadow-lg cursor-pointer group">
               <Avatar className="w-full h-full rounded-3xl">
@@ -246,7 +247,7 @@ const Profile: React.FC = () => {
                   alt={user?.name || "Avatar"}
                   className="object-cover"
                 />
-                <AvatarFallback className="bg-[#F0C72F] text-[#060D1C] text-3xl font-bold rounded-3xl">
+                <AvatarFallback className="text-3xl font-bold rounded-3xl" style={{ backgroundColor: designSystem.colors.accent, color: designSystem.colors.textPrimary }}>
                   {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
                 </AvatarFallback>
               </Avatar>
@@ -259,12 +260,12 @@ const Profile: React.FC = () => {
             </label>
             <div className="flex-1 space-y-4">
               <div>
-                <p className="text-sm text-[#060D1C]/60">Logado como</p>
-                <p className="text-lg font-semibold text-[#060D1C]">{user?.email || "Conta autenticada"}</p>
+                <p className="text-sm" style={{ color: designSystem.colors.textMuted }}>Logado como</p>
+                <p className="text-lg font-semibold" style={{ color: designSystem.colors.textPrimary }}>{user?.email || "Conta autenticada"}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="profile-name" className="text-sm text-[#060D1C] font-medium">
+                  <Label htmlFor="profile-name" className="text-sm font-medium" style={{ color: designSystem.colors.textPrimary }}>
                     Nome completo
                   </Label>
                   <Input
@@ -274,10 +275,11 @@ const Profile: React.FC = () => {
                       setFormState((prev) => ({ ...prev, name: event.target.value }))
                       scheduleAutoSave()
                     }}
+                    className={componentClasses.input.base}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="profile-email" className="text-sm text-[#060D1C] font-medium">
+                  <Label htmlFor="profile-email" className="text-sm font-medium" style={{ color: designSystem.colors.textPrimary }}>
                     E-mail
                   </Label>
                   <Input
@@ -288,10 +290,11 @@ const Profile: React.FC = () => {
                       setFormState((prev) => ({ ...prev, email: event.target.value }))
                       scheduleAutoSave()
                     }}
+                    className={componentClasses.input.base}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="profile-phone" className="text-sm text-[#060D1C] font-medium">
+                  <Label htmlFor="profile-phone" className="text-sm font-medium" style={{ color: designSystem.colors.textPrimary }}>
                     WhatsApp
                   </Label>
                   <Input
@@ -302,10 +305,11 @@ const Profile: React.FC = () => {
                       scheduleAutoSave()
                     }}
                     placeholder="(31) 99999-9999"
+                    className={componentClasses.input.base}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="profile-instagram" className="text-sm text-[#060D1C] font-medium">
+                  <Label htmlFor="profile-instagram" className="text-sm font-medium" style={{ color: designSystem.colors.textPrimary }}>
                     Instagram
                   </Label>
                   <Input
@@ -316,6 +320,7 @@ const Profile: React.FC = () => {
                       scheduleAutoSave()
                     }}
                     placeholder="@seudestino"
+                    className={componentClasses.input.base}
                   />
                 </div>
               </div>
@@ -331,13 +336,13 @@ const Profile: React.FC = () => {
           <div className="flex items-center justify-end gap-2 text-sm">
             {isSaving ? (
               <>
-                <div className="h-4 w-4 border-2 border-[#F0C72F] border-t-transparent rounded-full animate-spin" />
-                <span className="text-[#060D1C]/60">Salvando...</span>
+                <div className="h-4 w-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: designSystem.colors.accent, borderTopColor: 'transparent' }} />
+                <span style={{ color: designSystem.colors.textMuted }}>Salvando...</span>
               </>
             ) : lastSaved ? (
               <>
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <span className="text-[#060D1C]/60">
+                <CheckCircle2 className="h-4 w-4" style={{ color: designSystem.colors.success }} />
+                <span style={{ color: designSystem.colors.textMuted }}>
                   Salvo automaticamente
                 </span>
               </>

@@ -20,6 +20,7 @@ interface RequestConfig {
   params?: any;
   headers?: any;
   timeout?: number;
+  signal?: AbortSignal; // ✅ NOVO: Para cancelamento de requisições
 }
 
 // Funções auxiliares
@@ -64,6 +65,7 @@ const moblixApiService = {
         ...config,
         url: `${API_BASE_URL}${config.endpoint}`,
         timeout: config.timeout || 30000, // 30 segundos timeout padrão
+        signal: config.signal, // ✅ NOVO: Passa signal para axios
         headers: {
           'Accept': 'application/json',
           'Origin': 'externo',
@@ -211,7 +213,7 @@ const moblixApiService = {
    * @param {any} params Parâmetros da consulta
    * @returns {Promise<any>} Dados dos voos encontrados
    */
-  async consultarVoos(params: any): Promise<any> {
+  async consultarVoos(params: any, signal?: AbortSignal): Promise<any> {
     // Validações básicas
     if (!params.origem || !params.destino || !params.ida) {
       throw new Error('Origem, destino e data de ida são obrigatórios');
@@ -327,6 +329,7 @@ const moblixApiService = {
         method: 'post',
         endpoint: '/api/ConsultaAereo/Consultar',
         data: requestData,
+        signal, // ✅ NOVO: Passa signal para permitir cancelamento
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -360,6 +363,7 @@ const moblixApiService = {
               method: 'post',
               endpoint: '/api/ConsultaAereo/Consultar',
               data: altParams,
+              signal, // ✅ NOVO: Passa signal para permitir cancelamento
               headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'

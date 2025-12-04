@@ -180,22 +180,14 @@ const Flights: React.FC = () => {
     
     if (type === 'ida') {
       setSearchParams(prev => ({ ...prev, ida: formattedDate }));
-      
-      // Se não está em modo "somente ida" e não tem data de volta, sugere data de volta
-      if (!searchParams.soIda && !searchParams.volta) {
-        const suggestedReturn = new Date(date);
-        suggestedReturn.setDate(suggestedReturn.getDate() + 7); // Sugere 7 dias depois
-        const suggestedReturnFormatted = suggestedReturn.toISOString().split('T')[0];
-        setSearchParams(prev => ({ ...prev, volta: suggestedReturnFormatted }));
-      }
-      
-      // Se já tem data de volta e a nova data de ida é posterior, ajustar volta
+
+      // Se nova data de ida é posterior à volta, LIMPAR a volta
       if (!searchParams.soIda && searchParams.volta && formattedDate > searchParams.volta) {
-        const newReturn = new Date(date);
-        newReturn.setDate(newReturn.getDate() + 7); // Sugere 7 dias depois da nova ida
-        const newReturnFormatted = newReturn.toISOString().split('T')[0];
-        setSearchParams(prev => ({ ...prev, volta: newReturnFormatted }));
-        toast('Data de volta ajustada automaticamente para ser posterior à ida.', { icon: '⚠️', duration: 4000 });
+        setSearchParams(prev => ({ ...prev, volta: '' }));
+        toast('Data de ida atualizada. Por favor, selecione uma nova data de volta.', {
+          icon: 'ℹ️',
+          duration: 3000
+        });
       }
     } else {
       // Validar se data de volta não é anterior à ida
@@ -1815,6 +1807,8 @@ const Flights: React.FC = () => {
             title={calendarConfig.title}
             onDateSelect={(date) => handleCalendarDateSelect(date, calendarConfig.type)}
             onClose={handleCalendarClose}
+            selectedDate={calendarConfig.type === 'ida' ? searchParams.ida : searchParams.volta}
+            selectedDates={[searchParams.ida, searchParams.volta].filter(Boolean)} // ✅ NOVO: Passa ambas as datas
             minDate={calendarConfig.type === 'volta' && searchParams.ida ? new Date(searchParams.ida) : new Date()}
           />
         )}

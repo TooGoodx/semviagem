@@ -51,7 +51,11 @@
       "Bash(git rm:*)",
       "Bash(python3:*)",
       "Bash(source:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git checkout:*)",
+      "Bash(\" /Users/bruno/Downloads/buscadorReact-main/src --include=\"*.ts\" --include=\"*.tsx\" | wc -l)\")"
     ],
     "deny": [],
     "ask": []

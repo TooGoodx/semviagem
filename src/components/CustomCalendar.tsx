@@ -10,6 +10,7 @@ interface CustomCalendarProps {
   selectedDate?: string;
   minDate?: Date;
   title?: string;
+  selectedDates?: string[]; // ✅ NOVO: Array de datas selecionadas
 }
 
 const CustomCalendar: React.FC<CustomCalendarProps> = ({
@@ -17,7 +18,8 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
   onClose,
   selectedDate,
   minDate,
-  title = "Selecionar data"
+  title = "Selecionar data",
+  selectedDates = [] // ✅ NOVO: Default vazio
 }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
@@ -88,8 +90,15 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
   };
 
   const isDateSelected = (year: number, month: number, day: number) => {
-    if (!selectedDate) return false;
     const dateStr = formatDate(year, month, day);
+
+    // ✅ NOVO: Verifica se está no array de datas selecionadas
+    if (selectedDates.length > 0) {
+      return selectedDates.includes(dateStr);
+    }
+
+    // Fallback: comportamento original
+    if (!selectedDate) return false;
     return dateStr === selectedDate;
   };
 
@@ -240,7 +249,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({
           {/* Two months side by side (desktop) or one month (mobile) */}
           <div className="flex flex-col md:flex-row p-6 gap-4 md:gap-8">
             {renderMonth(0)}
-            <div className="hidden md:block">
+            <div className="hidden md:flex flex-1">
               {renderMonth(1)}
             </div>
           </div>

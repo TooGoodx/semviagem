@@ -1,25 +1,54 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useAuth } from '../../context/AuthContext'
 import { Lock, Sparkles, CheckCircle2 } from 'lucide-react'
 import PlanUpgradeOverlay from './PlanUpgradeOverlay'
 import AirportMultiSelect from './AirportMultiSelect'
+import { designSystem, componentClasses } from '../../styles/designSystem'
+import toast from 'react-hot-toast'
+
+/**
+ * ALERTCONFIGSECTION - Sistema de Alertas Inteligentes
+ *
+ * FUNCIONALIDADES ATUAIS:
+ * - Configuração de 1 alerta por vez
+ * - Até 5 origens e 5 destinos
+ * - Ranges de datas (Ida/Volta)
+ * - 2 tipos: Milhas e Preço (20%)
+ * - Auto-save para draft (1s debounce)
+ * - Salvamento manual com validações
+ *
+ * ROADMAP (FASE 2):
+ * - Permitir até 2 alertas salvos por usuário
+ * - Exibir cards com resumo dos alertas ativos
+ * - Botões "Editar" e "Excluir" em cada card
+ * - Desabilitar formulário quando atingir 2 alertas
+ * - Adicionar contador "1/2 alertas criados"
+ *
+ * ESTRUTURA DO BANCO (SUPABASE):
+ * Table: user_alerts
+ * Campos: id, user_id, origens[], destinos[], ida{}, volta{}, alertTypes{}, is_active, created_at
+ */
 
 interface AlertConfig {
-  origens: string[]  // Até 3 códigos IATA
-  destinos: string[] // Até 5 códigos IATA
-  dateRanges: DateRange[] // Até 2 ranges
-  alertTypes: {
-    milhas: boolean
-    preco: boolean
+  origens: string[]      // Até 5 aeroportos
+  destinos: string[]     // Até 5 aeroportos
+  ida: {
+    inicio: string       // ISO date
+    fim: string          // ISO date
   }
-}
-
-interface DateRange {
-  inicio: string  // ISO date
-  fim: string     // ISO date
+  volta: {
+    inicio: string       // ISO date
+    fim: string          // ISO date
+  }
+  alertTypes: {
+    milhas: boolean      // Alertar quando houver milhas
+    preco: boolean       // Alertar quando preço cair 20%
+  }
 }
 
 const AlertConfigSection: React.FC = () => {
@@ -29,16 +58,24 @@ const AlertConfigSection: React.FC = () => {
   const [config, setConfig] = useState<AlertConfig>({
     origens: [],
     destinos: [],
-    dateRanges: [],
+    ida: {
+      inicio: '',
+      fim: '',
+    },
+    volta: {
+      inicio: '',
+      fim: '',
+    },
     alertTypes: {
-      milhas: true,
-      preco: true,
+      milhas: false,
+      preco: false,
     },
   })
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [isSavingAlert, setIsSavingAlert] = useState(false)
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Auto-save function
@@ -92,6 +129,70 @@ const AlertConfigSection: React.FC = () => {
     }, 1000)
   }, [saveConfig])
 
+  // Manual save with validations
+  const handleSaveAlert = async () => {
+    // Validações
+    if (config.origens.length === 0) {
+      toast.error('Selecione pelo menos 1 origem')
+      return
+    }
+
+    if (config.destinos.length === 0) {
+      toast.error('Selecione pelo menos 1 destino')
+      return
+    }
+
+    if (!config.ida.inicio || !config.ida.fim) {
+      toast.error('Preencha as datas de IDA')
+      return
+    }
+
+    if (!config.volta.inicio || !config.volta.fim) {
+      toast.error('Preencha as datas de VOLTA')
+      return
+    }
+
+    if (!config.alertTypes.milhas && !config.alertTypes.preco) {
+      toast.error('Selecione pelo menos 1 tipo de alerta')
+      return
+    }
+
+    // Salvar alerta
+    setIsSavingAlert(true)
+    try {
+      const response = await fetch('/.netlify/functions/save-alert-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auth0_id: user?.sub,
+          config,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao salvar alerta')
+      }
+
+      const data = await response.json()
+
+      toast.success('Alerta salvo com sucesso!')
+
+      // Limpar formulário após salvar (preparar para próximo alerta)
+      setConfig({
+        origens: [],
+        destinos: [],
+        ida: { inicio: '', fim: '' },
+        volta: { inicio: '', fim: '' },
+        alertTypes: { milhas: false, preco: false },
+      })
+    } catch (error) {
+      console.error('Erro ao salvar alerta:', error)
+      toast.error('Não foi possível salvar o alerta. Tente novamente.')
+    } finally {
+      setIsSavingAlert(false)
+    }
+  }
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -113,7 +214,10 @@ const AlertConfigSection: React.FC = () => {
 
     if (plan === 'pro') {
       return (
-        <Badge className="bg-[#F0C72F] text-[#060D1C] text-xs font-semibold uppercase tracking-wider">
+        <Badge
+          className="text-xs font-semibold uppercase tracking-wider"
+          style={{ backgroundColor: designSystem.colors.accent, color: designSystem.colors.primary }}
+        >
           <Sparkles className="w-3 h-3 mr-1" />
           Alertas Ativos
         </Badge>
@@ -122,7 +226,11 @@ const AlertConfigSection: React.FC = () => {
 
     if (plan === 'basic') {
       return (
-        <Badge variant="outline" className="text-xs border-gray-300">
+        <Badge
+          variant="outline"
+          className="text-xs border-gray-300"
+          style={{ borderColor: designSystem.colors.outline, color: designSystem.colors.textSecondary }}
+        >
           <Lock className="w-3 h-3 mr-1" />
           Exclusivo para Alertas na Mão
         </Badge>
@@ -131,7 +239,11 @@ const AlertConfigSection: React.FC = () => {
 
     // plan === 'free'
     return (
-      <Badge variant="outline" className="text-xs border-gray-300">
+      <Badge
+        variant="outline"
+        className="text-xs border-gray-300"
+        style={{ borderColor: designSystem.colors.outline, color: designSystem.colors.textSecondary }}
+      >
         <Lock className="w-3 h-3 mr-1" />
         Disponível nos planos pagos
       </Badge>
@@ -140,14 +252,14 @@ const AlertConfigSection: React.FC = () => {
 
   return (
     <>
-      <Card className="shadow-[0_30px_70px_rgba(6,13,28,0.12)] border-gray-100 relative">
+      <Card className="shadow-2xl border-gray-100 relative">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <CardTitle className="text-xl font-bold text-[#060D1C]">
+              <CardTitle className="text-xl font-bold" style={{ color: designSystem.colors.textPrimary }}>
                 Configuração de Alertas
               </CardTitle>
-              <p className="text-sm text-[#060D1C]/70">
+              <p className="text-sm" style={{ color: designSystem.colors.textSecondary }}>
                 Defina suas rotas e datas favoritas para receber alertas inteligentes direto no WhatsApp.
               </p>
             </div>
@@ -172,14 +284,14 @@ const AlertConfigSection: React.FC = () => {
             <div className="space-y-6">
               {/* Seletor de Origens */}
               <AirportMultiSelect
-                label="Origens (até 3)"
+                label="Origens (até 5)"
                 value={config.origens}
                 onChange={(origens) => {
                   const newConfig = { ...config, origens }
                   setConfig(newConfig)
                   scheduleAutoSave(newConfig)
                 }}
-                maxSelections={3}
+                maxSelections={5}
                 placeholder="Digite o nome ou código do aeroporto de origem"
               />
 
@@ -196,13 +308,207 @@ const AlertConfigSection: React.FC = () => {
                 placeholder="Digite o nome ou código do destino"
               />
 
-              {/* Placeholder para futuros componentes */}
-              <div className="space-y-4 pt-2">
-                <div className="text-sm text-[#060D1C]/60">
-                  <strong>Períodos:</strong> Até 2 faixas de datas (em breve)
+              {/* Date Ranges - IDA */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium" style={{ color: designSystem.colors.textPrimary }}>
+                  Período de IDA
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs" style={{ color: designSystem.colors.textMuted }}>
+                      De:
+                    </label>
+                    <input
+                      type="date"
+                      value={config.ida.inicio}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...config,
+                          ida: { ...config.ida, inicio: e.target.value },
+                        }
+                        setConfig(newConfig)
+                        scheduleAutoSave(newConfig)
+                      }}
+                      className={componentClasses.input.base}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs" style={{ color: designSystem.colors.textMuted }}>
+                      Até:
+                    </label>
+                    <input
+                      type="date"
+                      value={config.ida.fim}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...config,
+                          ida: { ...config.ida, fim: e.target.value },
+                        }
+                        setConfig(newConfig)
+                        scheduleAutoSave(newConfig)
+                      }}
+                      className={componentClasses.input.base}
+                      min={config.ida.inicio || new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
                 </div>
-                <div className="text-sm text-[#060D1C]/60">
-                  <strong>Tipos:</strong> Alertas de Milhas e/ou Preço (em breve)
+              </div>
+
+              {/* Date Ranges - VOLTA */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium" style={{ color: designSystem.colors.textPrimary }}>
+                  Período de VOLTA
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs" style={{ color: designSystem.colors.textMuted }}>
+                      De:
+                    </label>
+                    <input
+                      type="date"
+                      value={config.volta.inicio}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...config,
+                          volta: { ...config.volta, inicio: e.target.value },
+                        }
+                        setConfig(newConfig)
+                        scheduleAutoSave(newConfig)
+                      }}
+                      className={componentClasses.input.base}
+                      min={config.ida.inicio || new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs" style={{ color: designSystem.colors.textMuted }}>
+                      Até:
+                    </label>
+                    <input
+                      type="date"
+                      value={config.volta.fim}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...config,
+                          volta: { ...config.volta, fim: e.target.value },
+                        }
+                        setConfig(newConfig)
+                        scheduleAutoSave(newConfig)
+                      }}
+                      className={componentClasses.input.base}
+                      min={config.volta.inicio || new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Alert Types */}
+              <div className="space-y-4">
+                <Label className="text-sm font-medium" style={{ color: designSystem.colors.textPrimary }}>
+                  Tipos de Alerta
+                </Label>
+
+                <div className="space-y-4">
+                  {/* Checkbox: Milhas */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={config.alertTypes.milhas}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...config,
+                          alertTypes: { ...config.alertTypes, milhas: e.target.checked },
+                        }
+                        setConfig(newConfig)
+                        scheduleAutoSave(newConfig)
+                      }}
+                      className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#0033AA] focus:ring-2 focus:ring-[#0033AA] transition-all"
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium group-hover:text-[#0033AA] transition-colors" style={{ color: designSystem.colors.textPrimary }}>
+                        Alertar quando houver passagens com milhas
+                      </span>
+                      <p className="text-xs mt-1" style={{ color: designSystem.colors.textMuted }}>
+                        Receba notificações quando surgirem opções para usar suas milhas
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Checkbox: Preço (20% fixo) */}
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      type="checkbox"
+                      checked={config.alertTypes.preco}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...config,
+                          alertTypes: { ...config.alertTypes, preco: e.target.checked },
+                        }
+                        setConfig(newConfig)
+                        scheduleAutoSave(newConfig)
+                      }}
+                      className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#0033AA] focus:ring-2 focus:ring-[#0033AA] transition-all"
+                    />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium group-hover:text-[#0033AA] transition-colors" style={{ color: designSystem.colors.textPrimary }}>
+                        Alertar quando o preço cair mais de 20%
+                      </span>
+                      <p className="text-xs mt-1" style={{ color: designSystem.colors.textMuted }}>
+                        Você será notificado quando o preço cair 20% ou mais em relação ao menor preço dos últimos 30 dias
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Botão Salvar Alerta */}
+              <div className="pt-6 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="text-sm" style={{ color: designSystem.colors.textMuted }}>
+                    <p className="font-medium mb-1">Salve sua configuração de alerta</p>
+                    <p className="text-xs">Você pode criar até 2 alertas simultâneos</p>
+                  </div>
+
+                  <button
+                    onClick={handleSaveAlert}
+                    disabled={isSavingAlert || !canConfigureAlerts}
+                    className={componentClasses.button.secondary}
+                    style={{
+                      minWidth: '160px',
+                      opacity: isSavingAlert || !canConfigureAlerts ? 0.6 : 1,
+                      cursor: isSavingAlert || !canConfigureAlerts ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {isSavingAlert ? (
+                      <>
+                        <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                        Salvando...
+                      </>
+                    ) : (
+                      'Salvar Alerta'
+                    )}
+                  </button>
+                </div>
+
+                {/* Info: 1.225 Possibilidades */}
+                <div
+                  className="mt-4 p-4 rounded-lg border"
+                  style={{
+                    backgroundColor: '#F0F9FF',
+                    borderColor: '#BAE6FD'
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">✈️</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold mb-1" style={{ color: designSystem.colors.textPrimary }}>
+                        Cada alerta monitora até 1.225 combinações de voos automaticamente!
+                      </p>
+                      <p className="text-xs" style={{ color: designSystem.colors.textMuted }}>
+                        Combinando 5 origens × 5 destinos × 49 datas (7 dias ida × 7 dias volta) = máxima chance de encontrar sua viagem ideal.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -211,13 +517,16 @@ const AlertConfigSection: React.FC = () => {
                 <div className="flex items-center justify-end gap-2 text-sm pt-4">
                   {isSaving ? (
                     <>
-                      <div className="h-4 w-4 border-2 border-[#F0C72F] border-t-transparent rounded-full animate-spin" />
-                      <span className="text-[#060D1C]/60">Salvando...</span>
+                      <div
+                        className="h-4 w-4 border-2 border-t-transparent rounded-full animate-spin"
+                        style={{ borderColor: designSystem.colors.accent }}
+                      />
+                      <span style={{ color: designSystem.colors.textMuted }}>Salvando...</span>
                     </>
                   ) : lastSaved ? (
                     <>
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <span className="text-[#060D1C]/60">
+                      <span style={{ color: designSystem.colors.textMuted }}>
                         Salvo automaticamente
                       </span>
                     </>
@@ -229,14 +538,17 @@ const AlertConfigSection: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Modal de upgrade (será implementado) */}
+      {/* Modal de upgrade */}
       {showUpgradeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-xl max-w-md">
-            <h3 className="text-lg font-bold text-[#060D1C] mb-2">
+          <div
+            className="bg-white p-6 max-w-md"
+            style={{ borderRadius: designSystem.radii.xl }}
+          >
+            <h3 className="text-lg font-bold mb-2" style={{ color: designSystem.colors.textPrimary }}>
               Upgrade Necessário
             </h3>
-            <p className="text-sm text-[#060D1C]/70 mb-4">
+            <p className="text-sm mb-4" style={{ color: designSystem.colors.textSecondary }}>
               {plan === 'free' && 'A Configuração de Alertas está disponível nos planos Milhas na Mão e Alertas na Mão.'}
               {plan === 'basic' && 'A Configuração de Alertas é exclusiva para assinantes do plano Alertas na Mão.'}
             </p>
@@ -253,7 +565,11 @@ const AlertConfigSection: React.FC = () => {
                   window.open('https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02', '_blank')
                   setShowUpgradeModal(false)
                 }}
-                className="flex-1 bg-[#F0C72F] text-[#060D1C] hover:bg-[#d8b329]"
+                className="flex-1"
+                style={{
+                  backgroundColor: designSystem.colors.accent,
+                  color: designSystem.colors.primary,
+                }}
               >
                 Ver Planos
               </Button>

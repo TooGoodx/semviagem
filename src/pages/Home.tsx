@@ -17,6 +17,8 @@ import CustomCalendar from '../components/CustomCalendar';
 import FlightLoadingOverlay from '../components/FlightLoadingOverlay';
 import SummarySection from '../components/SummarySection';
 import StripeButton from '../components/StripeButton';
+import ProductCard from '../components/ProductCard';
+import { designSystem, componentClasses } from '../styles/designSystem';
 
 // Interfaces
 interface Airport {
@@ -131,6 +133,36 @@ const Home: React.FC = () => {
   // Get today's date
   const today = new Date().toISOString().split('T')[0];
 
+  // ✅ Ajuste dinâmico do título para garantir 2 linhas
+  useEffect(() => {
+    function adjustHeroTitle() {
+      const el = document.querySelector('.hero-title');
+      if (!el) return;
+
+      // Calcula altura da linha
+      const style = window.getComputedStyle(el);
+      let fontSize = parseFloat(style.fontSize);
+      const lineHeight = parseFloat(style.lineHeight);
+
+      const getLines = () => Math.round(el.clientHeight / lineHeight);
+
+      // Reduz o font-size até encaixar em 2 linhas (mínimo 26px)
+      while (getLines() > 2 && fontSize > 26) {
+        fontSize -= 1;
+        (el as HTMLElement).style.fontSize = fontSize + 'px';
+      }
+    }
+
+    // Ajusta após fontes carregarem
+    document.fonts.ready.then(() => {
+      adjustHeroTitle();
+    });
+
+    // Ajusta ao redimensionar janela
+    window.addEventListener('resize', adjustHeroTitle);
+    return () => window.removeEventListener('resize', adjustHeroTitle);
+  }, []);
+
   // Auto-scroll to return flights after selecting outbound
   useEffect(() => {
     if (selectedFlights.outbound && returnFlightResults.length > 0) {
@@ -177,33 +209,22 @@ const Home: React.FC = () => {
   // Função para lidar com seleção de data do calendário
   const handleCalendarDateSelect = (date: Date, type: 'ida' | 'volta') => {
     const formattedDate = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-    
+
     if (type === 'ida') {
       setSearchParams(prev => ({ ...prev, ida: formattedDate }));
-      
-      // Se não está em modo "somente ida" e não tem data de volta, sugere data de volta
-      if (!searchParams.soIda && !searchParams.volta) {
-        const suggestedReturn = new Date(date);
-        suggestedReturn.setDate(suggestedReturn.getDate() + 7); // Sugere 7 dias depois
-        const suggestedReturnFormatted = suggestedReturn.toISOString().split('T')[0];
-        setSearchParams(prev => ({ ...prev, volta: suggestedReturnFormatted }));
-      }
-      
-      // Se já tem data de volta e a nova data de ida é posterior, ajustar volta
+
+      // Se já tem data de volta e a nova data de ida é posterior, limpar volta para o usuário escolher novamente
       if (!searchParams.soIda && searchParams.volta && formattedDate > searchParams.volta) {
-        const newReturn = new Date(date);
-        newReturn.setDate(newReturn.getDate() + 7); // Sugere 7 dias depois da nova ida
-        const newReturnFormatted = newReturn.toISOString().split('T')[0];
-        setSearchParams(prev => ({ ...prev, volta: newReturnFormatted }));
-        toast('Data de volta ajustada automaticamente para ser posterior à ida.', { icon: '⚠️', duration: 4000 });
+        setSearchParams(prev => ({ ...prev, volta: '' }));
+        toast('A data de volta foi limpa. Por favor, escolha uma nova data de volta.', { icon: '⚠️', duration: 4000 });
       }
-      
+
       // Se não é "somente ida", manter calendário aberto e mudar para seleção de volta
       if (!searchParams.soIda) {
-        setCalendarConfig(prev => ({ 
-          ...prev, 
-          type: 'volta', 
-          title: 'Selecionar data de volta' 
+        setCalendarConfig(prev => ({
+          ...prev,
+          type: 'volta',
+          title: 'Selecionar data de volta'
         }));
         return; // Não fecha o calendário
       }
@@ -215,7 +236,7 @@ const Home: React.FC = () => {
       }
       setSearchParams(prev => ({ ...prev, volta: formattedDate }));
     }
-    
+
     // Fecha o calendário apenas se for "somente ida" ou se selecionou a volta
     setCalendarConfig(prev => ({ ...prev, show: false }));
   };
@@ -1353,27 +1374,23 @@ const Home: React.FC = () => {
         <div className="absolute inset-0 z-10" style={{backgroundColor: 'rgba(6, 13, 28, 0.7)'}}></div>
 
         {/* Content */}
-        <div className="container mx-auto relative z-20 pb-12 pt-20">
-          <div className="flex justify-center items-center">
-            <div className="text-center max-w-4xl">
-              <h1 className="hero__title text-3xl md:text-4xl lg:text-5xl font-semibold mb-3" style={{lineHeight: '1.2', letterSpacing: '-0.02em'}}>
-                <span style={{color: '#F0C72F'}}>Tudo</span> o que você precisa para viver <span style={{color: '#4896C7'}}>mais o mundo</span><span style={{color: '#FFFFFF'}}>!</span>
-              </h1>
-              <p className="hero__subtitle text-base md:text-lg font-light mb-6" style={{lineHeight: '1.7', color: 'rgba(255,255,255,0.95)'}}>
-                Porque viajar é encontro — não labirinto de taxas. Busque, aprenda, receba alertas e transforme milhas em experiências.
-                <br /><br />
-                <strong className="font-bold">Viva o leve da vida, <span style={{color: '#F0C72F'}}>Sem</span> <span style={{color: '#4896C7'}}>Viagem</span>!</strong>
-              </p>
+        <div className="container mx-auto relative z-20 pb-16 pt-24 px-8 sm:px-12 lg:px-16">
+          <div className="max-w-[1350px] mx-auto text-center px-4">
+            <h1 className="hero-title mb-8" style={{color: '#FFFFFF'}}>
+              A forma mais <span style={{color: '#F0C730', fontWeight: 'bold'}}>inteligente</span> de viajar com <span style={{color: '#F0C730', fontWeight: 'bold'}}>milhas</span>. sem truques, sem taxas, <span style={{color: '#4896C7', fontWeight: 'bold'}}>Sem</span> <span style={{color: '#F0C730', fontWeight: 'bold'}}>Viagem</span>!
+            </h1>
+            <p className="hero__subtitle text-base md:text-lg font-light mb-6 max-w-4xl mx-auto" style={{lineHeight: '1.8', color: 'rgba(255,255,255,0.95)'}}>
+              <span className="font-semibold">Preço real, alertas avançados, estratégias personalizadas</span> e tudo o que você precisa para transformar milhas em experiências pelo mundo — <span className="italic font-bold" style={{color: '#F0C730', fontFamily: "'Playfair Display', serif"}}>quase de graça</span>.
+            </p>
+          </div>
 
-              {/* Search Form - Posicionado para ficar metade na hero e metade na próxima seção */}
-              <div id="flight-search-form" className="w-full max-w-4xl mt-4 relative" style={{transform: 'translateY(30%)'}}>
-                <Card className="bg-white shadow-xl border-0">
-                  <CardContent className="p-6">
+          {/* Search Form - Posicionado para ficar metade na hero e metade na próxima seção */}
+          <div id="flight-search-form" className="w-full max-w-7xl mx-auto mt-12 relative" style={{transform: 'translateY(30%)'}}>
+            <Card className="bg-white shadow-2xl border-0 rounded-3xl">
+              <CardContent className="p-12 md:p-16">
                     <form onSubmit={handleFormSubmit}>
                       {/* Header com tipo de viagem */}
-                      <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center" style={{fontSize: '17px'}}>Encontrar minha próxima experiência pelo mundo</h3>
-                        
+                      <div className="mb-6">
                         {/* Toggle Ida e Volta / Somente Ida */}
                         <div className="flex items-center space-x-4 mb-4">
                           <button
@@ -1402,7 +1419,7 @@ const Home: React.FC = () => {
                       </div>
 
                       {/* Primeira linha: Origem e Destino lado a lado */}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4" style={{textAlign: 'left'}}>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-4" style={{textAlign: 'left'}}>
                         {/* Origin */}
                         <div className="space-y-2" style={{textAlign: 'left'}}>
                           <label className="text-sm font-medium text-gray-700" style={{textAlign: 'left'}}>De</label>
@@ -1661,10 +1678,8 @@ const Home: React.FC = () => {
                       )}
 
                     </form>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -1715,16 +1730,16 @@ const Home: React.FC = () => {
             {selectedFlights.outbound && selectedFlights.return && (
               <div className="max-w-4xl mx-auto">
                 <div className="mb-6 text-center">
-                  <h3 className="text-xl font-bold text-[#060D1C] mb-4 text-center">
+                  <h3 className="text-xl font-bold mb-4 text-center" style={{ color: designSystem.colors.textPrimary }}>
                     Voos Selecionados
                   </h3>
-                  <p className="text-gray-600">Seus voos de ida e volta escolhidos</p>
+                  <p style={{ color: designSystem.colors.textSecondary }}>Seus voos de ida e volta escolhidos</p>
                 </div>
 
                 <div className="space-y-6">
                   <div className="bg-white rounded-lg shadow-lg">
-                    <div className="bg-[#F0C72F] px-4 py-2 rounded-t-lg">
-                      <h4 className="text-lg font-semibold text-[#060D1C] mb-3">
+                    <div className="px-4 py-2 rounded-t-lg" style={{ backgroundColor: designSystem.colors.accent }}>
+                      <h4 className="text-lg font-semibold mb-3" style={{ color: designSystem.colors.primary }}>
                         Voo de Ida
                       </h4>
                     </div>
@@ -1747,8 +1762,8 @@ const Home: React.FC = () => {
                   </div>
 
                   <div className="bg-white rounded-lg shadow-lg">
-                    <div className="bg-[#F0C72F] px-4 py-2 rounded-t-lg">
-                      <h4 className="text-lg font-semibold text-[#060D1C] mb-3">
+                    <div className="px-4 py-2 rounded-t-lg" style={{ backgroundColor: designSystem.colors.accent }}>
+                      <h4 className="text-lg font-semibold mb-3" style={{ color: designSystem.colors.primary }}>
                         Voo de Volta
                       </h4>
                     </div>
@@ -1822,67 +1837,55 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
 
             {/* CARD 1 - BUSCA ILIMITADA */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow relative">
-              <img src="/busca_voos.png" alt="Busca Ilimitada" className="w-24 h-24 mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-center mb-2" style={{color: '#060D1C'}}>Busca Ilimitada</h3>
-              <p className="text-xl text-center font-semibold mb-1" style={{color: '#060D1C'}}>R$ 9,90/mês</p>
-              <p className="text-sm text-gray-500 text-center mb-4">ou R$ 99/ano — economize 17%</p>
-              <p className="text-gray-600 text-center mb-6">Encontre passagens baratas com milhas para onde e quando quiser.</p>
-              <ul className="space-y-2 mb-6 text-sm text-gray-700">
-                <li>• Busca ilimitada de voos com milhas e dinheiro</li>
-                <li>• Comparação automática de tarifas reais</li>
-              </ul>
-              <button
-                onClick={() => window.open('https://buy.stripe.com/00w8wR9gpgBRfjpcsFdMI04', '_blank')}
-                className="w-full bg-[#0033AA] text-white py-3 rounded-lg font-semibold shadow-md hover:bg-[#0055FF] transition-colors"
-              >
-                Quero Buscar Passagens
-              </button>
-            </div>
+            <ProductCard
+              title="Busca Ilimitada"
+              price="R$ 9,90/mês"
+              priceLabel="a partir de"
+              bullets={[
+                'Busca ilimitada de voos com milhas e dinheiro',
+                'Comparação automática de tarifas reais',
+                'ou R$ 99/ano — economize 17%'
+              ]}
+              icon="/busca_voos.png"
+              iconAlt="Busca Ilimitada"
+              ctaText="Quero Buscar Passagens"
+              ctaHref="https://buy.stripe.com/00w8wR9gpgBRfjpcsFdMI04"
+            />
 
             {/* CARD 2 - ALERTAS INTELIGENTES (MAIS POPULAR) */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow relative">
-              <span className="absolute top-4 right-4 bg-[#0033AA] text-white text-xs px-3 py-1 rounded-full font-semibold">
-                MAIS POPULAR
-              </span>
-              <img src="/alertas_inteligentes.png" alt="Alertas Inteligentes" className="w-24 h-24 mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-center mb-2" style={{color: '#060D1C'}}>Alertas Inteligentes</h3>
-              <p className="text-xl text-center font-semibold mb-1" style={{color: '#060D1C'}}>R$ 19,90/mês</p>
-              <p className="text-sm text-gray-500 text-center mb-4">ou R$ 199/ano</p>
-              <p className="text-gray-600 text-center mb-6">Receba alertas em tempo real assim que os preços caírem</p>
-              <ul className="space-y-2 mb-4 text-sm text-gray-700">
-                <li>• Alertas automáticos de queda de preço (WhatsApp, E-mail e Push)</li>
-                <li>• Notificações diretas e instantâneas</li>
-                <li>• Sugestões de emissão com milhas ou dinheiro</li>
-                <li>• Acesso a promoções e transferências bonificadas exclusivas</li>
-              </ul>
-              <p className="text-sm text-gray-500 italic text-center mb-6">+30.000 alertas enviados neste mês</p>
-              <button
-                onClick={() => window.open('https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02', '_blank')}
-                className="w-full bg-[#0033AA] text-white py-3 rounded-lg font-semibold shadow-md hover:bg-[#0055FF] transition-colors"
-              >
-                Ativar meus Alertas
-              </button>
-            </div>
+            <ProductCard
+              title="Alertas Inteligentes"
+              price="R$ 19,90/mês"
+              priceLabel="a partir de"
+              bullets={[
+                'Alertas automáticos de queda de preço (WhatsApp, E-mail e Push)',
+                'Notificações diretas e instantâneas',
+                'Sugestões de emissão com milhas ou dinheiro',
+                'Acesso a promoções e transferências bonificadas exclusivas',
+                '+30.000 alertas enviados neste mês'
+              ]}
+              icon="/alertas_inteligentes.png"
+              iconAlt="Alertas Inteligentes"
+              ctaText="Ativar meus Alertas"
+              ctaHref="https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02"
+              badge="MAIS POPULAR"
+            />
 
             {/* CARD 3 - AI CONCIERGE */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow relative">
-              <img src="/agent_concierge.png" alt="AI Concierge" className="w-24 h-24 mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-center mb-2" style={{color: '#060D1C'}}>AI Concierge — Em breve</h3>
-              <p className="text-gray-600 text-center mb-6">Um assistente inteligente que planeja toda sua viagem — das milhas à hospedagem</p>
-              <ul className="space-y-2 mb-4 text-sm text-gray-700">
-                <li>• Planejamento automatizado com IA</li>
-                <li>• Sugestões personalizadas de voos e hotéis</li>
-                <li>• Agente pessoal 24h para emissões e resgates VIP</li>
-              </ul>
-              <p className="text-sm text-gray-500 italic text-center mb-6">Sem compromisso — avise-me quando lançar.</p>
-              <button
-                onClick={() => navigate('/register')}
-                className="w-full bg-[#0033AA] text-white py-3 rounded-lg font-semibold shadow-md hover:bg-[#0055FF] transition-colors"
-              >
-                Entrar na lista VIP
-              </button>
-            </div>
+            <ProductCard
+              title="AI Concierge — Em breve"
+              bullets={[
+                'Planejamento automatizado com IA',
+                'Sugestões personalizadas de voos e hotéis',
+                'Agente pessoal 24h para emissões e resgates VIP',
+                'Sem compromisso — avise-me quando lançar.'
+              ]}
+              icon="/agent_concierge.png"
+              iconAlt="AI Concierge"
+              ctaText="Entrar na lista VIP"
+              ctaAction={() => navigate('/register')}
+              comingSoon={true}
+            />
 
           </div>
         </div>
@@ -1892,26 +1895,26 @@ const Home: React.FC = () => {
       <section id="impacto" className="py-32 px-4" style={{backgroundColor: '#E4E4E4'}}>
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6" style={{color: '#060D1C'}}>Enquanto você viaja, você ajuda na educação das nossas crianças!</h2>
+            <h2 className="text-4xl font-bold mb-6" style={{ color: designSystem.colors.textPrimary }}>Enquanto você viaja, você ajuda na educação das nossas crianças!</h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 text-center mb-12">
-            <div className="bg-white p-6 rounded-lg shadow-lg" style={{borderBottom: '4px solid #F0C72F'}}>
-              <div className="text-4xl font-bold mb-2" style={{color: '#4896C7'}}>150+</div>
-              <div className="text-gray-600">Projetos Apoiados</div>
+            <div className="bg-white p-6 rounded-lg shadow-lg" style={{ borderBottom: `4px solid ${designSystem.colors.accent}` }}>
+              <div className="text-4xl font-bold mb-2" style={{ color: designSystem.colors.accentBlue }}>150+</div>
+              <div style={{ color: designSystem.colors.textSecondary }}>Projetos Apoiados</div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg" style={{borderBottom: '4px solid #F0C72F'}}>
-              <div className="text-4xl font-bold mb-2" style={{color: '#F0C72F'}}>50k+</div>
-              <div className="text-gray-600">Vidas Impactadas</div>
+            <div className="bg-white p-6 rounded-lg shadow-lg" style={{ borderBottom: `4px solid ${designSystem.colors.accent}` }}>
+              <div className="text-4xl font-bold mb-2" style={{ color: designSystem.colors.accent }}>50k+</div>
+              <div style={{ color: designSystem.colors.textSecondary }}>Vidas Impactadas</div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg" style={{borderBottom: '4px solid #F0C72F'}}>
-              <div className="text-4xl font-bold mb-2" style={{color: '#4896C7'}}>R$ 2M+</div>
-              <div className="text-gray-600">Investidos em Comunidades</div>
+            <div className="bg-white p-6 rounded-lg shadow-lg" style={{ borderBottom: `4px solid ${designSystem.colors.accent}` }}>
+              <div className="text-4xl font-bold mb-2" style={{ color: designSystem.colors.accentBlue }}>R$ 2M+</div>
+              <div style={{ color: designSystem.colors.textSecondary }}>Investidos em Comunidades</div>
             </div>
           </div>
           
           <div className="text-center">
-            <p className="text-lg text-gray-600 max-w-4xl mx-auto">
+            <p className="text-lg max-w-4xl mx-auto" style={{ color: designSystem.colors.textSecondary }}>
               Cada passagem comprada contribui diretamente para projetos que transformam vidas
             </p>
           </div>
@@ -1973,26 +1976,26 @@ const Home: React.FC = () => {
       <section id="faq" className="py-20 px-4" style={{backgroundColor: '#FFFFFF'}}>
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4" style={{color: '#060D1C'}}>FAQ Atualizado</h2>
-            <p className="text-xl" style={{color: '#060D1C'}}>Tire suas dúvidas sobre nossa plataforma e serviços</p>
+            <h2 className="text-4xl font-bold mb-4" style={{ color: designSystem.colors.textPrimary }}>FAQ Atualizado</h2>
+            <p className="text-xl" style={{ color: designSystem.colors.textSecondary }}>Tire suas dúvidas sobre nossa plataforma e serviços</p>
           </div>
 
-          <Accordion type="single" collapsible className="w-full space-y-4 [&_svg]:text-[#4896C7]">
+          <Accordion type="single" collapsible className="w-full space-y-4" style={{ '--accordion-icon-color': designSystem.colors.accentBlue } as any}>
             <AccordionItem value="item-1" className="border border-gray-200 rounded-lg px-6 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{color: '#060D1C'}}>
+              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
                 O que é a Conta PRO SemViagem?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{color: '#060D1C'}}>
+              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>
                 É uma assinatura mensal de R$29,99 que dá acesso a resultados ilimitados, alertas inteligentes e
                 promoções exclusivas.
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-2" className="border border-gray-200 rounded-lg px-6 hover:bg-opacity-10 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{color: '#060D1C'}}>
+              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
                 Como funciona o SemViagem?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{color: '#060D1C'}}>
+              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>
                 <p className="mb-3">
                   O SemViagem coleta dados de tráfego aéreo mundial em tempo real e disponibiliza passagens a preços
                   realmente baixos.
@@ -2009,26 +2012,26 @@ const Home: React.FC = () => {
             </AccordionItem>
 
             <AccordionItem value="item-3" className="border border-gray-200 rounded-lg px-6 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{color: '#060D1C'}}>
+              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
                 Como cada viagem gera impacto social?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{color: '#060D1C'}}>
+              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>
                 Parte da receita de cada passagem é destinada a projetos sociais e ambientais que apoiamos diretamente.
               </AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-4" className="border border-gray-200 rounded-lg px-6 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{color: '#060D1C'}}>
+              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
                 Quais métodos de pagamento são aceitos?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{color: '#060D1C'}}>Cartões de crédito.</AccordionContent>
+              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>Cartões de crédito.</AccordionContent>
             </AccordionItem>
 
             <AccordionItem value="item-5" className="border border-gray-200 rounded-lg px-6 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{color: '#060D1C'}}>
+              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
                 Posso cancelar minha assinatura a qualquer momento?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{color: '#060D1C'}}>
+              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>
                 Sim, você pode cancelar diretamente pelo portal do cliente sem multas ou burocracia.
               </AccordionContent>
             </AccordionItem>
@@ -2054,8 +2057,8 @@ const Home: React.FC = () => {
         
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6" style={{color: '#060D1C'}}>📞 Entre em Contato</h2>
-            <p className="text-xl max-w-3xl mx-auto" style={{color: '#060D1C'}}>
+            <h2 className="text-4xl font-bold mb-6" style={{ color: designSystem.colors.textPrimary }}>📞 Entre em Contato</h2>
+            <p className="text-xl max-w-3xl mx-auto" style={{ color: designSystem.colors.textSecondary }}>
               Estamos aqui para ajudar você a planejar sua próxima viagem. Entre em contato conosco!
             </p>
           </div>
@@ -2067,8 +2070,8 @@ const Home: React.FC = () => {
               
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{backgroundColor: '#F0C72F'}}>
-                    <svg className="w-6 h-6" fill="none" stroke="#060D1C" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: designSystem.colors.accent }}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" style={{ stroke: designSystem.colors.primary }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                   </div>
@@ -2080,8 +2083,8 @@ const Home: React.FC = () => {
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{backgroundColor: '#F0C72F'}}>
-                    <svg className="w-6 h-6" fill="none" stroke="#060D1C" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: designSystem.colors.accent }}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" style={{ stroke: designSystem.colors.primary }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
                     </svg>
                   </div>
@@ -2093,8 +2096,8 @@ const Home: React.FC = () => {
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{backgroundColor: '#F0C72F'}}>
-                    <svg className="w-6 h-6" fill="#060D1C" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: designSystem.colors.accent }}>
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
                       <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.479 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
                     </svg>
                   </div>
@@ -2166,34 +2169,34 @@ const Home: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-16" style={{backgroundColor: '#060D1C'}}>
+      <footer className="py-16" style={{ backgroundColor: designSystem.colors.primary }}>
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             {/* Logo e Descrição */}
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4" style={{color: '#F0C72F'}}>SemViagem</h3>
-              <p className="mb-4" style={{color: '#E4E4E4'}}>
+              <h3 className="text-2xl font-bold mb-4" style={{ color: designSystem.colors.accent }}>SemViagem</h3>
+              <p className="mb-4" style={{ color: designSystem.colors.surface }}>
                 Revolucionando o modo de viajar com impacto social positivo.
               </p>
             </div>
             
             {/* Links da Empresa */}
             <div>
-              <h4 className="text-lg font-semibold mb-4" style={{color: '#F0C72F'}}>Empresa</h4>
+              <h4 className="text-lg font-semibold mb-4" style={{ color: designSystem.colors.accent }}>Empresa</h4>
               <ul className="space-y-2">
-                <li><a href="#sobre" className="transition-colors hover:text-yellow-400" style={{color: '#E4E4E4'}}>Sobre Nós</a></li>
-                <li><a href="#impacto" className="transition-colors hover:text-yellow-400" style={{color: '#E4E4E4'}}>Impacto Social</a></li>
-                <li><a href="#faq" className="transition-colors hover:text-yellow-400" style={{color: '#E4E4E4'}}>FAQ</a></li>
+                <li><a href="#sobre" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Sobre Nós</a></li>
+                <li><a href="#impacto" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Impacto Social</a></li>
+                <li><a href="#faq" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>FAQ</a></li>
               </ul>
             </div>
             
             {/* Suporte */}
             <div>
-              <h4 className="text-lg font-semibold mb-4" style={{color: '#F0C72F'}}>Suporte</h4>
+              <h4 className="text-lg font-semibold mb-4" style={{ color: designSystem.colors.accent }}>Suporte</h4>
               <ul className="space-y-2">
-                <li><a href="#contato" className="transition-colors hover:text-yellow-400" style={{color: '#E4E4E4'}}>Central de Ajuda</a></li>
-                <li><a href="#contato" className="transition-colors hover:text-yellow-400" style={{color: '#E4E4E4'}}>Contato</a></li>
-                <li><a href="#" className="transition-colors hover:text-yellow-400" style={{color: '#E4E4E4'}}>Termos de Uso</a></li>
+                <li><a href="#contato" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Central de Ajuda</a></li>
+                <li><a href="#contato" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Contato</a></li>
+                <li><a href="#" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Termos de Uso</a></li>
               </ul>
             </div>
           </div>
@@ -2201,49 +2204,49 @@ const Home: React.FC = () => {
           {/* Social Media */}
           <div className="border-t border-gray-800 pt-8 mb-8">
             <div className="flex flex-col items-center">
-              <h4 className="text-lg font-semibold mb-4" style={{color: '#F0C72F'}}>Conecte-se</h4>
+              <h4 className="text-lg font-semibold mb-4" style={{ color: designSystem.colors.accent }}>Conecte-se</h4>
               <div className="flex gap-6">
-                <a 
-                  href="https://www.instagram.com/semviagemapp/" 
-                  target="_blank" 
+                <a
+                  href="https://www.instagram.com/semviagemapp/"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                  style={{backgroundColor: '#F0C72F'}}
+                  style={{ backgroundColor: designSystem.colors.accent }}
                 >
-                  <svg className="w-6 h-6" fill="#060D1C" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                   </svg>
                 </a>
-                <a 
-                  href="https://www.facebook.com/semviagem" 
-                  target="_blank" 
+                <a
+                  href="https://www.facebook.com/semviagem"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                  style={{backgroundColor: '#F0C72F'}}
+                  style={{ backgroundColor: designSystem.colors.accent }}
                 >
-                  <svg className="w-6 h-6" fill="#060D1C" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                   </svg>
                 </a>
-                <a 
-                  href="https://twitter.com/semviagem" 
-                  target="_blank" 
+                <a
+                  href="https://twitter.com/semviagem"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                  style={{backgroundColor: '#F0C72F'}}
+                  style={{ backgroundColor: designSystem.colors.accent }}
                 >
-                  <svg className="w-6 h-6" fill="#060D1C" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
                     <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
                   </svg>
                 </a>
-                <a 
-                  href="https://www.linkedin.com/company/semviagem" 
-                  target="_blank" 
+                <a
+                  href="https://www.linkedin.com/company/semviagem"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                  style={{backgroundColor: '#F0C72F'}}
+                  style={{ backgroundColor: designSystem.colors.accent }}
                 >
-                  <svg className="w-6 h-6" fill="#060D1C" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                   </svg>
                 </a>
@@ -2252,7 +2255,7 @@ const Home: React.FC = () => {
           </div>
           
           {/* Copyright */}
-          <div className="text-center text-sm" style={{color: '#E4E4E4'}}>
+          <div className="text-center text-sm" style={{ color: designSystem.colors.surface }}>
             <p>&copy; 2025 SemViagem. Todos os direitos reservados. Viaje com propósito e impacto social positivo.</p>
           </div>
         </div>
@@ -2264,7 +2267,10 @@ const Home: React.FC = () => {
           title={calendarConfig.title}
           onDateSelect={(date) => handleCalendarDateSelect(date, calendarConfig.type)}
           onClose={handleCalendarClose}
-          selectedDate={calendarConfig.type === 'ida' ? searchParams.ida : searchParams.volta}
+          selectedDates={[
+            searchParams.ida,
+            calendarConfig.type === 'volta' ? searchParams.volta : null
+          ].filter(Boolean) as string[]}
           minDate={new Date(new Date().setHours(0, 0, 0, 0))}
         />
       )}
