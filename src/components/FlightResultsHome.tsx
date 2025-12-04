@@ -26,9 +26,10 @@ interface SearchParams {
   bebes: number;
   companhia: number;
   tipoPagamento: 'ambos' | 'milhas' | 'dinheiro';
-  orderBy: 'tempo' | 'preco';
+  orderBy: 'tempo' | 'preco' | 'custo-beneficio';
   soIda: boolean;
   classe: 'economica' | 'executiva' | 'primeira';
+  airline?: string;
 }
 
 interface Flight {
@@ -139,15 +140,90 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     if (selectedFlights.outbound) debugFlight('OUTBOUND', selectedFlights.outbound);
     if (selectedFlights.return) debugFlight('RETURN', selectedFlights.return);
   }, [selectedFlights.outbound, selectedFlights.return]);
-  // Ordenar voos por preço (do menor para o maior) antes de exibir
-  const sortedFlights = [...flights].sort((a, b) => {
-    const priceA = a.priceWithTax || a.price || a.totalPrice || 0;
-    const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
-    return priceA - priceB;
-  });
+
+  // Helper: Converter duração string "2h 30m" para minutos
+  const parseDurationToMinutes = (durationStr: string): number => {
+    if (!durationStr || durationStr === 'N/A') return 999999; // Valor alto para ordenação
+
+    try {
+      const hoursMatch = durationStr.match(/(\d+)h/);
+      const minutesMatch = durationStr.match(/(\d+)m/);
+
+      const hours = hoursMatch ? parseInt(hoursMatch[1], 10) : 0;
+      const minutes = minutesMatch ? parseInt(minutesMatch[1], 10) : 0;
+
+      return (hours * 60) + minutes;
+    } catch {
+      return 999999; // Valor alto para ordenação em caso de erro
+    }
+  };
+
+  // Ordenar voos baseado no filtro selecionado
+  const sortedFlights = useMemo(() => {
+    return [...flights].sort((a, b) => {
+      const priceA = a.priceWithTax || a.price || a.totalPrice || 0;
+      const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
+
+      if (searchParams.orderBy === 'preco') {
+        // Mais barato: ordenar por preço (menor primeiro)
+        return priceA - priceB;
+      }
+
+      if (searchParams.orderBy === 'tempo') {
+        // Mais rápido: ordenar por duração (menor primeiro)
+        const durationA = parseDurationToMinutes(a.segments?.[0]?.duration || '');
+        const durationB = parseDurationToMinutes(b.segments?.[0]?.duration || '');
+        return durationA - durationB;
+      }
+
+      if (searchParams.orderBy === 'custo-beneficio') {
+        // Melhor custo-benefício: menor ratio preço/tempo
+        const durationA = parseDurationToMinutes(a.segments?.[0]?.duration || '');
+        const durationB = parseDurationToMinutes(b.segments?.[0]?.duration || '');
+
+        // Evitar divisão por zero
+        if (durationA === 0 || durationB === 0) {
+          return priceA - priceB; // Fallback para preço
+        }
+
+        const ratioA = priceA / durationA;
+        const ratioB = priceB / durationB;
+        return ratioA - ratioB;
+      }
+
+      // Fallback: ordenar por preço
+      return priceA - priceB;
+    });
+  }, [flights, searchParams.orderBy]);
+
+  // Filtrar por CIA Aérea se selecionada
+  const filteredByAirline = useMemo(() => {
+    if (!searchParams.airline || searchParams.airline === 'todas') {
+      return sortedFlights;
+    }
+
+    console.log('✈️ Filtrando por CIA Aérea:', searchParams.airline);
+
+    return sortedFlights.filter(flight => {
+      // Tentar extrair nome da companhia de diferentes campos possíveis
+      const airlineName = (flight as any).validatingBy?.name ||
+                         flight.airline ||
+                         (flight as any).CompanhiaAerea ||
+                         (flight as any).segments?.[0]?.legs?.[0]?.operatedBy?.name ||
+                         (flight as any).segments?.[0]?.legs?.[0]?.managedBy?.name;
+
+      const matches = airlineName === searchParams.airline;
+
+      if (matches) {
+        console.log('✅ Voo match:', { airlineName, flight: flight.numeroVoo });
+      }
+
+      return matches;
+    });
+  }, [sortedFlights, searchParams.airline]);
 
   // Estados locais
-  const [displayedFlights, setDisplayedFlights] = useState<Flight[]>(sortedFlights.slice(0, 10));
+  const [displayedFlights, setDisplayedFlights] = useState<Flight[]>(filteredByAirline.slice(0, 10));
   const [isSelectingReturn, setIsSelectingReturn] = useState(false);
   const [returnFlights, setReturnFlights] = useState<Flight[]>([]);
   const [selectedOutboundForReturn, setSelectedOutboundForReturn] = useState<Flight | null>(null);
@@ -212,19 +288,37 @@ const FlightResults: React.FC<FlightResultsProps> = ({
       setIsSelectingReturn(false);
       setReturnFlights([]);
     }
-    
+
+    // Helper function to apply airline filter
+    const applyAirlineFilter = (flightsList: Flight[]) => {
+      if (!searchParams.airline || searchParams.airline === 'todas') {
+        return flightsList;
+      }
+      return flightsList.filter(flight => {
+        const airlineName = (flight as any).validatingBy?.name ||
+                           flight.airline ||
+                           (flight as any).CompanhiaAerea ||
+                           (flight as any).segments?.[0]?.legs?.[0]?.operatedBy?.name ||
+                           (flight as any).segments?.[0]?.legs?.[0]?.managedBy?.name;
+        return airlineName === searchParams.airline;
+      });
+    };
+
+    // Apply airline filter to all flights first
+    const airlineFilteredFlights = applyAirlineFilter(flights);
+
     // ✅ CRITICAL FIX: SEMPRE preservar AMBOS os tipos quando o filtro está definido como "ambos"
     const isShowingBothTypes = searchParams.tipoPagamento === 'ambos';
-    
+
     if (isShowingBothTypes) {
       // 📊 MODO DUAS COLUNAS: Separar dinheiro e milhas MAS PRESERVAR AMBOS
-      const flightsMoney = flights.filter(f => !f.isMiles).sort((a, b) => {
+      const flightsMoney = airlineFilteredFlights.filter(f => !f.isMiles).sort((a, b) => {
         const priceA = a.priceWithTax || a.price || a.totalPrice || 0;
         const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
         return priceA - priceB;
       });
       
-      const flightsMiles = flights.filter(f => f.isMiles).sort((a, b) => {
+      const flightsMiles = airlineFilteredFlights.filter(f => f.isMiles).sort((a, b) => {
         const priceA = a.priceWithTax || a.price || a.totalPrice || 0;
         const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
         return priceA - priceB;
@@ -273,12 +367,12 @@ const FlightResults: React.FC<FlightResultsProps> = ({
       })();
       
       // ✅ CRÍTICO: Aplicar filtros apenas quando tipoPagamento NÃO é "ambos"
-      let filteredFlights = flights;
+      let filteredFlights = airlineFilteredFlights;
       if (searchParams.tipoPagamento === 'dinheiro') {
-        filteredFlights = flights.filter(f => !f.isMiles);
+        filteredFlights = airlineFilteredFlights.filter(f => !f.isMiles);
         console.log('🔍 Filtrando apenas voos em DINHEIRO:', filteredFlights.length);
       } else if (searchParams.tipoPagamento === 'milhas') {
-        filteredFlights = flights.filter(f => f.isMiles);
+        filteredFlights = airlineFilteredFlights.filter(f => f.isMiles);
         console.log('🔍 Filtrando apenas voos em MILHAS:', filteredFlights.length);
       } else {
         // Caso padrão: manter todos os voos
@@ -311,7 +405,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
       });
       
       // Mostrar apenas os 10 primeiros inicialmente quando há filtro específico
-      setDisplayedFlights(sortedFlights.slice(0, 10));
+      setDisplayedFlights(filteredByAirline.slice(0, 10));
     }
     
     setCurrentPage(0);
@@ -336,7 +430,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         }
       }
     } catch {}
-  }, [flights, selectedFlights.outbound, searchParams.tipoPagamento, showFinalSelection]); // removido isSelectingReturn para evitar loop
+  }, [flights, selectedFlights.outbound, searchParams.tipoPagamento, searchParams.airline, showFinalSelection]); // removido isSelectingReturn para evitar loop
 
   // ✅ PRE-FETCH AUTOMÁTICO: Buscar voos de volta em background
   useEffect(() => {
@@ -540,8 +634,8 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     const nextPage = currentPage + 1;
     const startIndex = nextPage * flightsPerPage;
     const endIndex = startIndex + flightsPerPage;
-    
-    const newFlights = sortedFlights.slice(startIndex, endIndex);
+
+    const newFlights = filteredByAirline.slice(startIndex, endIndex);
     const currentFlightsCount = displayedFlights.length;
     
     setDisplayedFlights(prev => [...prev, ...newFlights]);
@@ -564,18 +658,18 @@ const FlightResults: React.FC<FlightResultsProps> = ({
 
   // Load all remaining flights function
   const loadAllFlights = () => {
-    setDisplayedFlights(sortedFlights);
-    setCurrentPage(Math.ceil(sortedFlights.length / flightsPerPage) - 1);
+    setDisplayedFlights(filteredByAirline);
+    setCurrentPage(Math.ceil(filteredByAirline.length / flightsPerPage) - 1);
   };
 
   // Check if there are more flights to load
   const hasMoreFlights = () => {
-    return displayedFlights.length < sortedFlights.length;
+    return displayedFlights.length < filteredByAirline.length;
   };
 
   // Check if we should show "Load All" option (for small lists)
   const shouldShowLoadAll = () => {
-    const remaining = sortedFlights.length - displayedFlights.length;
+    const remaining = filteredByAirline.length - displayedFlights.length;
     return remaining > 0 && remaining <= 15; // Show "Load All" if 15 or fewer flights remain
   };
   
@@ -978,11 +1072,13 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             bebes: searchParams.bebes,
             tipoPagamento: searchParams.tipoPagamento,
             orderBy: searchParams.orderBy,
-            soIda: searchParams.soIda
+            soIda: searchParams.soIda,
+            airline: searchParams.airline
           }}
           onFiltersChange={handleFiltersChange}
           onNewSearch={handleNewSearchWithFilters}
           isLoading={isSearching}
+          flights={flights}
         />
 
         {/* Header com resumo dos resultados */}
@@ -1073,7 +1169,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                         fromLabel={getIata(searchParams.origem)}
                         toLabel={getIata(searchParams.destino)}
                         selectionMessage={''}
-                        allFlights={sortedFlights}
+                        allFlights={filteredByAirline}
                         isRoundTrip={!searchParams.soIda}
                         isSelectingReturn={false}
                         selectedOutboundFlight={selectedFlights.outbound || displayedFlights[0]}
@@ -1098,7 +1194,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                         fromLabel={getIata(searchParams.destino)}
                         toLabel={getIata(searchParams.origem)}
                         selectionMessage={''}
-                        allFlights={sortedFlights}
+                        allFlights={filteredByAirline}
                         isRoundTrip={!searchParams.soIda}
                         isSelectingReturn={false}
                         selectedOutboundFlight={selectedFlights.outbound || displayedFlights[0]}
@@ -1126,7 +1222,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                       fromLabel={selectedFlights.outbound.segments?.[0]?.departure || getIata(searchParams.origem)}
                       toLabel={selectedFlights.outbound.segments?.[selectedFlights.outbound.segments.length - 1]?.arrival || getIata(searchParams.destino)}
                       selectionMessage="Voo selecionado"
-                      allFlights={sortedFlights}
+                      allFlights={filteredByAirline}
                       isRoundTrip={!searchParams.soIda}
                       isSelectingReturn={false}
                       selectedOutboundFlight={selectedFlights.outbound}
@@ -1146,7 +1242,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                       fromLabel={selectedFlights.return.segments?.[0]?.departure || getIata(searchParams.destino)}
                       toLabel={selectedFlights.return.segments?.[selectedFlights.return.segments.length - 1]?.arrival || getIata(searchParams.origem)}
                       selectionMessage="Voo selecionado"
-                      allFlights={sortedFlights}
+                      allFlights={filteredByAirline}
                       isRoundTrip={!searchParams.soIda}
                       isSelectingReturn={false}
                       selectedOutboundFlight={selectedFlights.outbound}
@@ -1233,7 +1329,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                           fromLabel={flight.segments?.[0]?.departure || (isSelectingReturn ? getIata(searchParams.destino) : getIata(searchParams.origem))}
                           toLabel={flight.segments?.[flight.segments.length - 1]?.arrival || (isSelectingReturn ? getIata(searchParams.origem) : getIata(searchParams.destino))}
                           selectionMessage={getSelectionMessage(flight)}
-                          allFlights={sortedFlights}
+                          allFlights={filteredByAirline}
                           isRoundTrip={!searchParams.soIda}
                           isSelectingReturn={isSelectingReturn}
                           selectedOutboundFlight={selectedFlights.outbound}
@@ -1291,7 +1387,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                           fromLabel={flight.segments?.[0]?.departure || (isSelectingReturn ? getIata(searchParams.destino) : getIata(searchParams.origem))}
                           toLabel={flight.segments?.[flight.segments.length - 1]?.arrival || (isSelectingReturn ? getIata(searchParams.origem) : getIata(searchParams.destino))}
                           selectionMessage={getSelectionMessage(flight)}
-                          allFlights={sortedFlights}
+                          allFlights={filteredByAirline}
                           isRoundTrip={!searchParams.soIda}
                           isSelectingReturn={isSelectingReturn}
                           selectedOutboundFlight={selectedFlights.outbound}

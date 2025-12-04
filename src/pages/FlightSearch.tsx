@@ -38,7 +38,7 @@ interface SearchParams {
   companhia: number;
   soIda: boolean;
   tipoPagamento: 'milhas' | 'dinheiro' | 'ambos';
-  orderBy: 'tempo' | 'preco';
+  orderBy: 'tempo' | 'preco' | 'custo-beneficio';
   classe: 'economica' | 'executiva' | 'primeira';
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 interface InteractiveFiltersProps {
   searchParams: {
@@ -6,23 +6,44 @@ interface InteractiveFiltersProps {
     criancas: number;
     bebes: number;
     tipoPagamento: 'milhas' | 'dinheiro' | 'ambos';
-    orderBy: 'tempo' | 'preco';
+    orderBy: 'tempo' | 'preco' | 'custo-beneficio';
     soIda: boolean;
+    airline?: string;
   };
   onFiltersChange: (newParams: any) => void;
   onNewSearch: () => void;
   isLoading?: boolean;
+  flights?: any[]; // Lista de voos para extrair companhias disponíveis
 }
 
 const InteractiveFilters: React.FC<InteractiveFiltersProps> = ({
   searchParams,
   onFiltersChange,
   onNewSearch,
-  isLoading = false
+  isLoading = false,
+  flights = []
 }) => {
   const [showPassengerDropdown, setShowPassengerDropdown] = useState(false);
   const [localParams, setLocalParams] = useState(searchParams);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Extrair lista única de companhias aéreas dos resultados
+  const availableAirlines = useMemo(() => {
+    const airlines = new Set<string>();
+    flights.forEach((flight: any) => {
+      // Tentar extrair nome da companhia de diferentes campos possíveis
+      const airlineName = flight.validatingBy?.name ||
+                         flight.airline ||
+                         flight.CompanhiaAerea ||
+                         flight.segments?.[0]?.legs?.[0]?.operatedBy?.name ||
+                         flight.segments?.[0]?.legs?.[0]?.managedBy?.name;
+
+      if (airlineName && typeof airlineName === 'string') {
+        airlines.add(airlineName);
+      }
+    });
+    return Array.from(airlines).sort();
+  }, [flights]);
 
   // Inicializa localParams apenas uma vez quando o componente for montado
   useEffect(() => {
@@ -115,7 +136,7 @@ const InteractiveFilters: React.FC<InteractiveFiltersProps> = ({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {/* Passageiros */}
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -238,8 +259,29 @@ const InteractiveFilters: React.FC<InteractiveFiltersProps> = ({
             onChange={(e) => handleFilterChange('orderBy', e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
           >
-            <option value="preco">Por preço</option>
-            <option value="tempo">Por tempo</option>
+            <option value="preco">Mais barato</option>
+            <option value="tempo">Mais rápido</option>
+            <option value="custo-beneficio">Melhor custo-benefício</option>
+          </select>
+        </div>
+
+        {/* CIA Aérea */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            CIA Aérea
+          </label>
+          <select
+            value={localParams.airline || 'todas'}
+            onChange={(e) => handleFilterChange('airline', e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
+            disabled={availableAirlines.length === 0}
+          >
+            <option value="todas">Todas</option>
+            {availableAirlines.map((airline) => (
+              <option key={airline} value={airline}>
+                {airline}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -280,12 +322,18 @@ const InteractiveFilters: React.FC<InteractiveFiltersProps> = ({
             {getTotalPassengers()} passageiro{getTotalPassengers() > 1 ? 's' : ''}
           </span>
           <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800">
-            {localParams.tipoPagamento === 'milhas' ? 'Milhas' : 
+            {localParams.tipoPagamento === 'milhas' ? 'Milhas' :
              localParams.tipoPagamento === 'dinheiro' ? 'Dinheiro' : 'Ambos'}
           </span>
           <span className="inline-flex items-center px-2 py-1 rounded-full bg-purple-100 text-purple-800">
-            {localParams.orderBy === 'preco' ? 'Por preço' : 'Por tempo'}
+            {localParams.orderBy === 'preco' ? 'Mais barato' :
+             localParams.orderBy === 'tempo' ? 'Mais rápido' : 'Melhor custo-benefício'}
           </span>
+          {localParams.airline && localParams.airline !== 'todas' && (
+            <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 text-indigo-800">
+              {localParams.airline}
+            </span>
+          )}
           <span className="inline-flex items-center px-2 py-1 rounded-full bg-orange-100 text-orange-800">
             {localParams.soIda ? 'Somente ida' : 'Ida e volta'}
           </span>

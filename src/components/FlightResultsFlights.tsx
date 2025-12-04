@@ -24,7 +24,7 @@ interface SearchParams {
   bebes: number;
   companhia: number;
   tipoPagamento: 'ambos' | 'milhas' | 'dinheiro';
-  orderBy: 'tempo' | 'preco';
+  orderBy: 'tempo' | 'preco' | 'custo-beneficio';
   soIda: boolean;
   classe: 'economica' | 'executiva' | 'primeira';
 }
