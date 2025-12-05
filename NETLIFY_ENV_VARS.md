@@ -11,19 +11,26 @@ As variáveis SEM `VITE_` são usadas apenas nas Netlify Functions (backend).
 ## 🔐 Auth0 Configuration (Frontend)
 
 ### VITE_AUTH0_DOMAIN
-- **Valor**: `dev-jbjzcnwlhqzgtcpp.us.auth0.com`
+- **Valor**: `dev-j184kb6qzqv5nkd8.us.auth0.com`
 - **Tipo**: String
 - **Contexto**: Production, Deploy Preview, Branch Deploy
 - **Descrição**: Domínio do Auth0 para autenticação
 
 ### VITE_AUTH0_CLIENT_ID
-- **Valor**: `n3Q1wYJ3jAVdmLEy1QX2MvH3S88Jg1Sw`
+- **Valor**: `SfN7paQtf9vBWAh21GEhCN7vVClmxxV8`
 - **Tipo**: String
 - **Contexto**: Production, Deploy Preview, Branch Deploy
 - **Descrição**: Client ID da aplicação Auth0
 
+### VITE_AUTH0_REDIRECT_URI
+- **Valor**: `https://semviagem.com/area-logada`
+- **Tipo**: String
+- **Contexto**: Production
+- **Descrição**: URL de callback após autenticação (⚠️ DEVE estar configurada no Auth0 Dashboard)
+- **⚠️ IMPORTANTE**: Para desenvolvimento local, use `http://localhost:5173/area-logada`
+
 ### VITE_AUTH0_AUDIENCE
-- **Valor**: `https://dev-jbjzcnwlhqzgtcpp.us.auth0.com/api/v2/`
+- **Valor**: `https://dev-j184kb6qzqv5nkd8.us.auth0.com/api/v2/`
 - **Tipo**: String
 - **Contexto**: Production, Deploy Preview, Branch Deploy
 - **Descrição**: Audience para tokens JWT do Auth0
@@ -41,10 +48,11 @@ As variáveis SEM `VITE_` são usadas apenas nas Netlify Functions (backend).
 - **Descrição**: URL do projeto Supabase
 
 #### VITE_SUPABASE_ANON_KEY
-- **Valor**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0eHJncWxoZGJzenRzYm55Y2xuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1NjU1MTAsImV4cCI6MjA2NjE0MTUxMH0.IcF22qbU7vMlwQ04RfY3Tc4z9vmQYs-2sYxKxQoTnpw`
+- **Valor**: `sb_publishable_o5gqKHJNLaS0B043dVkgGA_ndLGlpVr`
 - **Tipo**: String
 - **Contexto**: Production, Deploy Preview, Branch Deploy
-- **Descrição**: Chave pública (anon) do Supabase para uso no frontend
+- **Descrição**: Chave pública (publishable) do Supabase para uso no frontend
+- **✅ ATUALIZADO**: Usando nova publishable key (Sprint 1)
 
 ### Backend (Netlify Functions)
 
@@ -246,4 +254,38 @@ console.log('Has STRIPE_SECRET_KEY:', !!process.env.STRIPE_SECRET_KEY)
 
 ---
 
-Última atualização: 2025-11-22
+## ⚠️ AÇÃO CRÍTICA: CONFIGURAR AUTH0 DASHBOARD
+
+**ANTES de fazer o deploy, você DEVE atualizar as URLs no Auth0:**
+
+1. **Acesse:** https://manage.auth0.com
+2. **Selecione a aplicação:** SemViagem (Client ID: `SfN7paQtf9vBWAh21GEhCN7vVClmxxV8`)
+3. **Vá em Settings e atualize:**
+
+**Allowed Callback URLs:**
+```
+https://semviagem.com/area-logada,http://localhost:5173/area-logada
+```
+
+**Allowed Logout URLs:**
+```
+https://semviagem.com,http://localhost:5173
+```
+
+**Allowed Web Origins:**
+```
+https://semviagem.com,http://localhost:5173
+```
+
+**Allowed Origins (CORS):**
+```
+https://semviagem.com,http://localhost:5173
+```
+
+4. **Clique em "Save Changes"**
+
+> ⚠️ **Se você não fizer isso, o login NÃO vai funcionar em produção!**
+
+---
+
+Última atualização: 2025-12-05 (Mobile UX + Production deployment)

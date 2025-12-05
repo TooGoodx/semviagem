@@ -297,6 +297,7 @@ const Navbar: React.FC = () => {
                       <div
                         id="user-dropdown-menu"
                         className="absolute right-0 mt-2 w-60 origin-top-right rounded-xl border border-gray-100 bg-white shadow-xl"
+                        style={{ zIndex: 9999 }}
                       >
                         <div className="border-b border-gray-100 px-4 py-3">
                           <p className="text-xs uppercase tracking-wider text-gray-400">Sessão ativa</p>
@@ -310,7 +311,8 @@ const Navbar: React.FC = () => {
                                 navigate(item.path)
                                 closeUserMenu()
                               }}
-                              className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                              className="flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 active:bg-gray-200"
+                              style={{ minHeight: '44px', WebkitTapHighlightColor: 'transparent' }}
                             >
                               {item.label}
                             </button>
@@ -318,7 +320,8 @@ const Navbar: React.FC = () => {
                           <hr className="my-2 border-gray-100" />
                           <button
                             onClick={handleLogout}
-                            className="flex w-full items-center px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                            className="flex w-full items-center px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 active:bg-red-100"
+                            style={{ minHeight: '44px', WebkitTapHighlightColor: 'transparent' }}
                           >
                             Sair da conta
                           </button>
@@ -509,9 +512,24 @@ const Navbar: React.FC = () => {
               {/* User menu for mobile */}
               {isAuthenticated && (
                 <div className="border-t border-gray-600 pt-4 space-y-2">
+                  {menuLinks.map((item) => (
+                    <button
+                      key={item.path}
+                      onClick={() => {
+                        navigate(item.path)
+                        setMobileMenuOpen(false)
+                      }}
+                      className="flex w-full items-center px-4 py-3 text-left text-white hover:bg-gray-700 rounded-md transition-colors"
+                      style={{ minHeight: '44px' }}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                  <hr className="my-2 border-gray-600" />
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-3 text-red-300 hover:bg-red-900/30 rounded-md transition-colors"
+                    style={{ minHeight: '44px' }}
                   >
                     Sair da Conta
                   </button>

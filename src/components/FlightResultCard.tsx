@@ -941,11 +941,11 @@ const getAirlineLogoPath = (flight: any): string => {
         minHeight: '80px',
       }}
     >
-      {/* Ultra-compact Skyscanner-style horizontal layout */}
-      <div className="flex items-center p-3" style={{ gap: '12px' }}>
+      {/* Responsive layout: stack on mobile, horizontal on desktop */}
+      <div className="flex flex-col md:flex-row md:items-center p-3 md:p-4 gap-3 md:gap-4">
 
-        {/* COL 1: Logo + Badge (20%) */}
-        <div className="flex items-center" style={{ width: '20%', minWidth: '120px', gap: '8px' }}>
+        {/* COL 1: Logo + Badge - Full width on mobile, 20% on desktop */}
+        <div className="flex items-center justify-between md:justify-start md:w-[20%] md:min-w-[120px] gap-2 md:gap-3">
           {/* Logo compacto 40x40 */}
           <div
             className="flex-shrink-0 flex items-center justify-center"
@@ -989,8 +989,8 @@ const getAirlineLogoPath = (flight: any): string => {
           </div>
         </div>
 
-        {/* COL 2: Timeline horizontal (50%) */}
-        <div className="flex items-center justify-between" style={{ width: '50%', gap: '12px' }}>
+        {/* COL 2: Timeline horizontal - Full width on mobile, 50% on desktop */}
+        <div className="flex items-center justify-between md:w-[50%] gap-2 md:gap-3">
           {/* Horário partida */}
           <div className="flex flex-col items-start" style={{ minWidth: '70px' }}>
             <span
@@ -1083,13 +1083,13 @@ const getAirlineLogoPath = (flight: any): string => {
           </div>
         </div>
 
-        {/* COL 3: Preço + Botão (30%) */}
-        <div className="flex flex-col items-end justify-center" style={{ width: '30%', gap: '8px' }}>
+        {/* COL 3: Preço + Botão - Full width row on mobile, 30% column on desktop */}
+        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center md:w-[30%] gap-3 md:gap-2 w-full md:w-auto">
           {/* Preço */}
           <div
             className="font-bold leading-tight"
             style={{
-              fontSize: '16px',
+              fontSize: 'clamp(16px, 4vw, 20px)',
               color: designSystem.colors.textPrimary,
               letterSpacing: '-0.3px',
             }}
@@ -1108,15 +1108,18 @@ const getAirlineLogoPath = (flight: any): string => {
               {onChooseOutbound ? (
                 <button
                   onClick={handleChooseOutbound}
-                  className="font-medium transition-colors"
+                  className="font-medium transition-colors active:scale-95"
                   style={{
-                    padding: '8px 16px',
+                    padding: '10px 20px',
                     borderRadius: '12px',
                     backgroundColor: designSystem.colors.success,
                     color: '#FFFFFF',
-                    fontSize: '13px',
+                    fontSize: 'clamp(13px, 3vw, 15px)',
                     border: 'none',
                     cursor: 'pointer',
+                    minHeight: '44px',
+                    minWidth: '80px',
+                    WebkitTapHighlightColor: 'transparent',
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
@@ -1130,15 +1133,18 @@ const getAirlineLogoPath = (flight: any): string => {
               ) : onChooseReturn ? (
                 <button
                   onClick={handleChooseReturn}
-                  className="font-medium transition-colors"
+                  className="font-medium transition-colors active:scale-95"
                   style={{
-                    padding: '8px 16px',
+                    padding: '10px 20px',
                     borderRadius: '12px',
                     backgroundColor: designSystem.colors.success,
                     color: '#FFFFFF',
-                    fontSize: '13px',
+                    fontSize: 'clamp(13px, 3vw, 15px)',
                     border: 'none',
                     cursor: 'pointer',
+                    minHeight: '44px',
+                    minWidth: '80px',
+                    WebkitTapHighlightColor: 'transparent',
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
@@ -1152,15 +1158,18 @@ const getAirlineLogoPath = (flight: any): string => {
               ) : (
                 <button
                   onClick={handleViewMore}
-                  className="font-medium transition-colors"
+                  className="font-medium transition-colors active:scale-95"
                   style={{
-                    padding: '8px 16px',
+                    padding: '10px 20px',
                     borderRadius: '12px',
                     backgroundColor: designSystem.colors.primary,
                     color: designSystem.colors.accent,
-                    fontSize: '13px',
+                    fontSize: 'clamp(13px, 3vw, 15px)',
                     border: 'none',
                     cursor: 'pointer',
+                    minHeight: '44px',
+                    minWidth: '80px',
+                    WebkitTapHighlightColor: 'transparent',
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
