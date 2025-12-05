@@ -12,6 +12,63 @@ import PurchaseConfirmationModal from './PurchaseConfirmationModal';
 import MilesGuidanceModal from './MilesGuidanceModal';
 import moblixApiService from '../services/moblixApiService';
 import { selecionarVoo } from '../services/moblixService';
+import { designSystem } from '../styles/designSystem';
+
+// ============================================
+// COMPONENTE AUXILIAR: AirlineLogo
+// Gerencia fallback resiliente para logos de companhias
+// ============================================
+const AirlineLogo: React.FC<{ flight: any }> = ({ flight }) => {
+  const [imgError, setImgError] = useState(false);
+
+  const getFlightAirlineName = (flight: any): string => {
+    if (!flight) return 'Companhia Aérea';
+
+    const airlineName = flight.validatingBy?.name ||
+                       flight.segments?.[0]?.legs?.[0]?.operatedBy?.name ||
+                       flight.segments?.[0]?.legs?.[0]?.managedBy?.name ||
+                       flight.airline ||
+                       '';
+
+    return getDisplayAirlineName(airlineName);
+  };
+
+  const airlineName = getFlightAirlineName(flight);
+  const logo = getAirlineLogo(airlineName);
+
+  return (
+    <div
+      className="flex-shrink-0 flex items-center justify-center"
+      style={{
+        width: '56px',
+        height: '56px',
+        backgroundColor: '#FFFFFF',
+        borderRadius: designSystem.radii.md,
+        boxShadow: designSystem.shadows.sm,
+        border: `1px solid ${designSystem.colors.outline || '#E5E7EB'}`,
+        padding: designSystem.spacing.xs,
+      }}
+    >
+      <img
+        src={imgError ? '/placeholder-logo.png' : (logo || '/placeholder-logo.png')}
+        alt={airlineName}
+        className="object-contain w-full h-full"
+        style={{ opacity: imgError ? 0.5 : 1 }}
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          if (!imgError && target.src !== '/placeholder-logo.png') {
+            setImgError(true);
+            target.src = '/placeholder-logo.png';
+            target.style.opacity = '0.5';
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('⚠️ Logo não encontrado para:', airlineName, 'tentado:', logo);
+            }
+          }
+        }}
+      />
+    </div>
+  );
+};
 
 interface FlightResultCardProps {
   flight: {
@@ -25,6 +82,10 @@ interface FlightResultCardProps {
     // Dados adicionais da API Moblix
     Origem?: string;
     Destino?: string;
+    validatingBy?: {
+      name?: string;
+      [key: string]: any;
+    };
     // Dados adicionais da API Moblix para múltiplas ofertas
     fareGroup?: {
       priceWithTax?: number;
@@ -85,6 +146,44 @@ const FlightResultCard: React.FC<FlightResultCardProps> = ({
   const [showMilesGuidanceModal, setShowMilesGuidanceModal] = useState(false);
 
   // Removido uso direto de TravelContext aqui para evitar erro quando fora do provider
+
+  // ============================================
+  // NORMALIZAÇÃO DE DADOS - Garantir campos mínimos
+  // ============================================
+  const normalizedFlight = {
+    segments: flight?.segments || [],
+    priceWithTax: flight?.priceWithTax ?? flight?.price ?? flight?.totalPrice ?? 0,
+    price: flight?.price ?? flight?.priceWithTax ?? flight?.totalPrice ?? 0,
+    totalPrice: flight?.totalPrice ?? flight?.priceWithTax ?? flight?.price ?? 0,
+    isMiles: !!flight?.isMiles,
+    airline: flight?.airline || flight?.validatingBy?.name || 'Companhia Aérea',
+    numeroVoo: flight?.numeroVoo || 'N/A',
+    Origem: flight?.Origem || flight?.segments?.[0]?.departure?.airport || flight?.segments?.[0]?.origem || flight?.segments?.[0]?.Origem || '',
+    Destino: flight?.Destino || flight?.segments?.slice(-1)[0]?.arrival?.airport || flight?.segments?.slice(-1)[0]?.destino || flight?.segments?.slice(-1)[0]?.Destino || '',
+    validatingBy: flight?.validatingBy,
+    fareGroup: flight?.fareGroup,
+    alternatives: flight?.alternatives || [],
+    originalData: flight?.originalData,
+    // Preserve original reference for debugging
+    __raw: flight
+  };
+
+  // Debug log para inspeção (apenas em desenvolvimento)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 FlightResultCard - Normalized Flight:', {
+        original: flight,
+        normalized: normalizedFlight,
+        fromLabel,
+        toLabel,
+        isRoundTrip,
+        isSelectingReturn,
+        hasOutboundHandler: !!onChooseOutbound,
+        hasReturnHandler: !!onChooseReturn,
+        isFinalSummary
+      });
+    }
+  }, []);
 
   // handleCardClick desativado: não abrir mais classes ao clicar
   const handleCardClick = (_e: React.MouseEvent) => {};
@@ -581,51 +680,70 @@ const extractTimeFromMoblixData = (segment: any, type: 'departure' | 'arrival'):
   }
 };
 
-// Função para formatar hora
-const formatTime = (dateString: string): string => {
-  if (!dateString || dateString === 'N/A') {
+// Função para formatar hora - MELHORADA para aceitar múltiplos formatos
+const formatTime = (input: string | number | Date | any): string => {
+  // Handle null/undefined
+  if (!input || input === 'N/A') {
     return '--:--';
   }
-  
+
   try {
+    // Se é um objeto com propriedades time/dateTime, usar recursivamente
+    if (typeof input === 'object' && !(input instanceof Date)) {
+      if (input.dateTime) return formatTime(input.dateTime);
+      if (input.time) return formatTime(input.time);
+      if (input.date && input.time) return formatTime(input.time);
+    }
+
+    // Converter para string se for número (timestamp)
+    const dateString = typeof input === 'number'
+      ? new Date(input).toISOString()
+      : input instanceof Date
+        ? input.toISOString()
+        : String(input);
+
     // Se já está no formato HH:MM, retornar diretamente
     if (/^\d{2}:\d{2}$/.test(dateString)) {
       return dateString;
     }
-    
+
     // Se está no formato HH:MM:SS, extrair apenas HH:MM
     if (/^\d{2}:\d{2}:\d{2}$/.test(dateString)) {
       return dateString.substring(0, 5);
     }
-    
+
     // Para datas ISO da API Moblix (2025-09-25T05:20:00-03:00)
     const isoTimeMatch = dateString.match(/T(\d{2}):(\d{2})/);
     if (isoTimeMatch) {
       // Usar horário exato da API Moblix
       return `${isoTimeMatch[1]}:${isoTimeMatch[2]}`;
     }
-    
+
     // Se é um timestamp ou data ISO, converter para horário LOCAL
     const date = new Date(dateString);
-    
+
     if (isNaN(date.getTime())) {
       // Tentar extrair horário de strings
       const timeMatch = dateString.match(/(\d{2}):(\d{2})/);
       if (timeMatch) {
         return `${timeMatch[1]}:${timeMatch[2]}`;
       }
-      
-      console.warn('Data inválida da API Moblix:', dateString);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ Data inválida na API:', input);
+      }
       return '--:--';
     }
-    
+
     // Usar horário LOCAL exato da API Moblix
     const hours = date.getHours();
     const minutes = date.getMinutes();
-    
+
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   } catch (error) {
-    console.error('Erro ao formatar horário da API Moblix:', error, dateString);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('❌ Erro ao formatar horário:', error, input);
+    }
     return '--:--';
   }
 };
@@ -870,281 +988,335 @@ const getAirlineLogoPath = (flight: any): string => {
 
   return (
     <div>
-    <div 
-      className={`flight-card bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all duration-300 cursor-pointer ${
-        isSelected && !isSelectingReturn ? 'ring-2 ring-green-500 bg-green-50 transform scale-[1.02]' : 'hover:scale-[1.01]'
-      }`}
-      // Removido clique para abrir classes
+    <article
+      role="article"
+      aria-labelledby={`flight-${(flight as any).flightId || Math.random()}-title`}
+      className={`
+        bg-white transition-all duration-200 ease-out
+        ${isSelected && !isSelectingReturn ? 'ring-2 bg-green-50' : ''}
+        ${!isFinalSummary ? 'hover:-translate-y-0.5' : 'opacity-90'}
+      `}
+      style={{
+        borderRadius: designSystem.radii.lg,
+        boxShadow: designSystem.shadows.card,
+        border: `1px solid ${designSystem.colors.border}`,
+        minHeight: '100px',
+        maxHeight: '120px',
+      }}
+      onMouseEnter={(e) => {
+        if (!isFinalSummary) {
+          (e.currentTarget as HTMLElement).style.boxShadow = designSystem.shadows.cardHover;
+        }
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = designSystem.shadows.card;
+      }}
     >
-      {/* Modern Flight Card Layout */}
-      <div className="p-3 md:p-6">
-        {/* Header with Airline and Price */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-          <div className="flex items-center space-x-4">
-            {/* Airline Logo - Large and Prominent */}
-            {(() => {
-              const airlineName = getFlightAirlineName(flight);
-              const logo = getAirlineLogo(airlineName);
-              if (!logo) return null;
-              const display = getDisplayAirlineName(airlineName);
-              return (
-                <div className="bg-white rounded-lg p-3 shadow-md border border-gray-100">
-                  <img
-                    src={logo}
-                    alt={display}
-                    className="object-contain filter brightness-100 contrast-100"
+      <div style={{ padding: designSystem.spacing.md }}>
+        {/* Grid: Logo+Info | Route | Price+Actions */}
+        <div
+          className="grid grid-cols-1 lg:grid-cols-[35%_40%_25%] items-center"
+          style={{ gap: designSystem.spacing.md }}
+        >
+
+          {/* COL 1: Logo + Badge + Horários */}
+          <div className="flex items-center" style={{ gap: designSystem.spacing.sm }}>
+            {/* Logo compacto padronizado */}
+            <AirlineLogo flight={normalizedFlight} />
+
+            {/* Badge + Horários */}
+            <div className="flex-1 min-w-0">
+              {/* Badge compacto Design System */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '2px 8px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  borderRadius: '4px',
+                  backgroundColor: flight.isMiles ? '#DBEAFE' : '#FEF3C7',
+                  color: flight.isMiles ? '#1E40AF' : '#92400E',
+                  marginBottom: '4px',
+                }}
+              >
+                {flight.isMiles ? 'Milhas' : 'Dinheiro'}
+              </div>
+
+              {/* Horário de partida - Tipografia correta */}
+              <div className="flex items-baseline" style={{ gap: designSystem.spacing.xs }}>
+                <span
+                  className="font-bold leading-none"
+                  style={{
+                    fontSize: '28px',
+                    color: designSystem.colors.textPrimary,
+                    letterSpacing: '-0.5px'
+                  }}
+                >
+                  {(() => {
+                    if ((flight as any).departureDate) {
+                      return extractTimeFromMoblixData(flight as any, 'departure');
+                    }
+                    if (flight.segments && flight.segments.length > 0) {
+                      return extractTimeFromMoblixData(flight.segments[0], 'departure');
+                    }
+                    return '--:--';
+                  })()}
+                </span>
+                <span
+                  className="font-medium tracking-wide"
+                  style={{
+                    fontSize: '14px',
+                    color: designSystem.colors.textSecondary
+                  }}
+                >
+                  {fromLabel || flight.Origem || 'GRU'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* COL 2: Linha de conexão + Duração */}
+          <div className="flex items-center justify-center">
+            <div className="flex-1 flex flex-col items-center gap-1">
+              {/* Timeline - linha fina com bolinha */}
+              <div className="relative w-full" style={{ margin: `${designSystem.spacing.xs} 0` }}>
+                <div className="absolute inset-0 flex items-center">
+                  <div
                     style={{
-                      width: '80px',
-                      height: '40px',
-                      transform: airlineName === 'Azul' ? 'scale(1.5)' : 'scale(1)'
+                      width: '100%',
+                      height: '1px',
+                      backgroundColor: designSystem.colors.border
                     }}
-                    title={display}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                    }}
-                  />
+                  ></div>
                 </div>
-              );
-            })()}
-            
-            {/* Flight Type Badge */}
-            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-              flight.isMiles 
-                ? 'bg-blue-100 text-blue-800' 
-                : 'bg-green-100 text-green-800'
-            }`}>
-              {flight.isMiles ? ' Milhas' : ' Dinheiro'}
-            </div>
-          </div>
-          {/* Price - Large and Prominent */}
-          <div className="text-right w-full sm:w-auto">
-            <div className="text-sm text-gray-600 mb-1">
-              {flight.isMiles ? 'Milhas' : 'Dinheiro'}
-            </div>
-            <div className="text-xl sm:text-2xl font-bold text-gray-900 break-words">
-              {(() => {
-                const price = flight.priceWithTax || flight.price || flight.totalPrice || 0;
-                console.log('🔍 FlightResultCard - Exibindo preço:', {
-                  isMiles: flight.isMiles,
-                  price: price,
-                  priceWithTax: flight.priceWithTax,
-                  totalPrice: flight.totalPrice,
-                  flightId: flight.flightId,
-                  segments: flight.segments?.length
-                });
-                return flight.isMiles 
-                  ? formatMiles(price)
-                  : formatCurrency(price);
-              })()}
-            </div>
-            <div className="text-sm text-gray-500">por pessoa</div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Flight Route - Clean and Modern */}
-      <div className="bg-white rounded-lg p-3 md:p-4">
-        <div className="flex items-center justify-between gap-2">
-          {/* Departure */}
-          <div className="text-center flex-shrink-0">
-            <div className="text-xl sm:text-2xl font-bold text-gray-900">
-              {(() => {
-                // Tentar pegar de múltiplas fontes
-                if ((flight as any).departureDate) {
-                  return extractTimeFromMoblixData(flight as any, 'departure');
-                }
-                if (flight.segments && flight.segments.length > 0) {
-                  return extractTimeFromMoblixData(flight.segments[0], 'departure');
-                }
-                return '--:--';
-              })()}
-            </div>
-            <div className="text-sm font-medium text-gray-600">
-              {fromLabel
-                ? fromLabel
-                : (() => {
-                    // Prioridade: dados diretos do voo, depois segments, depois legs
-                    console.log('🔍 DEBUG DEPARTURE:', {
-                      'flight.Origem': flight.Origem,
-                      'flight.departure': (flight as any).departure,
-                      'flight.origem': (flight as any).origem,
-                      'segments': flight.segments,
-                      'firstSegment': flight.segments?.[0],
-                      'firstSegment.departure': flight.segments?.[0]?.departure,
-                      'firstSegment.Origem': flight.segments?.[0]?.Origem
-                    });
-                    if (flight.Origem) return flight.Origem;
-                    if ((flight as any).departure) return (flight as any).departure;
-                    if ((flight as any).origem) return (flight as any).origem;
-                    if (flight.segments && flight.segments.length > 0) {
-                      const firstSegment = flight.segments[0];
-                      if (firstSegment.departure) return firstSegment.departure;
-                      if (firstSegment.Origem) return firstSegment.Origem;
-                      if (firstSegment.origem) return firstSegment.origem;
-                      if (firstSegment.legs?.[0]?.departure) return firstSegment.legs[0].departure;
-                    }
-                    return 'GRU';
-                  })()
-              }
-            </div>
-          </div>
-
-          {/* Flight Path */}
-          <div className="flex-1 mx-2 sm:mx-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t-2 border-dashed border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center">
-                <div className="bg-gray-400 rounded-full p-1.5 sm:p-2">
-                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" />
-                  </svg>
+                <div className="relative flex justify-center">
+                  <div
+                    className="flex items-center justify-center"
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      backgroundColor: '#FFFFFF',
+                      boxShadow: designSystem.shadows.sm,
+                      border: `2px solid ${designSystem.colors.border}`
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: designSystem.colors.textMuted
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="text-center mt-2">
-              <div className="text-xs text-gray-600">
-                {getTotalDuration(flight.segments)}
-              </div>
-              <div className="text-xs text-gray-600 font-medium">
-                {flight.segments && flight.segments.length > 1 
-                  ? `${flight.segments.length - 1} conexão${flight.segments.length - 1 > 1 ? 'ões' : ''}`
-                  : 'Direto'
-                }
-              </div>
-            </div>
-          </div>
 
-          {/* Arrival */}
-          <div className="text-center flex-shrink-0">
-            <div className="text-xl sm:text-2xl font-bold text-gray-900">
-              {(() => {
-                // Tentar pegar de múltiplas fontes
-                if ((flight as any).arrivalDate) {
-                  return extractTimeFromMoblixData(flight as any, 'arrival');
-                }
-                if (flight.segments && flight.segments.length > 0) {
-                  return extractTimeFromMoblixData(flight.segments[flight.segments.length - 1], 'arrival');
-                }
-                return '--:--';
-              })()}
-            </div>
-            <div className="text-sm font-medium text-gray-600">
-              {toLabel
-                ? toLabel
-                : (() => {
-                    // Prioridade: dados diretos do voo, depois segments, depois legs
-                    if (flight.Destino) return flight.Destino;
-                    if ((flight as any).arrival) return (flight as any).arrival;
-                    if ((flight as any).destino) return (flight as any).destino;
-                    if (flight.segments && flight.segments.length > 0) {
-                      const lastSegment = flight.segments[flight.segments.length - 1];
-                      if (lastSegment.arrival) return lastSegment.arrival;
-                      if (lastSegment.Destino) return lastSegment.Destino;
-                      if (lastSegment.destino) return lastSegment.destino;
-                      if (lastSegment.legs && lastSegment.legs.length > 0) {
-                        const lastLeg = lastSegment.legs[lastSegment.legs.length - 1];
-                        if (lastLeg.arrival) return lastLeg.arrival;
-                      }
+              {/* Duração e Conexões - Tipografia correta */}
+              <div className="text-center" style={{ marginTop: designSystem.spacing.xs }}>
+                <div
+                  className="font-medium"
+                  style={{
+                    fontSize: '13px',
+                    color: designSystem.colors.textSecondary
+                  }}
+                >
+                  {getTotalDuration(flight.segments)}
+                </div>
+                <div
+                  style={{
+                    fontSize: '12px',
+                    color: designSystem.colors.textMuted,
+                    marginTop: '2px'
+                  }}
+                >
+                  {flight.segments && flight.segments.length > 1
+                    ? `${flight.segments.length - 1} conexão${flight.segments.length - 1 > 1 ? 'ões' : ''}`
+                    : 'Direto'
+                  }
+                </div>
+              </div>
+
+              {/* Horário de chegada - Tipografia correta */}
+              <div className="flex items-baseline" style={{ gap: designSystem.spacing.xs }}>
+                <span
+                  className="font-bold leading-none"
+                  style={{
+                    fontSize: '28px',
+                    color: designSystem.colors.textPrimary,
+                    letterSpacing: '-0.5px'
+                  }}
+                >
+                  {(() => {
+                    if ((flight as any).arrivalDate) {
+                      return extractTimeFromMoblixData(flight as any, 'arrival');
                     }
-                    return 'CNF';
-                  })()
-              }
+                    if (flight.segments && flight.segments.length > 0) {
+                      return extractTimeFromMoblixData(flight.segments[flight.segments.length - 1], 'arrival');
+                    }
+                    return '--:--';
+                  })()}
+                </span>
+                <span
+                  className="font-medium tracking-wide"
+                  style={{
+                    fontSize: '14px',
+                    color: designSystem.colors.textSecondary
+                  }}
+                >
+                  {toLabel || flight.Destino || 'CNF'}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Price and Action Section */}
-      <div className="mt-6 bg-gray-50 rounded-lg p-3 md:p-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start mb-4 gap-2">
-          {/* Left side - Selection message */}
-          <div className="text-sm text-gray-600">{selectionMessage}</div>
-          {/* Right side - Price offers info */}
-          <div className="text-left sm:text-right">
-            <div className="flex justify-start sm:justify-end mb-2">
+          {/* COL 3: Preço + Botões */}
+          <div className="flex flex-col items-end justify-center gap-2">
+            {/* Preço - Tipografia correta */}
+            <div className="text-right">
+              <div
+                className="font-bold leading-tight"
+                style={{
+                  fontSize: '24px',
+                  color: designSystem.colors.textPrimary,
+                  letterSpacing: '-0.5px'
+                }}
+              >
+                {(() => {
+                  const price = flight.priceWithTax || flight.price || flight.totalPrice || 0;
+                  return flight.isMiles
+                    ? formatMiles(price)
+                    : formatCurrency(price);
+                })()}
+              </div>
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: designSystem.colors.textMuted,
+                  marginTop: '4px'
+                }}
+              >
+                por pessoa
+              </div>
             </div>
-            <div className="text-xs text-gray-500 mb-1">{getOffersMessage(flight)}</div>
+
+            {/* Botões - Design System com Fallback */}
+            {!isFinalSummary && (
+              <div style={{ marginTop: designSystem.spacing.sm }}>
+                {onChooseOutbound ? (
+                  <button
+                    onClick={handleChooseOutbound}
+                    className="font-semibold transition-colors"
+                    style={{
+                      width: '100%',
+                      height: '44px',
+                      borderRadius: designSystem.radii.md,
+                      backgroundColor: designSystem.colors.success,
+                      color: '#FFFFFF',
+                      fontSize: '14px',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.success;
+                    }}
+                  >
+                    Escolher
+                  </button>
+                ) : onChooseReturn ? (
+                  <button
+                    onClick={handleChooseReturn}
+                    className="font-semibold transition-colors"
+                    style={{
+                      width: '100%',
+                      height: '44px',
+                      borderRadius: designSystem.radii.md,
+                      backgroundColor: designSystem.colors.success,
+                      color: '#FFFFFF',
+                      fontSize: '14px',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.success;
+                    }}
+                  >
+                    Escolher
+                  </button>
+                ) : (
+                  /* Fallback CTA quando não há handlers do pai */
+                  <button
+                    onClick={handleViewMore}
+                    className="font-semibold transition-colors"
+                    style={{
+                      width: '100%',
+                      height: '44px',
+                      borderRadius: designSystem.radii.md,
+                      backgroundColor: designSystem.colors.primary,
+                      color: designSystem.colors.accent,
+                      fontSize: '14px',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+                    }}
+                  >
+                    Ver Detalhes
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
-        {/* Botões */}
-        <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
-          {/* 'Ver Classes' removido */}
-          
-          {/* Botão Escolher - fase de IDA */}
-          {onChooseOutbound && !isFinalSummary && (
-            <button
-              onClick={handleChooseOutbound}
-              className="px-6 py-2 rounded-lg font-medium text-sm transition-all duration-200 bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:scale-105 flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              Escolher voo de ida
-            </button>
-          )}
-          
-          {/* Botão Escolher - fase de VOLTA */}
-          {onChooseReturn && !isFinalSummary && (
-            <button
-              onClick={handleChooseReturn}
-              className="px-6 py-2 rounded-lg font-medium text-sm transition-all duration-200 bg-green-600 text-white hover:bg-green-700 hover:shadow-lg transform hover:scale-105 flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
-              Escolher voo
-            </button>
-          )}
-          
-          <button
-            onClick={handleViewMore}
-            className="px-6 py-2 rounded-lg text-sm transition-all duration-200 bg-white text-black border-2 border-gray-300 hover:border-gray-400 hover:shadow-lg"
-          >
-            Entre no site da companhia
-          </button>
-        </div>
       </div>
-    </div>
-  
-  {/* Modal de classes removido */}
-  
-  {/* Modal de Confirmação de Compra */}
-  {showPurchaseModal && airlineClickData && (
-      <PurchaseConfirmationModal
-        isOpen={showPurchaseModal}
-        onClose={() => setShowPurchaseModal(false)}
-        onConfirmPurchase={handlePurchaseConfirmation}
-        onDenyPurchase={handlePurchaseDenial}
-        flightInfo={{
-          airline: airlineClickData.airline,
-          route: airlineClickData.route,
-          date: airlineClickData.date,
-          price: airlineClickData.price,
-          isMiles: airlineClickData.isMiles, // Adicionado para formatação correta
-          isRoundTrip: !localStorage.getItem('soIda') || localStorage.getItem('soIda') === 'false',
-          isReturnFlight: false // Sempre false para voo de ida
-        }}
-      />
-    )}
-    
-    {/* Modal de Orientação para Milhas */}
-    {showMilesGuidanceModal && (
-      <MilesGuidanceModal
-        isOpen={showMilesGuidanceModal}
-        onClose={() => setShowMilesGuidanceModal(false)}
-        onContinueToSite={handleContinueToAirlineSite}
-        flightInfo={{
-          airline: (flight as any).validatingBy?.name || (flight as any).segments?.[0]?.legs?.[0]?.operatedBy?.name || flight.airline,
-          route: `${flight.Origem || flight.segments?.[0]?.departure || flight.segments?.[0]?.Origem || flight.segments?.[0]?.origem || 'GRU'} → ${flight.Destino || flight.segments?.[flight.segments?.length - 1]?.arrival || flight.segments?.[flight.segments?.length - 1]?.Destino || flight.segments?.[flight.segments?.length - 1]?.destino || 'CNF'}`,
-          date: flight.segments?.[0]?.departureDate ? new Date(flight.segments[0].departureDate).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
-          miles: flight.priceWithTax || flight.price || flight.totalPrice || 0,
-          url: '#'
-        }}
-      />
-    )}
+    </article>
+
+      {/* Modals */}
+      {showPurchaseModal && airlineClickData && (
+        <PurchaseConfirmationModal
+          isOpen={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          onConfirmPurchase={handlePurchaseConfirmation}
+          onDenyPurchase={handlePurchaseDenial}
+          flightInfo={{
+            airline: airlineClickData.airline,
+            route: airlineClickData.route,
+            date: airlineClickData.date,
+            price: airlineClickData.price,
+            isMiles: airlineClickData.isMiles,
+            isRoundTrip: !localStorage.getItem('soIda') || localStorage.getItem('soIda') === 'false',
+            isReturnFlight: false
+          }}
+        />
+      )}
+
+      {/* Modal de Orientação para Milhas */}
+      {showMilesGuidanceModal && (
+        <MilesGuidanceModal
+          isOpen={showMilesGuidanceModal}
+          onClose={() => setShowMilesGuidanceModal(false)}
+          onContinueToSite={handleContinueToAirlineSite}
+          flightInfo={{
+            airline: (flight as any).validatingBy?.name || (flight as any).segments?.[0]?.legs?.[0]?.operatedBy?.name || flight.airline,
+            route: `${flight.Origem || flight.segments?.[0]?.departure || flight.segments?.[0]?.Origem || flight.segments?.[0]?.origem || 'GRU'} → ${flight.Destino || flight.segments?.[flight.segments?.length - 1]?.arrival || flight.segments?.[flight.segments?.length - 1]?.Destino || flight.segments?.[flight.segments?.length - 1]?.destino || 'CNF'}`,
+            date: flight.segments?.[0]?.departureDate ? new Date(flight.segments[0].departureDate).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+            miles: flight.priceWithTax || flight.price || flight.totalPrice || 0,
+            url: '#'
+          }}
+        />
+      )}
     </div>
   );
 };
