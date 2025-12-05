@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import { UserProvider } from './context/UserContext';
 import { SelectionProvider } from './context/SelectionContext';
 import Navbar from './components/Navbar';
 import AppRoutes from './routes/AppRoutes';
@@ -26,25 +27,27 @@ function Layout() {
 function App() {
   return (
     <AuthProvider>
-      <SelectionProvider>
-        <Router>
-          <Routes>
-            <Route path="/*" element={<Layout />}>
-              <Route path="*" element={<AppRoutes />} />
-            </Route>
-          </Routes>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 5000,
-              style: {
-                background: '#374151',
-                color: '#f8fafc',
-              },
-            }}
-          />
-        </Router>
-      </SelectionProvider>
+      <UserProvider>
+        <SelectionProvider>
+          <Router>
+            <Routes>
+              <Route path="/*" element={<Layout />}>
+                <Route path="*" element={<AppRoutes />} />
+              </Route>
+            </Routes>
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 5000,
+                style: {
+                  background: '#374151',
+                  color: '#f8fafc',
+                },
+              }}
+            />
+          </Router>
+        </SelectionProvider>
+      </UserProvider>
     </AuthProvider>
   );
 }

@@ -61,7 +61,10 @@ export default function PricingCard({
           </div>
 
           {price && (
-            <p className="text-[clamp(22px,3vw,28px)] font-bold text-[var(--ds-text-primary)] mt-[var(--ds-spacing-xs)]">
+            <p
+              className="text-[clamp(22px,3vw,28px)] font-bold text-[var(--ds-text-primary)]"
+              style={{ marginTop: 'calc(var(--ds-spacing-xs) * 1.5)' }}
+            >
               {price}{" "}
               <span className="text-[13px] text-[var(--ds-text-muted)]">{priceSub}</span>
             </p>
@@ -79,16 +82,29 @@ export default function PricingCard({
       </ul>
 
       <div className="mt-[var(--ds-spacing-md)] flex gap-[var(--ds-spacing-sm)]">
-        <button
-          onClick={ctaPrimary.onClick}
-          className="flex-1 py-[var(--ds-spacing-sm)] rounded-[var(--ds-radius-md)] text-[var(--ds-neutral-100)] font-semibold bg-[var(--ds-brand-dark)] shadow-[var(--ds-shadow-card)] hover:shadow-[var(--ds-shadow-card-hover)] hover:-translate-y-0.5 transition-all duration-200"
-        >
-          {ctaPrimary.label}
-        </button>
+        {ctaPrimary.href ? (
+          <a
+            href={ctaPrimary.href}
+            target={ctaPrimary.href.startsWith('http') ? '_blank' : undefined}
+            rel={ctaPrimary.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+            className="flex-1 py-[var(--ds-spacing-sm)] rounded-[var(--ds-radius-md)] text-[var(--ds-neutral-100)] font-semibold bg-[var(--ds-brand-dark)] shadow-[var(--ds-shadow-card)] hover:shadow-[var(--ds-shadow-card-hover)] hover:-translate-y-0.5 transition-all duration-200 text-center flex items-center justify-center"
+          >
+            {ctaPrimary.label}
+          </a>
+        ) : (
+          <button
+            onClick={ctaPrimary.onClick}
+            className="flex-1 py-[var(--ds-spacing-sm)] rounded-[var(--ds-radius-md)] text-[var(--ds-neutral-100)] font-semibold bg-[var(--ds-brand-dark)] shadow-[var(--ds-shadow-card)] hover:shadow-[var(--ds-shadow-card-hover)] hover:-translate-y-0.5 transition-all duration-200"
+          >
+            {ctaPrimary.label}
+          </button>
+        )}
 
         {ctaSecondary && (
           <a
             href={ctaSecondary.href}
+            target={ctaSecondary.href?.startsWith('http') ? '_blank' : undefined}
+            rel={ctaSecondary.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
             className="px-[var(--ds-spacing-md)] py-[var(--ds-spacing-sm)] rounded-[var(--ds-radius-md)] border border-[var(--ds-neutral-light)] text-[var(--ds-brand-dark)] hover:bg-[var(--ds-neutral-light)] transition-colors duration-200"
           >
             {ctaSecondary.label}

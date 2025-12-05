@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(node test-supabase-connection.js:*)",
+      "Bash(node check-supabase-schema.js:*)",
+      "Bash(node validate-schema.js:*)",
+      "Bash(node test-corrected-schemas.js:*)",
+      "Bash(node check-rls-policies.js:*)",
+      "Bash(node test-manual-insert.js:*)",
+      "Bash(node:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

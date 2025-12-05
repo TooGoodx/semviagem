@@ -47,3 +47,17 @@ resposta-*.json
 lovable-launchpad/
 semviagem-mirror.git/
 *.git/
+
+# Debug and test files (Sprint 1 cleanup)
+test-*.js
+test-*.mjs
+test-*.cjs
+debug-*.js
+*-debug.*
+fix-*.sql
+cleanup-*.sql
+*DEBUG*.md
+*INVESTIGATION*.md
+*ACTION_REQUIRED*.md
+*PUBLISHABLE_KEY*.md
+*README_INVESTIGATION*.md

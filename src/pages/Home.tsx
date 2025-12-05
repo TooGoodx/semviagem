@@ -1736,12 +1736,12 @@ const Home: React.FC = () => {
                 "Busca ilimitada de voos com milhas e dinheiro",
                 "Comparação automática de tarifas reais",
               ]}
-              ctaPrimary={{ label: "Quero Buscar Passagens", href: "https://buy.stripe.com/00w8wR9gpgBRfjpcsFdMI04" }}
+              ctaPrimary={{ label: "Quero Buscar Passagens", href: "https://buy.stripe.com/cNibJ3eAJetJ0ovfERdMI05" }}
             />
 
             <PricingCard
               variant="alertas"
-              title="AI Agent Alertas"
+              title="Alertas Inteligentes (AI)"
               badge="MAIS POPULAR"
               price="R$ 29,90"
               priceSub="/mês"
@@ -1770,29 +1770,58 @@ const Home: React.FC = () => {
       </section>
 
       {/* Impact Section */}
-      <section id="impacto" className="py-32 px-4" style={{backgroundColor: '#E4E4E4'}}>
+      <section id="impacto" className="py-[var(--ds-spacing-2xl)] px-[var(--ds-spacing-lg)]" style={{backgroundColor: '#F8F9FA'}}>
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6" style={{ color: designSystem.colors.textPrimary }}>Enquanto você viaja, você ajuda na educação das nossas crianças!</h2>
+          <div className="text-center mb-[var(--ds-spacing-2xl)]">
+            <h2 className="text-[clamp(24px,3.5vw,32px)] font-bold mb-[var(--ds-spacing-md)] leading-tight" style={{ color: 'var(--ds-text-primary)' }}>
+              Enquanto você viaja, você ajuda na educação das nossas crianças!
+            </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 text-center mb-12">
-            <div className="bg-white p-6 rounded-lg shadow-lg" style={{ borderBottom: `4px solid ${designSystem.colors.accent}` }}>
-              <div className="text-4xl font-bold mb-2" style={{ color: designSystem.colors.accentBlue }}>150+</div>
-              <div style={{ color: designSystem.colors.textSecondary }}>Projetos Apoiados</div>
+          <div className="grid md:grid-cols-3 gap-[var(--ds-spacing-lg)] text-center mb-12 max-w-5xl mx-auto">
+            <div
+              className="bg-[var(--ds-neutral-100)] p-[var(--ds-spacing-xl)] text-center transition-all duration-300 hover:-translate-y-1"
+              style={{
+                borderRadius: 'var(--ds-radius-lg)',
+                boxShadow: 'var(--ds-shadow-card)',
+                borderBottom: '3px solid var(--ds-brand-yellow)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = 'var(--ds-shadow-card-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'var(--ds-shadow-card)'}
+            >
+              <div className="text-[clamp(32px,4vw,48px)] font-extrabold mb-[var(--ds-spacing-sm)]" style={{ color: 'var(--ds-brand-blue)' }}>150+</div>
+              <div className="text-[clamp(14px,1.2vw,16px)] font-semibold" style={{ color: 'var(--ds-text-primary)' }}>Projetos Apoiados</div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg" style={{ borderBottom: `4px solid ${designSystem.colors.accent}` }}>
-              <div className="text-4xl font-bold mb-2" style={{ color: designSystem.colors.accent }}>50k+</div>
-              <div style={{ color: designSystem.colors.textSecondary }}>Vidas Impactadas</div>
+            <div
+              className="bg-[var(--ds-neutral-100)] p-[var(--ds-spacing-xl)] text-center transition-all duration-300 hover:-translate-y-1"
+              style={{
+                borderRadius: 'var(--ds-radius-lg)',
+                boxShadow: 'var(--ds-shadow-card)',
+                borderBottom: '3px solid var(--ds-brand-yellow)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = 'var(--ds-shadow-card-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'var(--ds-shadow-card)'}
+            >
+              <div className="text-[clamp(32px,4vw,48px)] font-extrabold mb-[var(--ds-spacing-sm)]" style={{ color: 'var(--ds-brand-blue)' }}>50k+</div>
+              <div className="text-[clamp(14px,1.2vw,16px)] font-semibold" style={{ color: 'var(--ds-text-primary)' }}>Vidas Impactadas</div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg" style={{ borderBottom: `4px solid ${designSystem.colors.accent}` }}>
-              <div className="text-4xl font-bold mb-2" style={{ color: designSystem.colors.accentBlue }}>R$ 2M+</div>
-              <div style={{ color: designSystem.colors.textSecondary }}>Investidos em Comunidades</div>
+            <div
+              className="bg-[var(--ds-neutral-100)] p-[var(--ds-spacing-xl)] text-center transition-all duration-300 hover:-translate-y-1"
+              style={{
+                borderRadius: 'var(--ds-radius-lg)',
+                boxShadow: 'var(--ds-shadow-card)',
+                borderBottom: '3px solid var(--ds-brand-yellow)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = 'var(--ds-shadow-card-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'var(--ds-shadow-card)'}
+            >
+              <div className="text-[clamp(32px,4vw,48px)] font-extrabold mb-[var(--ds-spacing-sm)]" style={{ color: 'var(--ds-brand-blue)' }}>R$ 2M+</div>
+              <div className="text-[clamp(14px,1.2vw,16px)] font-semibold" style={{ color: 'var(--ds-text-primary)' }}>Investidos em Comunidades</div>
             </div>
           </div>
-          
+
           <div className="text-center">
-            <p className="text-lg max-w-4xl mx-auto" style={{ color: designSystem.colors.textSecondary }}>
+            <p className="text-[clamp(14px,1.1vw,15px)] max-w-4xl mx-auto" style={{ color: 'var(--ds-text-muted)', marginTop: 'var(--ds-spacing-lg)' }}>
               Cada passagem comprada contribui diretamente para projetos que transformam vidas
             </p>
           </div>
@@ -1800,80 +1829,100 @@ const Home: React.FC = () => {
       </section>
 
       {/* Partners Section */}
-      <section id="parceiros" className="py-16 px-4 bg-slate-50">
-        <div className="container mx-auto">
-          <h3 className="text-center text-lg font-semibold text-gray-600 mb-8">
+      <section id="parceiros" className="py-[var(--ds-spacing-xl)] px-[var(--ds-spacing-lg)]" style={{ backgroundColor: '#FAFBFC' }}>
+        <div className="container mx-auto max-w-6xl">
+          <h3 className="text-center text-[clamp(15px,1.2vw,17px)] font-semibold mb-[var(--ds-spacing-lg)]" style={{ color: 'var(--ds-text-muted)' }}>
             As melhores cias aéreas, 15 países, 127 aeroportos e continuamos adicionando destinos!
           </h3>
-          <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-8">
+          <div className="flex flex-wrap justify-center items-center gap-[var(--ds-spacing-lg)]">
             <img
               src="/logos/latam.png"
               alt="LATAM"
-              className="h-10 transition-all"
+              className="h-10 transition-all duration-200 opacity-70 hover:opacity-100"
             />
             <img
               src="/logos/azul.png"
               alt="Azul"
-              className="h-10 transition-all"
+              className="h-10 transition-all duration-200 opacity-70 hover:opacity-100"
             />
             <img
               src="/logos/gol.png"
               alt="GOL"
-              className="h-10 transition-all"
+              className="h-10 transition-all duration-200 opacity-70 hover:opacity-100"
             />
             <img
               src="/logos/american-airlines.svg"
               alt="American Airlines"
-              className="h-10 transition-all"
+              className="h-10 transition-all duration-200 opacity-70 hover:opacity-100"
             />
             <img
               src="/logos/tap.png"
               alt="TAP"
-              className="h-10 transition-all object-contain"
+              className="h-10 transition-all duration-200 opacity-70 hover:opacity-100 object-contain"
             />
             <img
               src="/logos/copa.png"
               alt="Copa Airlines"
-              className="h-10 transition-all"
+              className="h-10 transition-all duration-200 opacity-70 hover:opacity-100"
             />
             <img
               src="/logos/iberia.png"
               alt="Iberia"
-              className="h-10 transition-all"
+              className="h-10 transition-all duration-200 opacity-70 hover:opacity-100"
             />
             <img
               src="/logos/interline-azul.png"
               alt="Interline Azul"
-              className="h-10 transition-all"
+              className="h-10 transition-all duration-200 opacity-70 hover:opacity-100"
             />
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-20 px-4" style={{backgroundColor: '#FFFFFF'}}>
+      <section id="faq" className="py-[var(--ds-spacing-2xl)] px-[var(--ds-spacing-lg)]" style={{backgroundColor: 'var(--ds-neutral-100)'}}>
         <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4" style={{ color: designSystem.colors.textPrimary }}>FAQ Atualizado</h2>
-            <p className="text-xl" style={{ color: designSystem.colors.textSecondary }}>Tire suas dúvidas sobre nossa plataforma e serviços</p>
+          <div className="text-center mb-[var(--ds-spacing-2xl)]">
+            <h2 className="text-[clamp(28px,4vw,36px)] font-bold mb-4" style={{ color: 'var(--ds-text-primary)' }}>FAQ Atualizado</h2>
+            <p className="text-[clamp(16px,1.3vw,20px)]" style={{ color: 'var(--ds-text-muted)' }}>Tire suas dúvidas sobre nossa plataforma e serviços</p>
           </div>
 
-          <Accordion type="single" collapsible className="w-full space-y-4" style={{ '--accordion-icon-color': designSystem.colors.accentBlue } as any}>
-            <AccordionItem value="item-1" className="border border-gray-200 rounded-lg px-6 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
+          <Accordion type="single" collapsible className="w-full space-y-[var(--ds-spacing-sm)]" style={{ '--accordion-icon-color': designSystem.colors.accentBlue } as any}>
+            <AccordionItem
+              value="item-1"
+              className="border px-[var(--ds-spacing-lg)] transition-all duration-200 overflow-hidden"
+              style={{
+                borderColor: 'var(--ds-border)',
+                borderRadius: 'var(--ds-radius-lg)',
+                backgroundColor: 'var(--ds-neutral-100)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(240,199,47,0.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--ds-neutral-100)'}
+            >
+              <AccordionTrigger className="text-left font-semibold text-[clamp(14px,1.2vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>
                 O que é a Conta PRO SemViagem?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>
+              <AccordionContent className="pt-2 text-[14px] leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
                 É uma assinatura mensal de R$29,99 que dá acesso a resultados ilimitados, alertas inteligentes e
                 promoções exclusivas.
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-2" className="border border-gray-200 rounded-lg px-6 hover:bg-opacity-10 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
+            <AccordionItem
+              value="item-2"
+              className="border px-[var(--ds-spacing-lg)] transition-all duration-200 overflow-hidden"
+              style={{
+                borderColor: 'var(--ds-border)',
+                borderRadius: 'var(--ds-radius-lg)',
+                backgroundColor: 'var(--ds-neutral-100)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(240,199,47,0.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--ds-neutral-100)'}
+            >
+              <AccordionTrigger className="text-left font-semibold text-[clamp(14px,1.2vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>
                 Como funciona o SemViagem?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>
+              <AccordionContent className="pt-2 text-[14px] leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
                 <p className="mb-3">
                   O SemViagem coleta dados de tráfego aéreo mundial em tempo real e disponibiliza passagens a preços
                   realmente baixos.
@@ -1889,27 +1938,57 @@ const Home: React.FC = () => {
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-3" className="border border-gray-200 rounded-lg px-6 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
+            <AccordionItem
+              value="item-3"
+              className="border px-[var(--ds-spacing-lg)] transition-all duration-200 overflow-hidden"
+              style={{
+                borderColor: 'var(--ds-border)',
+                borderRadius: 'var(--ds-radius-lg)',
+                backgroundColor: 'var(--ds-neutral-100)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(240,199,47,0.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--ds-neutral-100)'}
+            >
+              <AccordionTrigger className="text-left font-semibold text-[clamp(14px,1.2vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>
                 Como cada viagem gera impacto social?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>
+              <AccordionContent className="pt-2 text-[14px] leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
                 Parte da receita de cada passagem é destinada a projetos sociais e ambientais que apoiamos diretamente.
               </AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-4" className="border border-gray-200 rounded-lg px-6 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
+            <AccordionItem
+              value="item-4"
+              className="border px-[var(--ds-spacing-lg)] transition-all duration-200 overflow-hidden"
+              style={{
+                borderColor: 'var(--ds-border)',
+                borderRadius: 'var(--ds-radius-lg)',
+                backgroundColor: 'var(--ds-neutral-100)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(240,199,47,0.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--ds-neutral-100)'}
+            >
+              <AccordionTrigger className="text-left font-semibold text-[clamp(14px,1.2vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>
                 Quais métodos de pagamento são aceitos?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>Cartões de crédito.</AccordionContent>
+              <AccordionContent className="pt-2 text-[14px] leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>Cartões de crédito.</AccordionContent>
             </AccordionItem>
 
-            <AccordionItem value="item-5" className="border border-gray-200 rounded-lg px-6 hover:bg-gray-100 transition-colors">
-              <AccordionTrigger className="text-left font-semibold" style={{ color: designSystem.colors.textPrimary }}>
+            <AccordionItem
+              value="item-5"
+              className="border px-[var(--ds-spacing-lg)] transition-all duration-200 overflow-hidden"
+              style={{
+                borderColor: 'var(--ds-border)',
+                borderRadius: 'var(--ds-radius-lg)',
+                backgroundColor: 'var(--ds-neutral-100)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(240,199,47,0.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--ds-neutral-100)'}
+            >
+              <AccordionTrigger className="text-left font-semibold text-[clamp(14px,1.2vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>
                 Posso cancelar minha assinatura a qualquer momento?
               </AccordionTrigger>
-              <AccordionContent className="pt-2" style={{ color: designSystem.colors.textPrimary }}>
+              <AccordionContent className="pt-2 text-[14px] leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
                 Sim, você pode cancelar diretamente pelo portal do cliente sem multas ou burocracia.
               </AccordionContent>
             </AccordionItem>
@@ -1934,55 +2013,73 @@ const Home: React.FC = () => {
         </div>
         
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6" style={{ color: designSystem.colors.textPrimary }}>📞 Entre em Contato</h2>
-            <p className="text-xl max-w-3xl mx-auto" style={{ color: designSystem.colors.textSecondary }}>
+          <div className="text-center mb-[var(--ds-spacing-2xl)]">
+            <h2 className="text-[clamp(28px,4vw,36px)] font-bold mb-[var(--ds-spacing-md)]" style={{ color: 'var(--ds-text-primary)' }}>📞 Entre em Contato</h2>
+            <p className="text-[clamp(16px,1.3vw,20px)] max-w-3xl mx-auto" style={{ color: 'var(--ds-text-muted)' }}>
               Estamos aqui para ajudar você a planejar sua próxima viagem. Entre em contato conosco!
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12">
+          <div className="grid md:grid-cols-2 gap-[var(--ds-spacing-2xl)]">
             {/* Contact Information */}
-            <div className="space-y-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Informações de Contato</h3>
-              
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: designSystem.colors.accent }}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" style={{ stroke: designSystem.colors.primary }}>
+            <div className="space-y-[var(--ds-spacing-lg)]">
+              <h3 className="text-[clamp(20px,2vw,24px)] font-bold mb-[var(--ds-spacing-md)]" style={{ color: 'var(--ds-text-primary)' }}>Informações de Contato</h3>
+
+              <div className="space-y-[var(--ds-spacing-md)]">
+                <div className="flex items-start gap-[var(--ds-spacing-md)]">
+                  <div
+                    className="w-14 h-14 flex items-center justify-center flex-shrink-0"
+                    style={{
+                      backgroundColor: 'var(--ds-brand-yellow)',
+                      borderRadius: 'var(--ds-radius-md)'
+                    }}
+                  >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" style={{ stroke: 'var(--ds-brand-dark)' }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900">E-mail</h4>
-                    <p className="text-gray-600">contato@semviagem.com.br</p>
-                    <p className="text-sm text-gray-500">Resposta em até 24 horas</p>
+                    <h4 className="text-[clamp(16px,1.3vw,18px)] font-semibold" style={{ color: 'var(--ds-text-primary)' }}>E-mail</h4>
+                    <p className="text-[clamp(14px,1.1vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>contato@semviagem.com.br</p>
+                    <p className="text-[13px] mt-[var(--ds-spacing-xs)]" style={{ color: 'var(--ds-text-muted)' }}>Resposta em até 24 horas</p>
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: designSystem.colors.accent }}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" style={{ stroke: designSystem.colors.primary }}>
+                <div className="flex items-start gap-[var(--ds-spacing-md)]">
+                  <div
+                    className="w-14 h-14 flex items-center justify-center flex-shrink-0"
+                    style={{
+                      backgroundColor: 'var(--ds-brand-yellow)',
+                      borderRadius: 'var(--ds-radius-md)'
+                    }}
+                  >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" style={{ stroke: 'var(--ds-brand-dark)' }}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900">Telefone</h4>
-                    <p className="text-gray-600">(11) 4040-4040</p>
-                    <p className="text-sm text-gray-500">Segunda a sexta, 9h às 18h</p>
+                    <h4 className="text-[clamp(16px,1.3vw,18px)] font-semibold" style={{ color: 'var(--ds-text-primary)' }}>Telefone</h4>
+                    <p className="text-[clamp(14px,1.1vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>(11) 4040-4040</p>
+                    <p className="text-[13px] mt-[var(--ds-spacing-xs)]" style={{ color: 'var(--ds-text-muted)' }}>Segunda a sexta, 9h às 18h</p>
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: designSystem.colors.accent }}>
-                    <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
+                <div className="flex items-start gap-[var(--ds-spacing-md)]">
+                  <div
+                    className="w-14 h-14 flex items-center justify-center flex-shrink-0"
+                    style={{
+                      backgroundColor: 'var(--ds-brand-yellow)',
+                      borderRadius: 'var(--ds-radius-md)'
+                    }}
+                  >
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: 'var(--ds-brand-dark)' }}>
                       <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.479 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900">WhatsApp</h4>
-                    <p className="text-gray-600">(31) 99733-4723</p>
-                    <p className="text-sm text-gray-500">Atendimento rápido e personalizado</p>
+                    <h4 className="text-[clamp(16px,1.3vw,18px)] font-semibold" style={{ color: 'var(--ds-text-primary)' }}>WhatsApp</h4>
+                    <p className="text-[clamp(14px,1.1vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>(31) 99733-4723</p>
+                    <p className="text-[13px] mt-[var(--ds-spacing-xs)]" style={{ color: 'var(--ds-text-muted)' }}>Atendimento rápido e personalizado</p>
                   </div>
                 </div>
               </div>
@@ -1990,53 +2087,119 @@ const Home: React.FC = () => {
 
             {/* Contact Form */}
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Envie sua Mensagem</h3>
-              <form className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
+              <h3 className="text-[clamp(20px,2vw,24px)] font-bold mb-[var(--ds-spacing-md)]" style={{ color: 'var(--ds-text-primary)' }}>Envie sua Mensagem</h3>
+              <form className="space-y-[var(--ds-spacing-md)]">
+                <div className="grid md:grid-cols-2 gap-[var(--ds-spacing-md)]">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Nome</label>
-                    <input 
-                      type="text" 
-                      id="name" 
-                      name="name" 
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:outline-none focus:border-blue-700"
+                    <label htmlFor="name" className="block text-[14px] font-medium mb-[var(--ds-spacing-xs)]" style={{ color: 'var(--ds-text-primary)' }}>Nome</label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      className="w-full px-[var(--ds-spacing-md)] py-[var(--ds-spacing-sm)] border transition-all duration-200 text-[14px] focus:outline-none"
+                      style={{
+                        borderColor: 'var(--ds-border)',
+                        borderRadius: 'var(--ds-radius-md)',
+                        backgroundColor: 'var(--ds-neutral-100)'
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--ds-brand-blue)';
+                        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(72, 150, 199, 0.1)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--ds-border)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
                       placeholder="Seu nome completo"
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
-                    <input 
-                      type="email" 
-                      id="email" 
-                      name="email" 
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:outline-none focus:border-blue-700"
+                    <label htmlFor="email" className="block text-[14px] font-medium mb-[var(--ds-spacing-xs)]" style={{ color: 'var(--ds-text-primary)' }}>E-mail</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      className="w-full px-[var(--ds-spacing-md)] py-[var(--ds-spacing-sm)] border transition-all duration-200 text-[14px] focus:outline-none"
+                      style={{
+                        borderColor: 'var(--ds-border)',
+                        borderRadius: 'var(--ds-radius-md)',
+                        backgroundColor: 'var(--ds-neutral-100)'
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--ds-brand-blue)';
+                        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(72, 150, 199, 0.1)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--ds-border)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
                       placeholder="seu@email.com"
                     />
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-900 mb-2">Assunto</label>
-                  <input 
-                    type="text" 
-                    id="subject" 
-                    name="subject" 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  <label htmlFor="subject" className="block text-[14px] font-medium mb-[var(--ds-spacing-xs)]" style={{ color: 'var(--ds-text-primary)' }}>Assunto</label>
+                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    className="w-full px-[var(--ds-spacing-md)] py-[var(--ds-spacing-sm)] border transition-all duration-200 text-[14px] focus:outline-none"
+                    style={{
+                      borderColor: 'var(--ds-border)',
+                      borderRadius: 'var(--ds-radius-md)',
+                      backgroundColor: 'var(--ds-neutral-100)'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--ds-brand-blue)';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(72, 150, 199, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--ds-border)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                     placeholder="Como podemos ajudar?"
                   />
                 </div>
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-900 mb-2">Mensagem</label>
-                  <textarea 
-                    id="message" 
-                    name="message" 
+                  <label htmlFor="message" className="block text-[14px] font-medium mb-[var(--ds-spacing-xs)]" style={{ color: 'var(--ds-text-primary)' }}>Mensagem</label>
+                  <textarea
+                    id="message"
+                    name="message"
                     rows={5}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:outline-none focus:border-blue-700"
+                    className="w-full px-[var(--ds-spacing-md)] py-[var(--ds-spacing-sm)] border transition-all duration-200 text-[14px] focus:outline-none resize-y"
+                    style={{
+                      borderColor: 'var(--ds-border)',
+                      borderRadius: 'var(--ds-radius-md)',
+                      backgroundColor: 'var(--ds-neutral-100)'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--ds-brand-blue)';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(72, 150, 199, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--ds-border)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                     placeholder="Descreva sua dúvida, sugestão ou como podemos te ajudar..."
                   ></textarea>
                 </div>
-                <button 
+                <button
                   type="submit"
-                  className="w-full py-3 px-6 rounded-lg transition-colors font-semibold bg-yellow-400 text-gray-900 hover:bg-yellow-500"
+                  className="w-full py-[var(--ds-spacing-sm)] px-[var(--ds-spacing-lg)] font-semibold transition-all duration-200"
+                  style={{
+                    backgroundColor: 'var(--ds-brand-dark)',
+                    color: 'var(--ds-neutral-100)',
+                    borderRadius: 'var(--ds-radius-md)',
+                    boxShadow: 'var(--ds-shadow-card)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.boxShadow = 'var(--ds-shadow-card-hover)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'var(--ds-shadow-card)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
                 >
                   Enviar Mensagem
                 </button>
@@ -2047,51 +2210,64 @@ const Home: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-16" style={{ backgroundColor: designSystem.colors.primary }}>
+      <footer
+        className="py-[var(--ds-spacing-2xl)] px-[var(--ds-spacing-lg)] border-t"
+        style={{
+          backgroundColor: 'var(--ds-brand-dark)',
+          color: 'var(--ds-neutral-100)',
+          borderTopColor: 'rgba(255,255,255,0.1)'
+        }}
+      >
         <div className="container mx-auto px-4 max-w-6xl">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
+          <div className="grid md:grid-cols-4 gap-[var(--ds-spacing-lg)] mb-12">
             {/* Logo e Descrição */}
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4" style={{ color: designSystem.colors.accent }}>SemViagem</h3>
-              <p className="mb-4" style={{ color: designSystem.colors.surface }}>
+              <h3 className="text-[clamp(20px,2.5vw,24px)] font-bold mb-4">
+                <span style={{ color: 'var(--ds-brand-blue)' }}>Sem</span>
+                <span style={{ color: 'var(--ds-brand-yellow)' }}>Viagem</span>
+              </h3>
+              <p className="mb-4 text-[clamp(14px,1.1vw,15px)] leading-relaxed max-w-md" style={{ color: 'rgba(255,255,255,0.8)' }}>
                 Revolucionando o modo de viajar com impacto social positivo.
               </p>
             </div>
-            
+
             {/* Links da Empresa */}
             <div>
-              <h4 className="text-lg font-semibold mb-4" style={{ color: designSystem.colors.accent }}>Empresa</h4>
-              <ul className="space-y-2">
-                <li><a href="#sobre" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Sobre Nós</a></li>
-                <li><a href="#impacto" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Impacto Social</a></li>
-                <li><a href="#faq" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>FAQ</a></li>
+              <h4 className="text-[clamp(16px,1.3vw,18px)] font-semibold mb-4" style={{ color: 'var(--ds-neutral-100)' }}>Empresa</h4>
+              <ul className="space-y-[var(--ds-spacing-sm)]">
+                <li><a href="#sobre" className="transition-all duration-200 text-[clamp(14px,1.1vw,15px)]" style={{ color: 'rgba(255,255,255,0.8)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ds-brand-yellow)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}>Sobre Nós</a></li>
+                <li><a href="#impacto" className="transition-all duration-200 text-[clamp(14px,1.1vw,15px)]" style={{ color: 'rgba(255,255,255,0.8)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ds-brand-yellow)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}>Impacto Social</a></li>
+                <li><a href="#faq" className="transition-all duration-200 text-[clamp(14px,1.1vw,15px)]" style={{ color: 'rgba(255,255,255,0.8)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ds-brand-yellow)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}>FAQ</a></li>
               </ul>
             </div>
-            
+
             {/* Suporte */}
             <div>
-              <h4 className="text-lg font-semibold mb-4" style={{ color: designSystem.colors.accent }}>Suporte</h4>
-              <ul className="space-y-2">
-                <li><a href="#contato" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Central de Ajuda</a></li>
-                <li><a href="#contato" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Contato</a></li>
-                <li><a href="#" className="transition-colors hover:text-yellow-400" style={{ color: designSystem.colors.surface }}>Termos de Uso</a></li>
+              <h4 className="text-[clamp(16px,1.3vw,18px)] font-semibold mb-4" style={{ color: 'var(--ds-neutral-100)' }}>Suporte</h4>
+              <ul className="space-y-[var(--ds-spacing-sm)]">
+                <li><a href="#contato" className="transition-all duration-200 text-[clamp(14px,1.1vw,15px)]" style={{ color: 'rgba(255,255,255,0.8)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ds-brand-yellow)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}>Central de Ajuda</a></li>
+                <li><a href="#contato" className="transition-all duration-200 text-[clamp(14px,1.1vw,15px)]" style={{ color: 'rgba(255,255,255,0.8)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ds-brand-yellow)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}>Contato</a></li>
+                <li><a href="#" className="transition-all duration-200 text-[clamp(14px,1.1vw,15px)]" style={{ color: 'rgba(255,255,255,0.8)' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--ds-brand-yellow)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}>Termos de Uso</a></li>
               </ul>
             </div>
           </div>
-          
+
           {/* Social Media */}
-          <div className="border-t border-gray-800 pt-8 mb-8">
+          <div className="border-t pt-[var(--ds-spacing-lg)] mb-[var(--ds-spacing-lg)]" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
             <div className="flex flex-col items-center">
-              <h4 className="text-lg font-semibold mb-4" style={{ color: designSystem.colors.accent }}>Conecte-se</h4>
-              <div className="flex gap-6">
+              <h4 className="text-[clamp(16px,1.3vw,18px)] font-semibold mb-4" style={{ color: 'var(--ds-neutral-100)' }}>Conecte-se</h4>
+              <div className="flex gap-[var(--ds-spacing-md)]">
                 <a
                   href="https://www.instagram.com/semviagemapp/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                  style={{ backgroundColor: designSystem.colors.accent }}
+                  className="w-12 h-12 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  style={{
+                    backgroundColor: 'var(--ds-brand-yellow)',
+                    borderRadius: 'var(--ds-radius-md)'
+                  }}
                 >
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: 'var(--ds-brand-dark)' }}>
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                   </svg>
                 </a>
@@ -2099,10 +2275,13 @@ const Home: React.FC = () => {
                   href="https://www.facebook.com/semviagem"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                  style={{ backgroundColor: designSystem.colors.accent }}
+                  className="w-12 h-12 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  style={{
+                    backgroundColor: 'var(--ds-brand-yellow)',
+                    borderRadius: 'var(--ds-radius-md)'
+                  }}
                 >
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: 'var(--ds-brand-dark)' }}>
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                   </svg>
                 </a>
@@ -2110,10 +2289,13 @@ const Home: React.FC = () => {
                   href="https://twitter.com/semviagem"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                  style={{ backgroundColor: designSystem.colors.accent }}
+                  className="w-12 h-12 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  style={{
+                    backgroundColor: 'var(--ds-brand-yellow)',
+                    borderRadius: 'var(--ds-radius-md)'
+                  }}
                 >
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: 'var(--ds-brand-dark)' }}>
                     <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
                   </svg>
                 </a>
@@ -2121,10 +2303,13 @@ const Home: React.FC = () => {
                   href="https://www.linkedin.com/company/semviagem"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                  style={{ backgroundColor: designSystem.colors.accent }}
+                  className="w-12 h-12 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                  style={{
+                    backgroundColor: 'var(--ds-brand-yellow)',
+                    borderRadius: 'var(--ds-radius-md)'
+                  }}
                 >
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: designSystem.colors.primary }}>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" style={{ fill: 'var(--ds-brand-dark)' }}>
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                   </svg>
                 </a>
@@ -2133,7 +2318,7 @@ const Home: React.FC = () => {
           </div>
           
           {/* Copyright */}
-          <div className="text-center text-sm" style={{ color: designSystem.colors.surface }}>
+          <div className="text-center text-[clamp(12px,1vw,14px)]" style={{ color: 'rgba(255,255,255,0.7)' }}>
             <p>&copy; 2025 SemViagem. Todos os direitos reservados. Viaje com propósito e impacto social positivo.</p>
           </div>
         </div>
