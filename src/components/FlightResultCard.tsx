@@ -14,62 +14,6 @@ import moblixApiService from '../services/moblixApiService';
 import { selecionarVoo } from '../services/moblixService';
 import { designSystem } from '../styles/designSystem';
 
-// ============================================
-// COMPONENTE AUXILIAR: AirlineLogo
-// Gerencia fallback resiliente para logos de companhias
-// ============================================
-const AirlineLogo: React.FC<{ flight: any }> = ({ flight }) => {
-  const [imgError, setImgError] = useState(false);
-
-  const getFlightAirlineName = (flight: any): string => {
-    if (!flight) return 'Companhia Aérea';
-
-    const airlineName = flight.validatingBy?.name ||
-                       flight.segments?.[0]?.legs?.[0]?.operatedBy?.name ||
-                       flight.segments?.[0]?.legs?.[0]?.managedBy?.name ||
-                       flight.airline ||
-                       '';
-
-    return getDisplayAirlineName(airlineName);
-  };
-
-  const airlineName = getFlightAirlineName(flight);
-  const logo = getAirlineLogo(airlineName);
-
-  return (
-    <div
-      className="flex-shrink-0 flex items-center justify-center"
-      style={{
-        width: '56px',
-        height: '56px',
-        backgroundColor: '#FFFFFF',
-        borderRadius: designSystem.radii.md,
-        boxShadow: designSystem.shadows.sm,
-        border: `1px solid ${designSystem.colors.outline || '#E5E7EB'}`,
-        padding: designSystem.spacing.xs,
-      }}
-    >
-      <img
-        src={imgError ? '/placeholder-logo.png' : (logo || '/placeholder-logo.png')}
-        alt={airlineName}
-        className="object-contain w-full h-full"
-        style={{ opacity: imgError ? 0.5 : 1 }}
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          if (!imgError && target.src !== '/placeholder-logo.png') {
-            setImgError(true);
-            target.src = '/placeholder-logo.png';
-            target.style.opacity = '0.5';
-            if (process.env.NODE_ENV === 'development') {
-              console.warn('⚠️ Logo não encontrado para:', airlineName, 'tentado:', logo);
-            }
-          }
-        }}
-      />
-    </div>
-  );
-};
-
 interface FlightResultCardProps {
   flight: {
     segments: any[];
@@ -632,15 +576,10 @@ const FlightResultCard: React.FC<FlightResultCardProps> = ({
 
 // Função para formatar moeda
 const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('pt-BR', { 
-    style: 'currency', 
-    currency: 'BRL' 
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
   }).format(value || 0);
-};
-
-// Função para formatar milhas
-const formatMiles = (value: number): string => {
-  return `${(value || 0).toLocaleString()} milhas`;
 };
 
 // Função para extrair horário corretamente da API Moblix
@@ -992,293 +931,249 @@ const getAirlineLogoPath = (flight: any): string => {
       role="article"
       aria-labelledby={`flight-${(flight as any).flightId || Math.random()}-title`}
       className={`
-        bg-white transition-all duration-200 ease-out
-        ${isSelected && !isSelectingReturn ? 'ring-2 bg-green-50' : ''}
-        ${!isFinalSummary ? 'hover:-translate-y-0.5' : 'opacity-90'}
+        bg-white transition-colors duration-150
+        ${isSelected && !isSelectingReturn ? 'border-green-500 bg-green-50' : 'hover:border-gray-300'}
+        ${isFinalSummary ? 'opacity-90' : ''}
       `}
       style={{
-        borderRadius: designSystem.radii.lg,
-        boxShadow: designSystem.shadows.card,
-        border: `1px solid ${designSystem.colors.border}`,
-        minHeight: '100px',
-        maxHeight: '120px',
-      }}
-      onMouseEnter={(e) => {
-        if (!isFinalSummary) {
-          (e.currentTarget as HTMLElement).style.boxShadow = designSystem.shadows.cardHover;
-        }
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = designSystem.shadows.card;
+        borderRadius: '8px',
+        border: `1px solid ${isSelected && !isSelectingReturn ? '#22c55e' : '#e5e7eb'}`,
+        minHeight: '80px',
       }}
     >
-      <div style={{ padding: designSystem.spacing.md }}>
-        {/* Grid: Logo+Info | Route | Price+Actions */}
-        <div
-          className="grid grid-cols-1 lg:grid-cols-[35%_40%_25%] items-center"
-          style={{ gap: designSystem.spacing.md }}
-        >
+      {/* Ultra-compact Skyscanner-style horizontal layout */}
+      <div className="flex items-center p-3" style={{ gap: '12px' }}>
 
-          {/* COL 1: Logo + Badge + Horários */}
-          <div className="flex items-center" style={{ gap: designSystem.spacing.sm }}>
-            {/* Logo compacto padronizado */}
-            <AirlineLogo flight={normalizedFlight} />
-
-            {/* Badge + Horários */}
-            <div className="flex-1 min-w-0">
-              {/* Badge compacto Design System */}
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '2px 8px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  borderRadius: '4px',
-                  backgroundColor: flight.isMiles ? '#DBEAFE' : '#FEF3C7',
-                  color: flight.isMiles ? '#1E40AF' : '#92400E',
-                  marginBottom: '4px',
-                }}
-              >
-                {flight.isMiles ? 'Milhas' : 'Dinheiro'}
-              </div>
-
-              {/* Horário de partida - Tipografia correta */}
-              <div className="flex items-baseline" style={{ gap: designSystem.spacing.xs }}>
-                <span
-                  className="font-bold leading-none"
-                  style={{
-                    fontSize: '28px',
-                    color: designSystem.colors.textPrimary,
-                    letterSpacing: '-0.5px'
-                  }}
-                >
-                  {(() => {
-                    if ((flight as any).departureDate) {
-                      return extractTimeFromMoblixData(flight as any, 'departure');
-                    }
-                    if (flight.segments && flight.segments.length > 0) {
-                      return extractTimeFromMoblixData(flight.segments[0], 'departure');
-                    }
-                    return '--:--';
-                  })()}
-                </span>
-                <span
-                  className="font-medium tracking-wide"
-                  style={{
-                    fontSize: '14px',
-                    color: designSystem.colors.textSecondary
-                  }}
-                >
-                  {fromLabel || flight.Origem || 'GRU'}
-                </span>
-              </div>
-            </div>
+        {/* COL 1: Logo + Badge (20%) */}
+        <div className="flex items-center" style={{ width: '20%', minWidth: '120px', gap: '8px' }}>
+          {/* Logo compacto 40x40 */}
+          <div
+            className="flex-shrink-0 flex items-center justify-center"
+            style={{
+              width: '40px',
+              height: '40px',
+              backgroundColor: '#FFFFFF',
+              borderRadius: '6px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+              border: '1px solid #F0F3F7',
+              padding: '4px',
+            }}
+          >
+            <img
+              src={getAirlineLogoPath(normalizedFlight)}
+              alt={getFlightAirlineName(normalizedFlight)}
+              className="object-contain w-full h-full"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder-logo.png';
+                target.style.opacity = '0.5';
+              }}
+            />
           </div>
 
-          {/* COL 2: Linha de conexão + Duração */}
-          <div className="flex items-center justify-center">
-            <div className="flex-1 flex flex-col items-center gap-1">
-              {/* Timeline - linha fina com bolinha */}
-              <div className="relative w-full" style={{ margin: `${designSystem.spacing.xs} 0` }}>
-                <div className="absolute inset-0 flex items-center">
-                  <div
-                    style={{
-                      width: '100%',
-                      height: '1px',
-                      backgroundColor: designSystem.colors.border
-                    }}
-                  ></div>
-                </div>
-                <div className="relative flex justify-center">
-                  <div
-                    className="flex items-center justify-center"
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      backgroundColor: '#FFFFFF',
-                      boxShadow: designSystem.shadows.sm,
-                      border: `2px solid ${designSystem.colors.border}`
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: designSystem.colors.textMuted
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
+          {/* Badge inline compacto */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '2px 6px',
+              fontSize: '10px',
+              fontWeight: 600,
+              borderRadius: '3px',
+              backgroundColor: flight.isMiles ? '#DBEAFE' : '#FEF3C7',
+              color: flight.isMiles ? '#1E40AF' : '#92400E',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {flight.isMiles ? 'Milhas' : 'R$'}
+          </div>
+        </div>
 
-              {/* Duração e Conexões - Tipografia correta */}
-              <div className="text-center" style={{ marginTop: designSystem.spacing.xs }}>
-                <div
-                  className="font-medium"
+        {/* COL 2: Timeline horizontal (50%) */}
+        <div className="flex items-center justify-between" style={{ width: '50%', gap: '12px' }}>
+          {/* Horário partida */}
+          <div className="flex flex-col items-start" style={{ minWidth: '70px' }}>
+            <span
+              className="font-bold leading-none"
+              style={{
+                fontSize: '18px',
+                color: designSystem.colors.textPrimary,
+                letterSpacing: '-0.3px',
+              }}
+            >
+              {(() => {
+                if ((flight as any).departureDate) {
+                  return extractTimeFromMoblixData(flight as any, 'departure');
+                }
+                if (flight.segments && flight.segments.length > 0) {
+                  return extractTimeFromMoblixData(flight.segments[0], 'departure');
+                }
+                return '--:--';
+              })()}
+            </span>
+            <span
+              className="font-medium"
+              style={{
+                fontSize: '11px',
+                color: designSystem.colors.textMuted,
+                marginTop: '2px',
+              }}
+            >
+              {fromLabel || flight.Origem || 'GRU'}
+            </span>
+          </div>
+
+          {/* Timeline horizontal com duração */}
+          <div className="flex-1 flex flex-col items-center" style={{ gap: '4px' }}>
+            {/* Linha com duração */}
+            <div className="relative w-full" style={{ height: '1px', backgroundColor: '#E5E7EB' }}>
+              <div
+                className="absolute left-1/2 -translate-x-1/2"
+                style={{
+                  top: '-3px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: designSystem.colors.textMuted,
+                }}
+              ></div>
+            </div>
+            {/* Duração abaixo da linha */}
+            <span
+              style={{
+                fontSize: '10px',
+                color: designSystem.colors.textMuted,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {getTotalDuration(flight.segments)}
+            </span>
+          </div>
+
+          {/* Horário chegada */}
+          <div className="flex flex-col items-end" style={{ minWidth: '70px' }}>
+            <span
+              className="font-bold leading-none"
+              style={{
+                fontSize: '18px',
+                color: designSystem.colors.textPrimary,
+                letterSpacing: '-0.3px',
+              }}
+            >
+              {(() => {
+                if ((flight as any).arrivalDate) {
+                  return extractTimeFromMoblixData(flight as any, 'arrival');
+                }
+                if (flight.segments && flight.segments.length > 0) {
+                  return extractTimeFromMoblixData(flight.segments[flight.segments.length - 1], 'arrival');
+                }
+                return '--:--';
+              })()}
+            </span>
+            <span
+              className="font-medium"
+              style={{
+                fontSize: '11px',
+                color: designSystem.colors.textMuted,
+                marginTop: '2px',
+              }}
+            >
+              {toLabel || flight.Destino || 'CNF'}
+            </span>
+          </div>
+        </div>
+
+        {/* COL 3: Preço + Botão (30%) */}
+        <div className="flex flex-col items-end justify-center" style={{ width: '30%', gap: '8px' }}>
+          {/* Preço */}
+          <div
+            className="font-bold leading-tight"
+            style={{
+              fontSize: '16px',
+              color: designSystem.colors.textPrimary,
+              letterSpacing: '-0.3px',
+            }}
+          >
+            {(() => {
+              const price = flight.priceWithTax || flight.price || flight.totalPrice || 0;
+              return flight.isMiles
+                ? `${(price || 0).toLocaleString()}mi`
+                : formatCurrency(price);
+            })()}
+          </div>
+
+          {/* Botão Escolher */}
+          {!isFinalSummary && (
+            <>
+              {onChooseOutbound ? (
+                <button
+                  onClick={handleChooseOutbound}
+                  className="font-medium transition-colors"
                   style={{
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    backgroundColor: designSystem.colors.success,
+                    color: '#FFFFFF',
                     fontSize: '13px',
-                    color: designSystem.colors.textSecondary
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.success;
                   }}
                 >
-                  {getTotalDuration(flight.segments)}
-                </div>
-                <div
+                  Escolher
+                </button>
+              ) : onChooseReturn ? (
+                <button
+                  onClick={handleChooseReturn}
+                  className="font-medium transition-colors"
                   style={{
-                    fontSize: '12px',
-                    color: designSystem.colors.textMuted,
-                    marginTop: '2px'
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    backgroundColor: designSystem.colors.success,
+                    color: '#FFFFFF',
+                    fontSize: '13px',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.success;
                   }}
                 >
-                  {flight.segments && flight.segments.length > 1
-                    ? `${flight.segments.length - 1} conexão${flight.segments.length - 1 > 1 ? 'ões' : ''}`
-                    : 'Direto'
-                  }
-                </div>
-              </div>
-
-              {/* Horário de chegada - Tipografia correta */}
-              <div className="flex items-baseline" style={{ gap: designSystem.spacing.xs }}>
-                <span
-                  className="font-bold leading-none"
+                  Escolher
+                </button>
+              ) : (
+                <button
+                  onClick={handleViewMore}
+                  className="font-medium transition-colors"
                   style={{
-                    fontSize: '28px',
-                    color: designSystem.colors.textPrimary,
-                    letterSpacing: '-0.5px'
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    backgroundColor: designSystem.colors.primary,
+                    color: designSystem.colors.accent,
+                    fontSize: '13px',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.opacity = '1';
                   }}
                 >
-                  {(() => {
-                    if ((flight as any).arrivalDate) {
-                      return extractTimeFromMoblixData(flight as any, 'arrival');
-                    }
-                    if (flight.segments && flight.segments.length > 0) {
-                      return extractTimeFromMoblixData(flight.segments[flight.segments.length - 1], 'arrival');
-                    }
-                    return '--:--';
-                  })()}
-                </span>
-                <span
-                  className="font-medium tracking-wide"
-                  style={{
-                    fontSize: '14px',
-                    color: designSystem.colors.textSecondary
-                  }}
-                >
-                  {toLabel || flight.Destino || 'CNF'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* COL 3: Preço + Botões */}
-          <div className="flex flex-col items-end justify-center gap-2">
-            {/* Preço - Tipografia correta */}
-            <div className="text-right">
-              <div
-                className="font-bold leading-tight"
-                style={{
-                  fontSize: '24px',
-                  color: designSystem.colors.textPrimary,
-                  letterSpacing: '-0.5px'
-                }}
-              >
-                {(() => {
-                  const price = flight.priceWithTax || flight.price || flight.totalPrice || 0;
-                  return flight.isMiles
-                    ? formatMiles(price)
-                    : formatCurrency(price);
-                })()}
-              </div>
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: designSystem.colors.textMuted,
-                  marginTop: '4px'
-                }}
-              >
-                por pessoa
-              </div>
-            </div>
-
-            {/* Botões - Design System com Fallback */}
-            {!isFinalSummary && (
-              <div style={{ marginTop: designSystem.spacing.sm }}>
-                {onChooseOutbound ? (
-                  <button
-                    onClick={handleChooseOutbound}
-                    className="font-semibold transition-colors"
-                    style={{
-                      width: '100%',
-                      height: '44px',
-                      borderRadius: designSystem.radii.md,
-                      backgroundColor: designSystem.colors.success,
-                      color: '#FFFFFF',
-                      fontSize: '14px',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.success;
-                    }}
-                  >
-                    Escolher
-                  </button>
-                ) : onChooseReturn ? (
-                  <button
-                    onClick={handleChooseReturn}
-                    className="font-semibold transition-colors"
-                    style={{
-                      width: '100%',
-                      height: '44px',
-                      borderRadius: designSystem.radii.md,
-                      backgroundColor: designSystem.colors.success,
-                      color: '#FFFFFF',
-                      fontSize: '14px',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.success;
-                    }}
-                  >
-                    Escolher
-                  </button>
-                ) : (
-                  /* Fallback CTA quando não há handlers do pai */
-                  <button
-                    onClick={handleViewMore}
-                    className="font-semibold transition-colors"
-                    style={{
-                      width: '100%',
-                      height: '44px',
-                      borderRadius: designSystem.radii.md,
-                      backgroundColor: designSystem.colors.primary,
-                      color: designSystem.colors.accent,
-                      fontSize: '14px',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.opacity = '1';
-                    }}
-                  >
-                    Ver Detalhes
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+                  Ver
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
     </article>

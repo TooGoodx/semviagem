@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { useSelection } from '../context/SelectionContext';
 import CustomCalendar from '../components/CustomCalendar';
 import moblixApiService from '../services/moblixApiService';
-import FlightResults from '../components/FlightResultsFlights';
+import FlightResults from '../components/FlightResults';
 import FlightLoadingOverlay from '../components/FlightLoadingOverlay';
 import SummarySection from '../components/SummarySection';
 import { searchAirports as searchAirportsData, Airport as AirportData } from '../data/airports';
@@ -1817,6 +1817,11 @@ const Flights: React.FC = () => {
         {/* Resultados da busca usando FlightResults */}
         {searchResults.length > 0 && (
           <FlightResults
+            variant="search"
+            enablePreFetch={false}
+            enableAdvancedSorting={false}
+            enableAirlineFilter={false}
+            showCompactCard={false}
             flights={searchResults}
             searchParams={searchParams}
             onNewSearch={handleNewSearch}

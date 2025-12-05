@@ -19,6 +19,14 @@ export const designSystem = {
     surface: '#E4E4E4',        // Cinza Claro Neutro - cards e backgrounds
     surfaceAlt: '#F5F5F5',     // Cinza mais claro - hover states
 
+    // Design System v2.0 Tokens
+    brandYellow: '#F0C72F',
+    brandDark: '#060D1C',
+    brandBlue: '#4896C7',
+    neutralLight: '#E4E4E4',
+    neutral100: '#FFFFFF',
+    border: 'rgba(6,13,28,0.06)',
+
     // Hierarquia de texto
     textPrimary: '#060D1C',    // Texto principal (preto azulado)
     textSecondary: '#1F2937',  // Texto secundário (cinza escuro)
@@ -33,6 +41,7 @@ export const designSystem = {
 
     // Estados e feedbacks
     outline: '#060D1C',
+    borderLight: '#E9EEF3',    // Borda suave - cards e divisores
     success: '#16A34A',        // Verde - sucesso
     danger: '#DC2626',         // Vermelho - erro
     warning: '#F59E0B',        // Laranja - aviso
@@ -165,6 +174,16 @@ export const designSystem = {
     popover: 60,
     tooltip: 70,
     notification: 80,
+  },
+
+  // ========================================
+  // 8.5 ICON SIZES
+  // ========================================
+  iconSizes: {
+    lg: 56,
+    md: 40,
+    sm: 28,
+    xs: 20,
   },
 
   // ========================================

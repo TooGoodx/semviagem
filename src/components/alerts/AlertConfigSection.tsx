@@ -470,13 +470,33 @@ const AlertConfigSection: React.FC = () => {
                   </div>
 
                   <button
+                    type="submit"
                     onClick={handleSaveAlert}
                     disabled={isSavingAlert || !canConfigureAlerts}
-                    className={componentClasses.button.secondary}
+                    className="btn-primary"
                     style={{
-                      minWidth: '160px',
-                      opacity: isSavingAlert || !canConfigureAlerts ? 0.6 : 1,
+                      backgroundColor: '#22C55E',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px 24px',
+                      fontSize: '14px',
+                      fontWeight: 600,
                       cursor: isSavingAlert || !canConfigureAlerts ? 'not-allowed' : 'pointer',
+                      transition: 'background-color 0.2s ease',
+                      boxShadow: 'none',
+                      opacity: isSavingAlert || !canConfigureAlerts ? 0.6 : 1,
+                      minWidth: '160px',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSavingAlert && canConfigureAlerts) {
+                        e.currentTarget.style.backgroundColor = '#16A34A';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSavingAlert && canConfigureAlerts) {
+                        e.currentTarget.style.backgroundColor = '#22C55E';
+                      }
                     }}
                   >
                     {isSavingAlert ? (
@@ -488,27 +508,6 @@ const AlertConfigSection: React.FC = () => {
                       'Salvar Alerta'
                     )}
                   </button>
-                </div>
-
-                {/* Info: 1.225 Possibilidades */}
-                <div
-                  className="mt-4 p-4 rounded-lg border"
-                  style={{
-                    backgroundColor: '#F0F9FF',
-                    borderColor: '#BAE6FD'
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">✈️</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold mb-1" style={{ color: designSystem.colors.textPrimary }}>
-                        Cada alerta monitora até 1.225 combinações de voos automaticamente!
-                      </p>
-                      <p className="text-xs" style={{ color: designSystem.colors.textMuted }}>
-                        Combinando 5 origens × 5 destinos × 49 datas (7 dias ida × 7 dias volta) = máxima chance de encontrar sua viagem ideal.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
 

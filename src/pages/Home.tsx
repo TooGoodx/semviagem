@@ -11,14 +11,16 @@ import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
 import toast from 'react-hot-toast';
 import moblixApiService from '../services/moblixApiService';
-import FlightResults from '../components/FlightResultsHome';
+import FlightResults from '../components/FlightResults';
 import FlightResultCard from '../components/FlightResultCard';
 import CustomCalendar from '../components/CustomCalendar';
 import FlightLoadingOverlay from '../components/FlightLoadingOverlay';
 import SummarySection from '../components/SummarySection';
 import StripeButton from '../components/StripeButton';
 import ProductCard from '../components/ProductCard';
+import PricingCard from '../components/PricingCard';
 import { designSystem, componentClasses } from '../styles/designSystem';
+import { logger } from '../utils/logger';
 
 // Interfaces
 interface Airport {
@@ -468,11 +470,11 @@ const Home: React.FC = () => {
 
   // Search airports with direct value to avoid stale state issues
   const searchAirportsWithValue = useCallback(async (field: 'origin' | 'destination', searchValue: string) => {
-    console.log('🚀 Home - searchAirportsWithValue INICIADA - field:', field, 'value:', searchValue);
-    console.log('🚀 Home - searchAirportsWithValue - searchValue:', searchValue, 'length:', searchValue.length);
-    
+    logger.debug('Home - searchAirportsWithValue INICIADA - field:', { field, value: searchValue });
+    logger.debug('Home - searchAirportsWithValue - searchValue:', { searchValue, length: searchValue.length });
+
     if (searchValue.length < 2) {
-      console.log('⚠️ Home - searchValue muito curto, limpando sugestões');
+      logger.warn('Home - searchValue muito curto, limpando sugestões');
       setAirportSuggestions(prev => ({ ...prev, [field]: [] }));
       return;
     }
@@ -487,9 +489,9 @@ const Home: React.FC = () => {
     const signal = abortControllerRef.current.signal;
 
     setIsLoadingAirports(prev => ({ ...prev, [field]: true }));
-    
+
     try {
-      console.log('🔍 Home - Buscando aeroportos com termo:', searchValue);
+      logger.debug('Home - Buscando aeroportos com termo:', searchValue);
       
       // SEMPRE busca na lista local primeiro (garante que GRU seja encontrado)
       const localFiltered = globalAirports.filter(airport => 
@@ -503,7 +505,7 @@ const Home: React.FC = () => {
       
       // Se encontrou resultados locais, usa sempre (prioriza lista local)
       if (localFiltered.length > 0) {
-        console.log('✅ Home - Encontrados', localFiltered.length, 'aeroportos locais');
+        logger.success('Home - Encontrados aeroportos locais', { count: localFiltered.length });
         // Priorizar aeroportos agrupados da mesma cidade/região
         const groupedResults = localFiltered.sort((a, b) => {
           // Prioriza aeroportos com Cidade definida
@@ -524,19 +526,19 @@ const Home: React.FC = () => {
           // Ordenação padrão por nome
           return a.Nome.localeCompare(b.Nome, 'pt-BR');
         });
-        
+
         finalResults = groupedResults.slice(0, 8);
       } else {
-        console.log('⚠️ Home - Nenhum aeroporto local encontrado, tentando API Moblix');
+        logger.warn('Home - Nenhum aeroporto local encontrado, tentando API Moblix');
         // Só tenta a API Moblix se não encontrou nada localmente
         try {
           // Verificar se a requisição foi cancelada antes de fazer a chamada da API
           if (signal.aborted) {
             return;
           }
-          
+
           const apiResponse = await moblixApiService.buscarAeroportos(searchValue);
-          console.log('🔍 Home - Resposta da API Moblix:', apiResponse);
+          logger.debug('Home - Resposta da API Moblix:', apiResponse);
           
           // Verificar novamente se foi cancelada após a resposta
           if (signal.aborted) {
@@ -551,16 +553,16 @@ const Home: React.FC = () => {
               Pais: airport.Pais,
               Cidade: airport.Cidade
             })).slice(0, 8);
-            console.log('✅ Home - Usando', finalResults.length, 'aeroportos da API Moblix');
+            logger.success('Home - Usando aeroportos da API Moblix', { count: finalResults.length });
           } else {
-            console.log('⚠️ Home - API Moblix não retornou resultados válidos');
+            logger.warn('Home - API Moblix não retornou resultados válidos');
           }
         } catch (apiError: any) {
           // Ignorar erros de cancelamento
           if (apiError.name === 'AbortError') {
             return;
           }
-          console.warn('⚠️ Home - Erro na API Moblix:', apiError);
+          logger.warn('Home - Erro na API Moblix:', apiError);
         }
       }
       
@@ -568,17 +570,17 @@ const Home: React.FC = () => {
       if (signal.aborted) {
         return;
       }
-      
-      console.log('📋 Home - Atualizando sugestões com', finalResults.length, 'resultados');
+
+      logger.debug('Home - Atualizando sugestões', { count: finalResults.length });
       setAirportSuggestions(prev => ({ ...prev, [field]: finalResults }));
       
     } catch (error: any) {
       // Ignorar erros de cancelamento
       if (error.name === 'AbortError') {
-        console.log('🚫 Home - Busca de aeroportos cancelada');
+        logger.debug('Home - Busca de aeroportos cancelada');
         return;
       }
-      console.error('❌ Home - Erro geral na busca:', error);
+      logger.error('Home - Erro geral na busca:', error);
       setAirportSuggestions(prev => ({ ...prev, [field]: [] }));
     } finally {
       // Só atualizar loading se não foi cancelado
@@ -666,7 +668,7 @@ const Home: React.FC = () => {
           if (apiError.name === 'AbortError') {
             return;
           }
-          console.warn('⚠️ Home - Erro na API Moblix:', apiError);
+          logger.warn('Home - Erro na API Moblix:', apiError);
         }
       }
       
@@ -680,10 +682,10 @@ const Home: React.FC = () => {
     } catch (error: any) {
       // Ignorar erros de cancelamento
       if (error.name === 'AbortError') {
-        console.log('🚫 Home - Busca de aeroportos cancelada');
+        logger.debug('Home - Busca de aeroportos cancelada');
         return;
       }
-      console.error('❌ Home - Erro geral na busca:', error);
+      logger.error('Home - Erro geral na busca:', error);
       setAirportSuggestions(prev => ({ ...prev, [field]: [] }));
     } finally {
       // Só atualizar loading se não foi cancelado
@@ -850,8 +852,8 @@ const Home: React.FC = () => {
                                    extractIataCode(paramsForNorm.destino) ||
                                    arrival ||
                                    'CNF';
-          
-          console.log('🔍 NORMALIZING FLIGHT:', {
+
+          logger.debug('NORMALIZING FLIGHT:', {
             'isMiles': isMilesFlag,
             'finalPrice': finalPrice,
             'flight.Origem': flight.Origem,
@@ -917,28 +919,28 @@ const Home: React.FC = () => {
           tipoPagamento: params.tipoPagamento,
           classe: params.classe
         });
-        console.log('🔍 Home - Processando resultado IDA (somente ida):', {
+        logger.debug('Home - Processando resultado IDA (somente ida):', {
           tipoResultIda: typeof resultIda,
           isArray: Array.isArray(resultIda),
           hasFlights: resultIda?.flights?.length || 0,
           hasData: resultIda?.Data?.[0]?.flights?.length || 0
         });
         
-        const rawOut = Array.isArray(resultIda?.flights) ? resultIda.flights : 
-                       Array.isArray(resultIda) ? resultIda : 
+        const rawOut = Array.isArray(resultIda?.flights) ? resultIda.flights :
+                       Array.isArray(resultIda) ? resultIda :
                        (resultIda?.Data?.[0]?.flights ?? resultIda?.Data?.[0]?.Ida ?? resultIda?.Data ?? []);
-        
-        console.log('🔍 Home - Raw flights extraídos (somente ida):', {
+
+        logger.debug('Home - Raw flights extraídos (somente ida):', {
           total: rawOut.length,
           primeiro: rawOut[0] ? {
             rateToken: rawOut[0].rateToken || rawOut[0].segments?.[0]?.rateToken,
             fareGroup: !!rawOut[0].fareGroup
           } : null
         });
-        
+
         const normalizedOut = normalizeFlights(rawOut, params);
-        
-        console.log('🔍 Home - Voos normalizados (somente ida):', {
+
+        logger.debug('Home - Voos normalizados (somente ida):', {
           total: normalizedOut.length,
           primeiro: normalizedOut[0] ? {
             price: normalizedOut[0].price,
@@ -963,8 +965,8 @@ const Home: React.FC = () => {
 
       // Ida e volta: buscar as duas rotas em paralelo (X->Z e Z->X) com logs e tolerância a falhas
       setLoadingMessage('🔁 Buscando ida e volta em paralelo...');
-      console.log('Home -> Outbound params', { origem: origemIata, destino: destinoIata, ida: params.ida, adultos: params.adultos, criancas: params.criancas, bebes: params.bebes, companhia: params.companhia, classe: params.classe });
-      console.log('Home -> Return params', { origem: destinoIata, destino: origemIata, ida: params.volta, adultos: params.adultos, criancas: params.criancas, bebes: params.bebes, companhia: params.companhia, classe: params.classe });
+      logger.debug('Home -> Outbound params', { origem: origemIata, destino: destinoIata, ida: params.ida, adultos: params.adultos, criancas: params.criancas, bebes: params.bebes, companhia: params.companhia, classe: params.classe });
+      logger.debug('Home -> Return params', { origem: destinoIata, destino: origemIata, ida: params.volta, adultos: params.adultos, criancas: params.criancas, bebes: params.bebes, companhia: params.companhia, classe: params.classe });
 
       const [outcomeIda, outcomeVolta] = await Promise.allSettled([
         moblixApiService.consultarVoos({
@@ -994,39 +996,39 @@ const Home: React.FC = () => {
       const resultIda = outcomeIda.status === 'fulfilled' ? outcomeIda.value : null;
       const resultVolta = outcomeVolta.status === 'fulfilled' ? outcomeVolta.value : null;
       if (outcomeIda.status === 'rejected') {
-        console.log('❌ Home -> Outbound request failed:', outcomeIda.reason);
+        logger.error('Home -> Outbound request failed:', outcomeIda.reason);
       } else {
-        console.log('✅ Home -> Outbound request succeeded');
+        logger.success('Home -> Outbound request succeeded');
       }
       if (outcomeVolta.status === 'rejected') {
-        console.log('❌ Home -> Return request failed:', outcomeVolta.reason);
+        logger.error('Home -> Return request failed:', outcomeVolta.reason);
       } else {
-        console.log('✅ Home -> Return request succeeded');
+        logger.success('Home -> Return request succeeded');
       }
 
       // Normalizar os resultados individualmente (usa vazio se alguma perna falhar)
-      console.log('🔍 Home - Processando resultado IDA:', {
+      logger.debug('Home - Processando resultado IDA:', {
         tipoResultIda: typeof resultIda,
         isArray: Array.isArray(resultIda),
         hasFlights: resultIda?.flights?.length || 0,
         hasData: resultIda?.Data?.[0]?.flights?.length || 0
       });
-      
-      const rawOut = Array.isArray(resultIda?.flights) ? resultIda.flights : 
-                     Array.isArray(resultIda) ? resultIda : 
+
+      const rawOut = Array.isArray(resultIda?.flights) ? resultIda.flights :
+                     Array.isArray(resultIda) ? resultIda :
                      (resultIda?.Data?.[0]?.flights ?? resultIda?.Data?.[0]?.Ida ?? resultIda?.Data ?? []);
-      
-      console.log('🔍 Home - Raw flights extraídos:', {
+
+      logger.debug('Home - Raw flights extraídos:', {
         total: rawOut.length,
         primeiro: rawOut[0] ? {
           rateToken: rawOut[0].rateToken || rawOut[0].segments?.[0]?.rateToken,
           fareGroup: !!rawOut[0].fareGroup
         } : null
       });
-      
+
       const normalizedOut = normalizeFlights(rawOut, params);
-      
-      console.log('🔍 Home - Voos normalizados:', {
+
+      logger.debug('Home - Voos normalizados:', {
         total: normalizedOut.length,
         primeiro: normalizedOut[0] ? {
           price: normalizedOut[0].price,
@@ -1035,17 +1037,17 @@ const Home: React.FC = () => {
         } : null
       });
 
-      const rawRet = Array.isArray(resultVolta?.flights) ? resultVolta.flights : 
-                     Array.isArray(resultVolta) ? resultVolta : 
+      const rawRet = Array.isArray(resultVolta?.flights) ? resultVolta.flights :
+                     Array.isArray(resultVolta) ? resultVolta :
                      (resultVolta?.Data?.[0]?.flights ?? resultVolta?.Data?.[0]?.Ida ?? resultVolta?.Data ?? []);
-      console.log('🔍 Home - Processando resultado VOLTA:', {
+      logger.debug('Home - Processando resultado VOLTA:', {
         tipoResultVolta: typeof resultVolta,
         isArray: Array.isArray(resultVolta),
         hasFlights: resultVolta?.flights?.length || 0,
         hasData: resultVolta?.Data?.[0]?.flights?.length || 0
       });
-      
-      console.log('🔍 Home - Raw flights volta extraídos:', {
+
+      logger.debug('Home - Raw flights volta extraídos:', {
         total: rawRet.length,
         primeiro: rawRet[0] ? {
           rateToken: rawRet[0].rateToken || rawRet[0].segments?.[0]?.rateToken,
@@ -1060,8 +1062,8 @@ const Home: React.FC = () => {
         ida: params.volta,
         volta: ''
       });
-      
-      console.log('🔍 Home - Voos volta normalizados:', {
+
+      logger.debug('Home - Voos volta normalizados:', {
         total: normalizedRet.length,
         primeiro: normalizedRet[0] ? {
           price: normalizedRet[0].price,
@@ -1084,7 +1086,7 @@ const Home: React.FC = () => {
         toast.success('Resultados atualizados!');
       }
     } catch (error: any) {
-      console.error('❌ Home - Erro na busca:', error);
+      logger.error('Home - Erro na busca:', error);
       toast.error(`Erro ao buscar voos: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -1306,7 +1308,7 @@ const Home: React.FC = () => {
 
   // Handle flight selection
   const handleFlightSelect = (flight: any, type: 'outbound' | 'return') => {
-    console.log(`✈️ Voo ${type} selecionado:`, flight);
+    logger.debug('Voo selecionado', { type, flight });
     if (type === 'outbound') {
       setOutbound(flight);
       // Se selecionou só o voo de ida, mostra mensagem para continuar
@@ -1315,13 +1317,13 @@ const Home: React.FC = () => {
       setReturn(flight);
       // IMPORTANTE: NÃO fazer nova busca aqui - apenas completar a seleção
       toast.success('Voos selecionados com sucesso!');
-      console.log('🎯 SELEÇÃO COMPLETA - Ida e volta selecionados');
+      logger.success('SELEÇÃO COMPLETA - Ida e volta selecionados');
     }
   };
 
   // Handle filters change from FlightResults component
   const handleFiltersChange = (newFilterParams: Partial<SearchParams>) => {
-    console.log('🎛️ Home - Recebendo mudanças nos filtros:', newFilterParams);
+    logger.debug('Home - Recebendo mudanças nos filtros:', newFilterParams);
     setSearchParams(prev => ({
       ...prev,
       ...newFilterParams
@@ -1330,7 +1332,7 @@ const Home: React.FC = () => {
 
   // Handle new search with current filters
   const handleNewSearchWithFilters = (currentParams: SearchParams) => {
-    console.log('🔍 Home - Nova busca solicitada com filtros atuais:', currentParams);
+    logger.debug('Home - Nova busca solicitada com filtros atuais:', currentParams);
     // Atualiza os searchParams com os valores atuais e dispara nova busca
     setSearchParams(currentParams);
     // Simula submit do formulário com os novos parâmetros
@@ -1686,137 +1688,27 @@ const Home: React.FC = () => {
 
 
       {/* Flight Results Section - Sequential flow: show return only after outbound is selected */}
-      {showFlightResults && (outboundFlightResults.length > 0 || returnFlightResults.length > 0) && (
+      {showFlightResults && outboundFlightResults.length > 0 && (
         <section className="pt-40 pb-20 px-4 bg-gradient-to-br from-blue-50 to-white">
           <div className="container mx-auto max-w-7xl space-y-12">
-            {outboundFlightResults.length > 0 && !selectedFlights.outbound && (
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Voos de ida</h2>
-                <FlightResults 
-                  flights={outboundFlightResults}
-                  searchParams={searchParams}
-                  onNewSearch={handleNewSearch}
-                  onFlightSelect={handleFlightSelect}
-                  onFiltersChange={handleFiltersChange}
-                  onNewSearchWithFilters={handleNewSearchWithFilters}
-                  isSearching={isLoading}
-                />
-              </div>
-            )}
-
-            {returnFlightResults.length > 0 && selectedFlights.outbound && !selectedFlights.return && (
-              <div id="return-flights">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Voos de volta</h2>
-                <FlightResults 
-                  flights={returnFlightResults}
-                  searchParams={{
-                    ...searchParams,
-                    origem: searchParams.destino,
-                    destino: searchParams.origem,
-                    ida: searchParams.volta,
-                    volta: ''
-                  }}
-                  onNewSearch={handleNewSearch}
-                  onFlightSelect={handleFlightSelect}
-                  onFiltersChange={handleFiltersChange}
-                  onNewSearchWithFilters={handleNewSearchWithFilters}
-                  isSearching={isLoading}
-                  isReturnSection={true}
-                />
-              </div>
-            )}
-
-            {/* Final Summary - Show only selected flights after both are chosen */}
-            {selectedFlights.outbound && selectedFlights.return && (
-              <div className="max-w-4xl mx-auto">
-                <div className="mb-6 text-center">
-                  <h3 className="text-xl font-bold mb-4 text-center" style={{ color: designSystem.colors.textPrimary }}>
-                    Voos Selecionados
-                  </h3>
-                  <p style={{ color: designSystem.colors.textSecondary }}>Seus voos de ida e volta escolhidos</p>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="bg-white rounded-lg shadow-lg">
-                    <div className="px-4 py-2 rounded-t-lg" style={{ backgroundColor: designSystem.colors.accent }}>
-                      <h4 className="text-lg font-semibold mb-3" style={{ color: designSystem.colors.primary }}>
-                        Voo de Ida
-                      </h4>
-                    </div>
-                    <div className="p-4">
-                      <FlightResultCard
-                        flight={selectedFlights.outbound}
-                        isSelected={true}
-                        fromLabel={extractIataCode(searchParams.origem)}
-                        toLabel={extractIataCode(searchParams.destino)}
-                        selectionMessage={''}
-                        allFlights={outboundFlightResults}
-                        isRoundTrip={!searchParams.soIda}
-                        isSelectingReturn={false}
-                        selectedOutboundFlight={selectedFlights.outbound}
-                        onChooseOutbound={undefined}
-                        onChooseReturn={undefined}
-                        isFinalSummary={true}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-lg shadow-lg">
-                    <div className="px-4 py-2 rounded-t-lg" style={{ backgroundColor: designSystem.colors.accent }}>
-                      <h4 className="text-lg font-semibold mb-3" style={{ color: designSystem.colors.primary }}>
-                        Voo de Volta
-                      </h4>
-                    </div>
-                    <div className="p-4">
-                      <FlightResultCard
-                        flight={selectedFlights.return}
-                        isSelected={true}
-                        fromLabel={extractIataCode(searchParams.destino)}
-                        toLabel={extractIataCode(searchParams.origem)}
-                        selectionMessage={''}
-                        allFlights={returnFlightResults}
-                        isRoundTrip={!searchParams.soIda}
-                        isSelectingReturn={false}
-                        selectedOutboundFlight={selectedFlights.outbound}
-                        onChooseOutbound={undefined}
-                        onChooseReturn={undefined}
-                        isFinalSummary={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* CTA Box */}
-                <div className="mt-8 bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <h4 className="text-lg font-bold text-gray-900 mb-2">
-                        🚀 Desbloqueie Resultados ilimitados
-                      </h4>
-                      <p className="text-sm text-gray-700 mb-2">
-                        Veja mais voos, receba alertas de preços e apoie o desenvolvimento do SemViagem
-                      </p>
-                      <p className="text-xs text-yellow-700">
-                        💳 Pagamento Seguro via Stripe
-                      </p>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <button
-                        onClick={() => {
-                          // Redirecionar para página de checkout ou abrir modal
-                          window.open('https://buy.stripe.com/test_seu_link_aqui', '_blank');
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors whitespace-nowrap"
-                      >
-                        Comprar Agora!
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
+            {/* 🆕 COMPONENTE UNIFICADO - Gerencia ida, volta e resumo automaticamente */}
+            <FlightResults
+              key={`flights-${selectedFlights.outbound?.flightId || 'none'}-${selectedFlights.return?.flightId || 'none'}`}
+              flights={outboundFlightResults}
+              returnFlights={returnFlightResults.length > 0 ? returnFlightResults : undefined}
+              searchParams={searchParams}
+              onNewSearch={handleNewSearch}
+              onFlightSelect={handleFlightSelect}
+              onFiltersChange={handleFiltersChange}
+              onNewSearchWithFilters={handleNewSearchWithFilters}
+              isSearching={isLoading}
+              variant="home"
+              enablePreFetch={true}
+              enableAdvancedSorting={true}
+              enableAirlineFilter={true}
+              showCompactCard={true}
+            />
+            {/* FlightResults acima gerencia automaticamente: ida, volta e resumo final */}
           </div>
         </section>
       )}
@@ -1834,59 +1726,45 @@ const Home: React.FC = () => {
           </div>
 
           {/* Three Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto px-4">
-
-            {/* CARD 1 - BUSCA ILIMITADA */}
-            <ProductCard
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--ds-spacing-lg)] max-w-7xl mx-auto px-4">
+            <PricingCard
+              variant="busca"
               title="Busca Ilimitada"
-              price="R$ 9,90/mês"
-              priceLabel="a partir de"
+              price="R$ 19,90"
+              priceSub="/mês"
               bullets={[
-                'Busca ilimitada de voos com milhas e dinheiro',
-                'Comparação automática de tarifas reais',
-                'ou R$ 99/ano — economize 17%'
+                "Busca ilimitada de voos com milhas e dinheiro",
+                "Comparação automática de tarifas reais",
               ]}
-              icon="/busca_voos.png"
-              iconAlt="Busca Ilimitada"
-              ctaText="Quero Buscar Passagens"
-              ctaHref="https://buy.stripe.com/00w8wR9gpgBRfjpcsFdMI04"
+              ctaPrimary={{ label: "Quero Buscar Passagens", href: "https://buy.stripe.com/00w8wR9gpgBRfjpcsFdMI04" }}
             />
 
-            {/* CARD 2 - ALERTAS INTELIGENTES (MAIS POPULAR) */}
-            <ProductCard
-              title="Alertas Inteligentes"
-              price="R$ 19,90/mês"
-              priceLabel="a partir de"
-              bullets={[
-                'Alertas automáticos de queda de preço (WhatsApp, E-mail e Push)',
-                'Notificações diretas e instantâneas',
-                'Sugestões de emissão com milhas ou dinheiro',
-                'Acesso a promoções e transferências bonificadas exclusivas',
-                '+30.000 alertas enviados neste mês'
-              ]}
-              icon="/alertas_inteligentes.png"
-              iconAlt="Alertas Inteligentes"
-              ctaText="Ativar meus Alertas"
-              ctaHref="https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02"
+            <PricingCard
+              variant="alertas"
+              title="AI Agent Alertas"
               badge="MAIS POPULAR"
-            />
-
-            {/* CARD 3 - AI CONCIERGE */}
-            <ProductCard
-              title="AI Concierge — Em breve"
+              price="R$ 29,90"
+              priceSub="/mês"
               bullets={[
-                'Planejamento automatizado com IA',
-                'Sugestões personalizadas de voos e hotéis',
-                'Agente pessoal 24h para emissões e resgates VIP',
-                'Sem compromisso — avise-me quando lançar.'
+                "Alertas automáticos de queda de preço",
+                "Notificações instantâneas",
+                "Sugestões de emissão",
+                "Acesso a promoções exclusivas",
               ]}
-              icon="/agent_concierge.png"
-              iconAlt="AI Concierge"
-              ctaText="Entrar na lista VIP"
-              ctaAction={() => navigate('/register')}
-              comingSoon={true}
+              ctaPrimary={{ label: "Ativar meus Alertas", href: "https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02" }}
             />
 
+            <PricingCard
+              variant="concierge"
+              title="AI Concierge"
+              badge="EM BREVE"
+              bullets={[
+                "Planejamento completo de viagem com IA",
+                "Sugestões personalizadas",
+                "Agente 24h para emissões VIP",
+              ]}
+              ctaPrimary={{ label: "Entrar na lista VIP", href: "/register" }}
+            />
           </div>
         </div>
       </section>

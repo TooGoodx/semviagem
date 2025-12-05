@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 
 export interface Flight {
   segments: any[];
@@ -31,7 +31,8 @@ interface SelectionContextValue {
   clear: () => void;
 }
 
-const SelectionContext = createContext<SelectionContextValue | undefined>(undefined);
+// Exportar o Context para uso direto com useContext
+export const SelectionContext = createContext<SelectionContextValue | undefined>(undefined);
 
 const STORAGE_KEY = 'flightSelections';
 
@@ -56,12 +57,26 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } catch {}
   }, [selected]);
 
+
+  // Funções estáveis que não mudam a cada render
+  const setOutbound = useCallback((flight: Flight | null) => {
+    setSelected(prev => ({ ...prev, outbound: flight }));
+  }, []);
+
+  const setReturn = useCallback((flight: Flight | null) => {
+    setSelected(prev => ({ ...prev, return: flight }));
+  }, []);
+
+  const clear = useCallback(() => {
+    setSelected({ outbound: null, return: null });
+  }, []);
+
   const value = useMemo<SelectionContextValue>(() => ({
     selected,
-    setOutbound: (flight) => setSelected(prev => ({ ...prev, outbound: flight })),
-    setReturn: (flight) => setSelected(prev => ({ ...prev, return: flight })),
-    clear: () => setSelected({ outbound: null, return: null })
-  }), [selected]);
+    setOutbound,
+    setReturn,
+    clear
+  }), [selected, setOutbound, setReturn, clear]);
 
   return (
     <SelectionContext.Provider value={value}>

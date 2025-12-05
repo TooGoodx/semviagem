@@ -328,6 +328,78 @@ const Profile: React.FC = () => {
           </CardHeader>
         </Card>
 
+        {/* Box informativo sobre combinações de alertas */}
+        <section
+          aria-labelledby="alerts-info-title"
+          className="sv-info-box"
+          role="region"
+          style={{
+            background: '#fff',
+            border: '1px solid #E9EEF3',
+            borderRadius: '12px',
+            padding: '16px',
+            boxShadow: 'none',
+            marginBottom: '24px',
+            marginTop: '24px'
+          }}
+        >
+          <div
+            className="sv-info-box__inner"
+            style={{
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center'
+            }}
+          >
+            {/* Ícone */}
+            <div
+              className="sv-info-box__icon"
+              aria-hidden="true"
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#fff',
+                boxShadow: '0 1px 4px rgba(9,30,66,0.04)',
+                border: '1px solid #E9EEF3'
+              }}
+            >
+              ✈️
+            </div>
+
+            {/* Conteúdo */}
+            <div className="sv-info-box__content" style={{ flex: 1 }}>
+              <h3
+                id="alerts-info-title"
+                className="sv-info-box__title"
+                style={{
+                  margin: 0,
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#060D1C',
+                  lineHeight: 1.4
+                }}
+              >
+                Cada alerta monitora até 1.225 combinações de voos automaticamente!
+              </h3>
+              <p
+                className="sv-info-box__desc"
+                style={{
+                  margin: '4px 0 0 0',
+                  fontSize: '13px',
+                  color: '#8B98A6',
+                  lineHeight: 1.4
+                }}
+              >
+                Combinando 5 origens × 5 destinos × 49 datas (7 dias ida × 7 dias volta) — máxima chance de encontrar sua viagem ideal.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Configuração de Alertas - Substituiu "Preferências de viagem" antiga */}
         <AlertConfigSection />
 

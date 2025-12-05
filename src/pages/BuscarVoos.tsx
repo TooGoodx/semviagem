@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
 import toast from 'react-hot-toast';
 import moblixApiService from '../services/moblixApiService';
-import FlightResults from '../components/FlightResultsHome';
+import FlightResults from '../components/FlightResults';
 import CustomCalendar from '../components/CustomCalendar';
 import FlightLoadingOverlay from '../components/FlightLoadingOverlay';
 
@@ -1018,6 +1018,11 @@ const BuscarVoos: React.FC = () => {
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Voos de ida</h2>
                   <FlightResults
+                    variant="home"
+                    enablePreFetch={true}
+                    enableAdvancedSorting={true}
+                    enableAirlineFilter={true}
+                    showCompactCard={true}
                     flights={outboundFlightResults}
                     searchParams={searchParams}
                     onNewSearch={handleNewSearch}
@@ -1034,6 +1039,11 @@ const BuscarVoos: React.FC = () => {
                 <div id="return-flights">
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Voos de volta</h2>
                   <FlightResults
+                    variant="home"
+                    enablePreFetch={true}
+                    enableAdvancedSorting={true}
+                    enableAirlineFilter={true}
+                    showCompactCard={true}
                     flights={returnFlightResults}
                     searchParams={{
                       ...searchParams,

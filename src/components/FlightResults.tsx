@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useContext } from 'react';
 import FlightResultCard from './FlightResultCard';
 import InteractiveFilters from './InteractiveFilters';
 import SelectionModal from './SelectionModal';
 import ReturnFlightModal from './ReturnFlightModal';
-import { useSelection } from '../context/SelectionContext';
+import { useSelection, SelectionContext } from '../context/SelectionContext';
 import { useNavigate } from 'react-router-dom';
 import { getAirlineLogo, getDisplayAirlineName } from '../utils/airlineLogos';
 import CompactFlightCard from './CompactFlightCard';
 import moblixApiService from '../services/moblixApiService';
+import { logger } from '../utils/logger';
 
 // Interfaces
 interface Airport {
@@ -29,7 +30,7 @@ interface SearchParams {
   orderBy: 'tempo' | 'preco' | 'custo-beneficio';
   soIda: boolean;
   classe: 'economica' | 'executiva' | 'primeira';
-  airline?: string;
+  airline?: string; // Opcional - usado apenas quando enableAirlineFilter=true
 }
 
 interface Flight {
@@ -44,6 +45,7 @@ interface Flight {
 
 interface FlightResultsProps {
   flights: Flight[];
+  returnFlights?: Flight[]; // 🆕 Nova prop para voos de volta
   searchParams: SearchParams;
   onNewSearch: () => void;
   onFlightSelect?: (flight: Flight, type: 'outbound' | 'return') => void;
@@ -53,6 +55,13 @@ interface FlightResultsProps {
   isReturnSection?: boolean;
   isFinalSummary?: boolean;
   hideFilters?: boolean;
+
+  // NOVAS PROPS para controlar comportamentos específicos
+  variant?: 'home' | 'search';
+  enablePreFetch?: boolean;
+  enableAdvancedSorting?: boolean;
+  enableAirlineFilter?: boolean;
+  showCompactCard?: boolean;
 }
 
 interface SelectedFlights {
@@ -60,21 +69,115 @@ interface SelectedFlights {
   return: Flight | null;
 }
 
-const FlightResults: React.FC<FlightResultsProps> = ({ 
-  flights, 
-  searchParams, 
-  onNewSearch, 
-  onFlightSelect, 
+const FlightResults: React.FC<FlightResultsProps> = ({
+  flights,
+  returnFlights, // 🆕 Nova prop
+  searchParams,
+  onNewSearch,
+  onFlightSelect,
   onFiltersChange,
   onNewSearchWithFilters,
   isSearching = false,
   isReturnSection = false,
   isFinalSummary = false,
-  hideFilters = false
+  hideFilters = false,
+
+  // Valores padrão para novas props
+  variant = 'search',
+  enablePreFetch = false,
+  enableAdvancedSorting = false,
+  enableAirlineFilter = false,
+  showCompactCard = false
 }) => {
   // Estado global de seleção
   const { selected: selectedFlights, setOutbound, setReturn, clear } = useSelection();
+
   const navigate = useNavigate();
+
+  // Estados locais (declarados antes de serem usados)
+  const [displayedFlights, setDisplayedFlights] = useState<Flight[]>([]);
+  const [isSelectingReturn, setIsSelectingReturn] = useState(false);
+  const [internalReturnFlights, setInternalReturnFlights] = useState<Flight[]>([]);
+  const [selectedOutboundForReturn, setSelectedOutboundForReturn] = useState<Flight | null>(null);
+  const [shouldAutoOpenReturnModal, setShouldAutoOpenReturnModal] = useState(false);
+  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [showFinalSelection, setShowFinalSelection] = useState(false);
+
+  // 🆕 STATE MACHINE - Determina automaticamente qual etapa estamos e quais voos mostrar
+  const flightState = useMemo(() => {
+    // ETAPA 3: Resumo Final (ambos selecionados)
+    if (selectedFlights.outbound && selectedFlights.return) {
+      return {
+        step: 'summary' as const,
+        flights: [],
+        showSummary: true,
+        isSelectingOutbound: false,
+        isSelectingReturn: false
+      };
+    }
+
+    // ETAPA 2: Selecionando volta (ida já selecionada + temos voos de volta)
+    if (selectedFlights.outbound && !selectedFlights.return) {
+      const returnFlightsToUse = returnFlights || internalReturnFlights;
+      if (returnFlightsToUse && returnFlightsToUse.length > 0) {
+        return {
+          step: 'return' as const,
+          flights: returnFlightsToUse,
+          showSummary: false,
+          isSelectingOutbound: false,
+          isSelectingReturn: true
+        };
+      }
+    }
+
+    // ETAPA 1: Selecionando ida (estado inicial)
+    return {
+      step: 'outbound' as const,
+      flights: flights,
+      showSummary: false,
+      isSelectingOutbound: true,
+      isSelectingReturn: false
+    };
+  }, [selectedFlights.outbound, selectedFlights.return, flights, returnFlights, internalReturnFlights]);
+
+  // 🔍 DEBUG - Log dos estados principais (apenas se variant="home")
+  useEffect(() => {
+    if (variant === 'home') {
+      logger.debug('DEBUG - Estados atuais:', {
+        hasOutbound: !!selectedFlights.outbound,
+        hasReturn: !!selectedFlights.return,
+        outboundAirline: selectedFlights.outbound?.airline || 'N/A',
+        returnAirline: selectedFlights.return?.airline || 'N/A',
+        shouldShowSummary: !!(selectedFlights.outbound && selectedFlights.return)
+      });
+    }
+  }, [variant, selectedFlights.outbound, selectedFlights.return]);
+
+  // 🔍 DEBUG - Log específico da condição de renderização do resumo
+  useEffect(() => {
+    const shouldShow = !!(selectedFlights.outbound && selectedFlights.return);
+    logger.debug('🔍 RESUMO DEBUG:', {
+      showFinalSelection,
+      hasOutbound: !!selectedFlights.outbound,
+      hasReturn: !!selectedFlights.return,
+      shouldShowSummary: shouldShow,
+      selectedFlights: {
+        outbound: selectedFlights.outbound ? 'exists' : 'null',
+        return: selectedFlights.return ? 'exists' : 'null'
+      }
+    });
+  }, [selectedFlights.outbound, selectedFlights.return, showFinalSelection]);
+
+  // 🔥 DEBUG - Rastrear re-renderizações do FlightResults
+  useEffect(() => {
+    console.log('🔥 FLIGHTRESULTS - RENDERIZOU com selectedFlights:', {
+      outbound: selectedFlights.outbound?.airline || 'NULL',
+      return: selectedFlights.return?.airline || 'NULL',
+      outboundPrice: selectedFlights.outbound?.totalPrice || 'N/A',
+      returnPrice: selectedFlights.return?.totalPrice || 'N/A',
+      timestamp: new Date().toISOString()
+    });
+  }, [selectedFlights]);
 
   // Listener para abrir modal da volta
   useEffect(() => {
@@ -84,7 +187,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     };
 
     window.addEventListener('open-return-modal', handleOpenReturnModal as EventListener);
-    
+
     return () => {
       window.removeEventListener('open-return-modal', handleOpenReturnModal as EventListener);
     };
@@ -93,17 +196,17 @@ const FlightResults: React.FC<FlightResultsProps> = ({
   // Extrai rota e horários somente a partir de campos reais do voo selecionado
   const getRouteAndTimes = (flight?: any) => {
     if (!flight) return { from: '', to: '', depISO: '', arrISO: '' };
-    
+
     // Prioriza dados dos segments que contêm os horários exatos da API
     const segments = flight.segments || [];
     const firstSegment = segments[0] || {};
     const lastSegment = segments[segments.length - 1] || {};
-    
+
     const from = firstSegment.departure || firstSegment.origem || flight.Origem || flight.departure || '';
     const to = lastSegment.arrival || lastSegment.destino || flight.Destino || flight.arrival || '';
     const depISO = firstSegment.departureDate || flight.Saida || flight.departureDate || '';
     const arrISO = lastSegment.arrivalDate || flight.Chegada || flight.arrivalDate || '';
-    
+
     return { from, to, depISO, arrISO };
   };
 
@@ -111,13 +214,13 @@ const FlightResults: React.FC<FlightResultsProps> = ({
   const debugFlight = (label: string, flight: any) => {
     try {
       if (!flight) {
-        console.log(`🧪 Summary Debug - ${label}: vazio/null`);
+        logger.debug(`Summary Debug - ${label}: vazio/null`);
         return;
       }
       const segs = Array.isArray(flight.segments) ? flight.segments : [];
       const first = segs[0] || {};
       const last = segs.length ? segs[segs.length - 1] : {};
-      console.log(`🧪 Summary Debug - ${label}:`, {
+      logger.debug(`Summary Debug - ${label}:`, {
         Origem: flight.Origem,
         Destino: flight.Destino,
         Saida: flight.Saida,
@@ -131,7 +234,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         segLast: { origem: last.origem, destino: last.destino, departureDate: last.departureDate, arrivalDate: last.arrivalDate }
       });
     } catch (e) {
-      console.log(`🧪 Summary Debug - ${label}: erro ao inspecionar`, e);
+      logger.error(`Summary Debug - ${label}: erro ao inspecionar`, e);
     }
   };
 
@@ -158,51 +261,61 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     }
   };
 
-  // Ordenar voos baseado no filtro selecionado
+  // Ordenar voos baseado no filtro selecionado (condicional: avançado vs simples)
   const sortedFlights = useMemo(() => {
-    return [...flights].sort((a, b) => {
-      const priceA = a.priceWithTax || a.price || a.totalPrice || 0;
-      const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
+    if (enableAdvancedSorting) {
+      // ORDENAÇÃO AVANÇADA (variant="home")
+      return [...flights].sort((a, b) => {
+        const priceA = a.priceWithTax || a.price || a.totalPrice || 0;
+        const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
 
-      if (searchParams.orderBy === 'preco') {
-        // Mais barato: ordenar por preço (menor primeiro)
-        return priceA - priceB;
-      }
-
-      if (searchParams.orderBy === 'tempo') {
-        // Mais rápido: ordenar por duração (menor primeiro)
-        const durationA = parseDurationToMinutes(a.segments?.[0]?.duration || '');
-        const durationB = parseDurationToMinutes(b.segments?.[0]?.duration || '');
-        return durationA - durationB;
-      }
-
-      if (searchParams.orderBy === 'custo-beneficio') {
-        // Melhor custo-benefício: menor ratio preço/tempo
-        const durationA = parseDurationToMinutes(a.segments?.[0]?.duration || '');
-        const durationB = parseDurationToMinutes(b.segments?.[0]?.duration || '');
-
-        // Evitar divisão por zero
-        if (durationA === 0 || durationB === 0) {
-          return priceA - priceB; // Fallback para preço
+        if (searchParams.orderBy === 'preco') {
+          // Mais barato: ordenar por preço (menor primeiro)
+          return priceA - priceB;
         }
 
-        const ratioA = priceA / durationA;
-        const ratioB = priceB / durationB;
-        return ratioA - ratioB;
-      }
+        if (searchParams.orderBy === 'tempo') {
+          // Mais rápido: ordenar por duração (menor primeiro)
+          const durationA = parseDurationToMinutes(a.segments?.[0]?.duration || '');
+          const durationB = parseDurationToMinutes(b.segments?.[0]?.duration || '');
+          return durationA - durationB;
+        }
 
-      // Fallback: ordenar por preço
-      return priceA - priceB;
-    });
-  }, [flights, searchParams.orderBy]);
+        if (searchParams.orderBy === 'custo-beneficio') {
+          // Melhor custo-benefício: menor ratio preço/tempo
+          const durationA = parseDurationToMinutes(a.segments?.[0]?.duration || '');
+          const durationB = parseDurationToMinutes(b.segments?.[0]?.duration || '');
 
-  // Filtrar por CIA Aérea se selecionada
+          // Evitar divisão por zero
+          if (durationA === 0 || durationB === 0) {
+            return priceA - priceB; // Fallback para preço
+          }
+
+          const ratioA = priceA / durationA;
+          const ratioB = priceB / durationB;
+          return ratioA - ratioB;
+        }
+
+        // Fallback: ordenar por preço
+        return priceA - priceB;
+      });
+    } else {
+      // ORDENAÇÃO SIMPLES (variant="search")
+      return [...flights].sort((a, b) => {
+        const priceA = a.priceWithTax || a.price || a.totalPrice || 0;
+        const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
+        return priceA - priceB;
+      });
+    }
+  }, [flights, searchParams.orderBy, enableAdvancedSorting]);
+
+  // Filtrar por CIA Aérea se selecionada (condicional)
   const filteredByAirline = useMemo(() => {
-    if (!searchParams.airline || searchParams.airline === 'todas') {
+    if (!enableAirlineFilter || !searchParams.airline || searchParams.airline === 'todas') {
       return sortedFlights;
     }
 
-    console.log('✈️ Filtrando por CIA Aérea:', searchParams.airline);
+    logger.debug('Filtrando por CIA Aérea:', searchParams.airline);
 
     return sortedFlights.filter(flight => {
       // Tentar extrair nome da companhia de diferentes campos possíveis
@@ -215,29 +328,20 @@ const FlightResults: React.FC<FlightResultsProps> = ({
       const matches = airlineName === searchParams.airline;
 
       if (matches) {
-        console.log('✅ Voo match:', { airlineName, flight: flight.numeroVoo });
+        logger.debug('Voo match:', { airlineName, flight: flight.numeroVoo });
       }
 
       return matches;
     });
-  }, [sortedFlights, searchParams.airline]);
+  }, [sortedFlights, searchParams.airline, enableAirlineFilter]);
 
-  // Estados locais
-  const [displayedFlights, setDisplayedFlights] = useState<Flight[]>(filteredByAirline.slice(0, 10));
-  const [isSelectingReturn, setIsSelectingReturn] = useState(false);
-  const [returnFlights, setReturnFlights] = useState<Flight[]>([]);
-  const [selectedOutboundForReturn, setSelectedOutboundForReturn] = useState<Flight | null>(null);
-  const [shouldAutoOpenReturnModal, setShouldAutoOpenReturnModal] = useState(false);
-  const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
-  const [showFinalSelection, setShowFinalSelection] = useState(false);
-  
   // Modal de seleção apenas para VOOS DE VOLTA
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [selectionModalFlight, setSelectionModalFlight] = useState<Flight | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const flightsPerPage = 10;
-  
+
   // Estados para paginação separada de milhas e dinheiro
   const [moneyPage, setMoneyPage] = useState(0);
   const [milesPage, setMilesPage] = useState(0);
@@ -249,7 +353,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
   const scrollPositionRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // ✅ NOVOS ESTADOS PARA PRE-FETCH DE VOOS DE VOLTA
+  // ✅ ESTADOS PARA PRE-FETCH DE VOOS DE VOLTA (apenas se enablePreFetch=true)
   const [voosVoltaPrefetched, setVoosVoltaPrefetched] = useState<Flight[]>([]);
   const returnFlightsPrefetched = useRef(false);
   const [isPrefetchingReturn, setIsPrefetchingReturn] = useState(false);
@@ -264,34 +368,34 @@ const FlightResults: React.FC<FlightResultsProps> = ({
 
   // 🔄 RESET: Quando novos voos chegam, reseta a exibição com ordenação
   useEffect(() => {
+    // ✅ CRITICAL: Não resetar se ambos os voos já foram selecionados (ida e volta)
+    if (selectedFlights.outbound && selectedFlights.return) {
+      logger.debug('PROTEÇÃO FORTE: Ambos voos selecionados - NUNCA resetar');
+      return;
+    }
+
     // ✅ CRITICAL: Não resetar se showFinalSelection está ativo (resultado final)
     if (showFinalSelection) {
-      console.log('🛡️ PROTEÇÃO: useEffect bloqueado - showFinalSelection ativo');
+      logger.debug('PROTEÇÃO: useEffect bloqueado - showFinalSelection ativo');
       return;
     }
-    
-    // ✅ CRITICAL: Não resetar se ambos os voos já foram selecionados (ida e volta)
-    if (showFinalSelection || (selectedFlights.outbound && selectedFlights.return && !isSelectingReturn)) {
-      console.log('🛡️ PROTEÇÃO: Ambos voos selecionados - não resetar');
-      return;
-    }
-    
+
     // ✅ CRITICAL: Não resetar se estamos selecionando voos de volta
-    if (isSelectingReturn && returnFlights.length > 0) {
-      console.log('🛡️ PROTEÇÃO: Selecionando volta - não resetar');
+    if (isSelectingReturn && internalReturnFlights.length > 0) {
+      logger.debug('PROTEÇÃO: Selecionando volta - não resetar');
       return;
     }
-    
+
     // Reset selection state when new flights arrive (ensure we start with outbound flights)
     // Only reset if we're not in the middle of selecting return flights
     if (!isSelectingReturn) {
       setIsSelectingReturn(false);
-      setReturnFlights([]);
+      setInternalReturnFlights([]);
     }
 
     // Helper function to apply airline filter
     const applyAirlineFilter = (flightsList: Flight[]) => {
-      if (!searchParams.airline || searchParams.airline === 'todas') {
+      if (!enableAirlineFilter || !searchParams.airline || searchParams.airline === 'todas') {
         return flightsList;
       }
       return flightsList.filter(flight => {
@@ -317,13 +421,13 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
         return priceA - priceB;
       });
-      
+
       const flightsMiles = airlineFilteredFlights.filter(f => f.isMiles).sort((a, b) => {
         const priceA = a.priceWithTax || a.price || a.totalPrice || 0;
         const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
         return priceA - priceB;
       });
-      
+
       // 🎯 FIX CRÍTICO: Manter TODOS os voos (dinheiro + milhas) visíveis
       // Não fazer intercalação, apenas manter todos disponíveis
       const allFlights = [...flightsMoney, ...flightsMiles].sort((a, b) => {
@@ -331,9 +435,9 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
         return priceA - priceB;
       });
-      
+
       // Modo duas colunas ativado - PRESERVANDO AMBOS
-      
+
       // ✅ Preservar TODOS os voos, não apenas uma amostra
       setDisplayedFlights(allFlights);
     } else {
@@ -343,7 +447,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         if (selectedFlights.outbound) {
           return !selectedFlights.outbound.isMiles;
         }
-        
+
         // Filtrar por tipo de pagamento selecionado
         if (searchParams.tipoPagamento === 'dinheiro') {
           return true; // Priorizar dinheiro
@@ -351,7 +455,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         if (searchParams.tipoPagamento === 'milhas') {
           return false; // Priorizar milhas
         }
-        
+
         // Se não, verificar dados salvos
         try {
           const originalPurchase = localStorage.getItem('originalPurchase');
@@ -360,29 +464,29 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             return !purchaseData.isMiles;
           }
         } catch (error) {
-          console.log('⚠️ Erro ao ler originalPurchase:', error);
+          logger.warn('Erro ao ler originalPurchase:', error);
         }
-        
+
         return true; // Padrão: dinheiro primeiro
       })();
-      
+
       // ✅ CRÍTICO: Aplicar filtros apenas quando tipoPagamento NÃO é "ambos"
       let filteredFlights = airlineFilteredFlights;
       if (searchParams.tipoPagamento === 'dinheiro') {
         filteredFlights = airlineFilteredFlights.filter(f => !f.isMiles);
-        console.log('🔍 Filtrando apenas voos em DINHEIRO:', filteredFlights.length);
+        logger.debug('Filtrando apenas voos em DINHEIRO:', filteredFlights.length);
       } else if (searchParams.tipoPagamento === 'milhas') {
         filteredFlights = airlineFilteredFlights.filter(f => f.isMiles);
-        console.log('🔍 Filtrando apenas voos em MILHAS:', filteredFlights.length);
+        logger.debug('Filtrando apenas voos em MILHAS:', filteredFlights.length);
       } else {
         // Caso padrão: manter todos os voos
-        console.log('🔍 Mantendo TODOS os tipos de voo:', filteredFlights.length);
+        logger.debug('Mantendo TODOS os tipos de voo:', filteredFlights.length);
       }
-      
+
       const sortedFlights = [...filteredFlights].sort((a, b) => {
         const isAMoney = !a.isMiles;
         const isBMoney = !b.isMiles;
-        
+
         // Se um é dinheiro e outro é milhas, priorizar baseado no padrão estabelecido
         if (isAMoney !== isBMoney) {
           if (vooPrincipalEmDinheiro) {
@@ -391,23 +495,23 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             return isAMoney ? 1 : -1; // Milhas primeiro
           }
         }
-        
+
         // Se ambos são do mesmo tipo, ordenar por preço
         const priceA = a.priceWithTax || a.price || a.totalPrice || 0;
         const priceB = b.priceWithTax || b.price || b.totalPrice || 0;
         return priceA - priceB;
       });
-      
-      console.log('📋 Voos filtrados e ordenados:', {
+
+      logger.debug('Voos filtrados e ordenados:', {
         tipoFiltro: searchParams.tipoPagamento,
         total: sortedFlights.length,
         primeiro: sortedFlights[0] ? (!sortedFlights[0].isMiles ? 'dinheiro' : 'milhas') : 'nenhum'
       });
-      
+
       // Mostrar apenas os 10 primeiros inicialmente quando há filtro específico
       setDisplayedFlights(filteredByAirline.slice(0, 10));
     }
-    
+
     setCurrentPage(0);
     setIsLoadingMore(false);
     // Resetar paginação por seção (dinheiro e milhas)
@@ -416,7 +520,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
 
     // Quando estamos selecionando a VOLTA, os voos recebidos são os de volta da API
     if (isSelectingReturn && !showFinalSelection) {
-      setReturnFlights(flights);
+      setInternalReturnFlights(flights);
     }
 
     // 🔁 Após busca da VOLTA: apenas orientar o usuário, sem auto-selecionar voos
@@ -426,14 +530,16 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         if (shouldReopen && flights && flights.length > 0) {
           // Limpa a flag e orienta o usuário a escolher manualmente
           localStorage.removeItem('reopenSelectionAfterSearch');
-          console.log('ℹ️ Retorno disponível. Aguarde o usuário escolher o voo de volta.');
+          logger.info('Retorno disponível. Aguarde o usuário escolher o voo de volta.');
         }
       }
     } catch {}
-  }, [flights, selectedFlights.outbound, searchParams.tipoPagamento, searchParams.airline, showFinalSelection]); // removido isSelectingReturn para evitar loop
+  }, [flights, selectedFlights.outbound, searchParams.tipoPagamento, searchParams.airline, showFinalSelection, enableAirlineFilter]); // removido isSelectingReturn para evitar loop
 
-  // ✅ PRE-FETCH AUTOMÁTICO: Buscar voos de volta em background
+  // ✅ PRE-FETCH AUTOMÁTICO: Buscar voos de volta em background (condicional)
   useEffect(() => {
+    if (!enablePreFetch) return; // Skip se pre-fetch não estiver habilitado
+
     const prefetchReturnFlights = async () => {
       // Condições para executar pre-fetch:
       // 1. Temos voos de ida carregados
@@ -446,7 +552,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         !returnFlightsPrefetched.current &&
         !showFinalSelection
       ) {
-        console.log('🔄 [PRE-FETCH] Iniciando busca automática de voos de volta em background...');
+        logger.debug('[PRE-FETCH] Iniciando busca automática de voos de volta em background...');
         setIsPrefetchingReturn(true);
 
         try {
@@ -479,7 +585,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             soIda: true // Buscar só ida (que será a volta)
           };
 
-          console.log('🔄 [PRE-FETCH] Parâmetros invertidos:', returnParams);
+          logger.debug('[PRE-FETCH] Parâmetros invertidos:', returnParams);
 
           // Buscar voos de volta com timeout de 10 segundos
           const timeoutPromise = new Promise((_, reject) =>
@@ -499,14 +605,14 @@ const FlightResults: React.FC<FlightResultsProps> = ({
               isReturnFlight: true
             }));
 
-            console.log(`✅ [PRE-FETCH] ${processedReturnFlights.length} voos de volta pré-carregados com sucesso!`);
+            logger.success(`[PRE-FETCH] ${processedReturnFlights.length} voos de volta pré-carregados com sucesso!`);
             setVoosVoltaPrefetched(processedReturnFlights);
             returnFlightsPrefetched.current = true;
           } else {
-            console.warn('⚠️ [PRE-FETCH] API não retornou voos de volta');
+            logger.warn('[PRE-FETCH] API não retornou voos de volta');
           }
         } catch (error) {
-          console.warn('⚠️ [PRE-FETCH] Erro ao buscar voos de volta (não crítico):', error);
+          logger.warn('[PRE-FETCH] Erro ao buscar voos de volta (não crítico):', error);
           // Não bloquear UI - usuário poderá buscar manualmente depois
         } finally {
           setIsPrefetchingReturn(false);
@@ -515,7 +621,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     };
 
     prefetchReturnFlights();
-  }, [flights, searchParams.soIda, showFinalSelection]);
+  }, [flights, searchParams.soIda, showFinalSelection, enablePreFetch]);
 
   // Format functions
   const formatCurrency = (value: number) => {
@@ -566,24 +672,24 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     if (!dateString || dateString === 'N/A') {
       return '--:--';
     }
-    
+
     try {
       // Se já está no formato HH:MM, retornar diretamente
       if (/^\d{2}:\d{2}$/.test(dateString)) {
         return dateString;
       }
-      
+
       const date = new Date(dateString);
-      
+
       if (isNaN(date.getTime())) {
         return '--:--';
       }
-      
+
       // Usar horário local para manter consistência com o timezone do usuário
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
       const formattedTime = `${hours}:${minutes}`;
-      
+
       return formattedTime;
     } catch (error) {
       return '--:--';
@@ -597,12 +703,12 @@ const FlightResults: React.FC<FlightResultsProps> = ({
 
   const getDisplayAirlineName = (flight: Flight) => {
     // Priorizar dados da API Moblix (validatingBy.name) sobre flight.airline
-    const airlineName = (flight as any).validatingBy?.name || 
-                       (flight as any).segments?.[0]?.legs?.[0]?.operatedBy?.name || 
+    const airlineName = (flight as any).validatingBy?.name ||
+                       (flight as any).segments?.[0]?.legs?.[0]?.operatedBy?.name ||
                        (flight as any).segments?.[0]?.legs?.[0]?.managedBy?.name ||
-                       flight.airline || 
+                       flight.airline ||
                        'Companhia Aérea';
-    
+
     return airlineName;
   };
 
@@ -627,28 +733,28 @@ const FlightResults: React.FC<FlightResultsProps> = ({
   // Load more flights function with loading state and smooth scroll
   const loadMoreFlights = async () => {
     setIsLoadingMore(true);
-    
+
     // Small delay to show loading state
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     const nextPage = currentPage + 1;
     const startIndex = nextPage * flightsPerPage;
     const endIndex = startIndex + flightsPerPage;
 
     const newFlights = filteredByAirline.slice(startIndex, endIndex);
     const currentFlightsCount = displayedFlights.length;
-    
+
     setDisplayedFlights(prev => [...prev, ...newFlights]);
     setCurrentPage(nextPage);
     setIsLoadingMore(false);
-    
+
     // Smooth scroll to the first newly loaded flight after a small delay
     setTimeout(() => {
       const flightElements = document.querySelectorAll('.flight-card');
       const targetElement = flightElements[currentFlightsCount];
       if (targetElement) {
-        targetElement.scrollIntoView({ 
-          behavior: 'smooth', 
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
           block: 'start',
           inline: 'nearest'
         });
@@ -672,7 +778,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     const remaining = filteredByAirline.length - displayedFlights.length;
     return remaining > 0 && remaining <= 15; // Show "Load All" if 15 or fewer flights remain
   };
-  
+
   // Funções para carregar mais voos por seção
   const loadMoreMoneyFlights = async () => {
     setIsLoadingMoreMoney(true);
@@ -680,34 +786,37 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     setMoneyPage(prev => prev + 1);
     setIsLoadingMoreMoney(false);
   };
-  
+
   const loadMoreMilesFlights = async () => {
     setIsLoadingMoreMiles(true);
     await new Promise(resolve => setTimeout(resolve, 300));
     setMilesPage(prev => prev + 1);
     setIsLoadingMoreMiles(false);
   };
-  
+
   // Verificar se há mais voos para carregar por seção
   const hasMoreMoneyFlights = () => {
     const moneyFlights = getCurrentDisplayedFlights().filter(f => !f.isMiles);
     const displayedMoneyCount = (moneyPage + 1) * itemsPerSection;
     return moneyFlights.length > displayedMoneyCount;
   };
-  
+
   const hasMoreMilesFlights = () => {
     const milesFlights = getCurrentDisplayedFlights().filter(f => f.isMiles);
     const displayedMilesCount = (milesPage + 1) * itemsPerSection;
     return milesFlights.length > displayedMilesCount;
   };
 
-  // Nova função para lidar com a escolha do voo de ida
+  // Nova função para lidar com a escolha do voo de ida (condicional: com ou sem pre-fetch)
   const handleChooseOutbound = async (flight: Flight) => {
-    console.log('✈️ [SELEÇÃO] Voo de ida escolhido:', flight);
+    logger.debug('handleChooseOutbound INICIADO:', flight?.airline);
+    logger.debug('setOutbound function:', typeof setOutbound);
+    logger.debug('[SELEÇÃO] Voo de ida escolhido:', flight);
 
     // Se a busca é SOMENTE IDA
     if (searchParams.soIda) {
       setOutbound(flight);
+      logger.success('setOutbound EXECUTADO (somente ida)');
       setReturn(null);
       setIsSelectingReturn(false);
       onFlightSelect?.(flight, 'outbound');
@@ -717,15 +826,17 @@ const FlightResults: React.FC<FlightResultsProps> = ({
 
     // Para IDA E VOLTA: selecionar voo de ida
     setOutbound(flight);
+    logger.success('setOutbound EXECUTADO (ida e volta)');
     setSelectedOutboundForReturn(flight);
     setIsSelectionModalOpen(false);
     setSelectionModalFlight(null);
 
-    // ✅ TRANSIÇÃO INLINE: Usar voos de volta pré-carregados
-    if (voosVoltaPrefetched.length > 0) {
-      console.log(`⚡ [INLINE] Usando ${voosVoltaPrefetched.length} voos de volta PRÉ-CARREGADOS (instantâneo)`);
+    // ✅ COMPORTAMENTO CONDICIONAL: Pre-fetch vs Busca em tempo real
+    if (enablePreFetch && voosVoltaPrefetched.length > 0) {
+      // VARIANT="HOME": Usar voos de volta pré-carregados (INSTANTÂNEO)
+      logger.success(`[INLINE] Usando ${voosVoltaPrefetched.length} voos de volta PRÉ-CARREGADOS (instantâneo)`);
 
-      setReturnFlights(voosVoltaPrefetched);
+      setInternalReturnFlights(voosVoltaPrefetched);
       setIsSelectingReturn(true);
       setDisplayedFlights(voosVoltaPrefetched);
 
@@ -734,12 +845,10 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 100);
     } else {
-      console.log('🔄 [FALLBACK] Pre-fetch não disponível, buscando voos de volta agora...');
+      // VARIANT="SEARCH" OU FALLBACK: Buscar voos de volta agora
+      logger.debug('[FALLBACK] Pre-fetch não disponível, buscando voos de volta agora...');
 
-      // Fallback: buscar voos de volta agora (comportamento original)
       try {
-        const { default: moblixApiService } = await import('../services/moblixApiService');
-
         const extractIATA = (cityString: string): string => {
           if (!cityString) return '';
           const parenMatch = cityString.match(/\(([A-Z]{3})\)/);
@@ -771,12 +880,12 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             isReturnFlight: true
           }));
 
-          setReturnFlights(processedFlights);
+          setInternalReturnFlights(processedFlights);
           setIsSelectingReturn(true);
           setDisplayedFlights(processedFlights);
         }
       } catch (error) {
-        console.error('❌ [FALLBACK] Erro ao buscar voos de volta:', error);
+        logger.error('[FALLBACK] Erro ao buscar voos de volta:', error);
       }
     }
 
@@ -785,51 +894,54 @@ const FlightResults: React.FC<FlightResultsProps> = ({
 
   // Selecionar imediatamente a VOLTA ao clicar em "Escolher" (sem modal)
   const openReturnSelectionModal = (flight: Flight) => {
-    
+
     // Fechar quaisquer modais abertos via evento global (cards)
     try {
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('sv-close-modals'));
       }
     } catch {}
-    
+
     // Definir o voo de volta e encerrar estado de seleção
     setReturn(flight);
     setIsSelectingReturn(false);
     setIsSelectionModalOpen(false);
     setSelectionModalFlight(null);
-    
+
     // Não navegar para resumo - manter na mesma página
   };
 
   // Nova função para lidar com a escolha do voo de volta
   const handleChooseReturn = (flight: Flight) => {
-    console.log('🎯 Selecionando voo de volta:', flight);
-    
+    logger.debug('handleChooseReturn INICIADO:', flight?.airline);
+    logger.debug('setReturn function:', typeof setReturn);
+    logger.debug('Selecionando voo de volta:', flight);
+
     // Definir os voos finais PRIMEIRO, antes de limpar os estados
     const outboundFlight = selectedFlights.outbound;
     if (outboundFlight) {
-      console.log('✅ Definindo voos finais - Ida:', outboundFlight, 'Volta:', flight);
-      
+      logger.success('Definindo voos finais', { ida: outboundFlight, volta: flight });
+
       // CRÍTICO: Atualizar todos os estados SINCRONAMENTE para ir direto ao modal final
       setReturn(flight);
+      logger.success('setReturn EXECUTADO');
       setShowFinalSelection(true);
       setIsSelectingReturn(false);
-      setReturnFlights([]);
+      setInternalReturnFlights([]);
       setSelectedOutboundForReturn(null);
-      
+
       // FORÇAR exibição do modal final imediatamente
       setDisplayedFlights([outboundFlight, flight]);
-      
-      console.log('🎯 RESULTADO FINAL ATIVADO: showFinalSelection=true, displayedFlights=[ida,volta]');
-      console.log('🎯 ESTADO FINAL: isSelectingReturn=false, showFinalSelection=true');
-      
+
+      logger.success('RESULTADO FINAL ATIVADO: showFinalSelection=true, displayedFlights=[ida,volta]');
+      logger.success('ESTADO FINAL: isSelectingReturn=false, showFinalSelection=true');
+
       // Scroll automático para o modal final após um pequeno delay para garantir que o DOM foi atualizado
       setTimeout(() => {
         const finalSummaryElement = document.querySelector('[data-final-summary]');
         if (finalSummaryElement) {
-          finalSummaryElement.scrollIntoView({ 
-            behavior: 'smooth', 
+          finalSummaryElement.scrollIntoView({
+            behavior: 'smooth',
             block: 'start',
             inline: 'nearest'
           });
@@ -838,7 +950,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }, 100);
-      
+
       // Notificar o componente pai IMEDIATAMENTE
       if (onFlightSelect) {
         onFlightSelect(flight, 'return');
@@ -852,34 +964,29 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     handleChooseOutbound(flight);
   };
 
-  // Abrir modal ao clicar em "Escolher" na VOLTA
-  // (removido) duplicado de openReturnSelectionModal
-
-  // Modal de confirmação removido; seleção é imediata, não há handler aqui
-  
   // Handle flight selection - AGORA PROCESSA DIFERENTES TIPOS DE EVENTOS
   const handleFlightSelect = async (flightOrEvent: Flight | any) => {
-    console.log('👍 FlightResults - handleFlightSelect chamado:', flightOrEvent);
-    
+    logger.debug('FlightResults - handleFlightSelect chamado:', flightOrEvent);
+
     // Verificar se é um evento especial (com type) ou um voo normal
     if (flightOrEvent && typeof flightOrEvent === 'object' && flightOrEvent.type) {
       const event = flightOrEvent;
-      
+
       switch (event.type) {
         case 'CHOOSE_OUTBOUND':
           // Lidar com escolha de voo de ida do botão "Escolher"
-          console.log('✨ Processando escolha de voo de ida via botão Escolher');
+          logger.debug('Processando escolha de voo de ida via botão Escolher');
           handleChooseOutbound(event.flight);
           break;
         case 'CHOOSE_RETURN':
-          console.log('✨ Processando escolha de voo de volta via botão Escolher');
+          logger.debug('Processando escolha de voo de volta via botão Escolher');
           handleChooseReturn(event.flight);
           break;
-          
+
         case 'SEARCH_RETURN_FLIGHTS':
-          console.log('🔄 Iniciando busca de voos de volta...', event.searchParams);
-          console.log('💰 Preço do voo de ida selecionado:', event.originalPurchase?.price);
-          
+          logger.debug('Iniciando busca de voos de volta...', event.searchParams);
+          logger.debug('Preço do voo de ida selecionado:', event.originalPurchase?.price);
+
           // Salvar preço mínimo para validação dos voos de volta
           const precoMinimo = event.originalPurchase?.price || 'R$ 0,00';
           // Extrair valor numérico do preço (remover "R$ ", pontos e vírgulas)
@@ -890,9 +997,9 @@ const FlightResults: React.FC<FlightResultsProps> = ({
               .replace(',', '.')
               .trim()
           ) || 0;
-          
-          console.log('📊 Preço mínimo numérico para voos de volta:', precoMinimoNumerico);
-          
+
+          logger.debug('Preço mínimo numérico para voos de volta:', precoMinimoNumerico);
+
           // Notificar o componente pai (Home) para realizar busca de volta
           if (onNewSearchWithFilters) {
             // Salvar informações da compra original + preço mínimo
@@ -900,13 +1007,13 @@ const FlightResults: React.FC<FlightResultsProps> = ({
               ...event.originalPurchase,
               precoMinimoNumerico: precoMinimoNumerico
             }));
-            
+
             // Salvar preço mínimo para filtragem posterior
             localStorage.setItem('precoMinimoVolta', precoMinimoNumerico.toString());
-            
+
             // Executar busca de volta
             onNewSearchWithFilters(event.searchParams as SearchParams);
-            
+
             // Mostrar mensagem de sucesso
             setTimeout(() => {
               if (typeof window !== 'undefined') {
@@ -915,26 +1022,26 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             }, 500);
           }
           break;
-          
+
         case 'SHOW_SUCCESS_MESSAGE':
-          console.log('🎉 Mostrando mensagem de sucesso:', event.message);
+          logger.success('Mostrando mensagem de sucesso:', event.message);
           if (typeof window !== 'undefined') {
             setTimeout(() => {
               alert(`✨ ${event.message}`);
             }, 500);
           }
           break;
-          
+
         default:
-          console.warn('⚠️ Tipo de evento não reconhecido:', event.type);
+          logger.warn('Tipo de evento não reconhecido:', event.type);
       }
-      
+
       return; // Early return para eventos especiais
     }
-    
+
     // Lógica original para seleção normal de voos
     const flight = flightOrEvent as Flight;
-    
+
     // Se estamos na seção de volta, sempre tratar como escolha de volta
     if (isReturnSection) {
       setReturn(flight);
@@ -983,16 +1090,16 @@ const FlightResults: React.FC<FlightResultsProps> = ({
         onFlightSelect?.(flight, 'outbound');
       } else {
         // Segundo seleciona o voo de volta - Transição automática para resumo final
-        console.log('🎯 SELEÇÃO DIRETA DE VOLTA - TRANSIÇÃO AUTOMÁTICA');
-        
+        logger.debug('SELEÇÃO DIRETA DE VOLTA - TRANSIÇÃO AUTOMÁTICA');
+
         // Atualizar estados para transição automática
         setReturn(flight);
         setShowFinalSelection(true);
         setIsSelectingReturn(false);
-        setReturnFlights([]);
+        setInternalReturnFlights([]);
         setSelectedOutboundForReturn(null);
         setDisplayedFlights([selectedFlights.outbound, flight]);
-        
+
         onFlightSelect?.(flight, 'return');
       }
     }
@@ -1002,7 +1109,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
   const resetSelection = () => {
     clear();
     setIsSelectingReturn(false);
-    setReturnFlights([]);
+    setInternalReturnFlights([]);
     setShowFinalSelection(false); // Reset flag de seleção final
     setShouldAutoOpenReturnModal(false); // Reset flag do modal automático
   };
@@ -1011,26 +1118,28 @@ const FlightResults: React.FC<FlightResultsProps> = ({
   const getCurrentFlights = useMemo(() => {
     // PRIORIDADE ABSOLUTA: Se ambos os voos estão selecionados, SEMPRE mostrar resultado final
     if (selectedFlights.outbound && selectedFlights.return) {
-      console.log('✅ AMBOS VOOS SELECIONADOS - Mostrando resultado final');
+      logger.success('AMBOS VOOS SELECIONADOS - Mostrando resultado final');
       return [selectedFlights.outbound, selectedFlights.return];
     }
-    
+
     // PRIORIDADE 1: Se estamos selecionando volta e temos voos de volta, mas NÃO temos volta selecionada
-    if (isSelectingReturn && returnFlights.length > 0 && !selectedFlights.return) {
-      console.log('🔄 Mostrando voos de volta para seleção');
-      return returnFlights;
+    const returnFlightsToUse = returnFlights || internalReturnFlights;
+    if (isSelectingReturn && returnFlightsToUse.length > 0 && !selectedFlights.return) {
+      logger.debug('Mostrando voos de volta para seleção');
+      return returnFlightsToUse;
     }
-    
+
     // PRIORIDADE 2: Caso padrão - mostrar voos de ida
-    console.log('📋 Mostrando voos de ida');
+    logger.debug('Mostrando voos de ida');
     return displayedFlights;
-  }, [isSelectingReturn, returnFlights, selectedFlights.outbound, selectedFlights.return, displayedFlights]);
+  }, [isSelectingReturn, returnFlights, internalReturnFlights, selectedFlights.outbound, selectedFlights.return, displayedFlights]);
 
   // Get current displayed flights
   const getCurrentDisplayedFlights = () => {
     // Se estamos selecionando volta, mostrar voos de volta
-    if (isSelectingReturn && returnFlights.length > 0) {
-      return returnFlights;
+    const returnFlightsToUse = returnFlights || internalReturnFlights;
+    if (isSelectingReturn && returnFlightsToUse.length > 0) {
+      return returnFlightsToUse;
     }
     // Sempre mostrar voos de ida primeiro (displayedFlights são os voos originais)
     return displayedFlights;
@@ -1038,13 +1147,13 @@ const FlightResults: React.FC<FlightResultsProps> = ({
 
   // Handle filter changes
   const handleFiltersChange = (newFilterParams: any) => {
-    console.log('🎛️ Filtros alterados:', newFilterParams);
+    logger.debug('Filtros alterados:', newFilterParams);
     onFiltersChange?.(newFilterParams);
   };
 
   // Handle new search with filters
   const handleNewSearchWithFilters = () => {
-    console.log('🔍 Nova busca solicitada com filtros atuais');
+    logger.debug('Nova busca solicitada com filtros atuais');
     if (onNewSearchWithFilters) {
       onNewSearchWithFilters(searchParams);
     } else {
@@ -1063,7 +1172,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
 
   return (
     <div className="flight-results py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto px-6" style={{ maxWidth: '1600px' }}>
         {/* Filtros Interativos */}
         <InteractiveFilters
           searchParams={{
@@ -1073,22 +1182,22 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             tipoPagamento: searchParams.tipoPagamento,
             orderBy: searchParams.orderBy,
             soIda: searchParams.soIda,
-            airline: searchParams.airline
+            airline: enableAirlineFilter ? searchParams.airline : undefined
           }}
           onFiltersChange={handleFiltersChange}
           onNewSearch={handleNewSearchWithFilters}
           isLoading={isSearching}
-          flights={flights}
+          flights={enableAirlineFilter ? flights : undefined}
         />
 
         {/* Header com resumo dos resultados */}
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-2xl border border-blue-100/50 p-8 mb-8">
+        <div className="bg-white p-6 mb-6">
           {/* Progresso da seleção (para ida e volta) */}
           {!searchParams.soIda && (
             <div className="mb-6">
               <div className="flex items-center justify-center space-x-4 mb-4">
                 <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
-                  selectedFlights.outbound ? 'bg-green-100 text-green-800' : 
+                  selectedFlights.outbound ? 'bg-green-100 text-green-800' :
                   !isReturnSection ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
                 }`}>
                   <span className="text-sm font-medium">1. Selecione seu voo de ida</span>
@@ -1096,7 +1205,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                 </div>
                 <div className="w-8 h-0.5 bg-gray-300"></div>
                 <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
-                  selectedFlights.return ? 'bg-green-100 text-green-800' : 
+                  selectedFlights.return ? 'bg-green-100 text-green-800' :
                   isReturnSection ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
                 }`}>
                   <span className="text-sm font-medium">2. Selecione seu voo de volta</span>
@@ -1106,27 +1215,12 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             </div>
           )}
 
-          {(() => {
-            const shouldShowFinalSummary = selectedFlights.outbound && selectedFlights.return;
-            console.log('🔍 DEBUG MODAL FINAL:', {
-              hasOutbound: !!selectedFlights.outbound,
-              hasReturn: !!selectedFlights.return,
-              showFinalSelection,
-              isSelectingReturn,
-              shouldShow: shouldShowFinalSummary,
-              currentFlights: getCurrentFlights.length
-            });
-            
-            // FORÇAR exibição do modal final se ambos voos estão selecionados OU showFinalSelection está ativo
-            if (shouldShowFinalSummary || showFinalSelection) {
-              console.log('🎯 FORÇANDO MODAL FINAL - ambos voos selecionados ou showFinalSelection ativo');
-              return true;
-            }
-            
-            return false;
-          })() ? (
+          {flightState.showSummary ? (
             <>
-              <div className="flex justify-between items-center mb-6" data-final-summary>
+              <div
+                className="flex justify-between items-center mb-6"
+                data-final-summary
+              >
                 <div>
                   <h2 className="text-2xl font-bold text-[#060D1C] mb-2">
                     ✈️ Voos Selecionados
@@ -1179,7 +1273,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                       />
                     )}
                   </div>
-                  
+
                   {/* Voo de Volta */}
                   <div className="bg-white rounded-lg shadow-lg border-2 border-[#F0C72F]">
                     <div className="bg-[#F0C72F] px-4 py-2 rounded-t-lg">
@@ -1209,58 +1303,13 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             </>
           ) : (
             <>
-              {selectedFlights.outbound && selectedFlights.return ? (
-                // Modal final integrado - substitui as colunas
-                <div className="space-y-6">
-                  {/* Voo de Ida */}
-                  <div className="bg-white rounded-lg shadow-lg p-6">
-                    <h3 className="text-xl font-bold text-[#060D1C] mb-4">Voo de Ida</h3>
-                    <FlightResultCard
-                      key={`final-outbound-${selectedFlights.outbound.segments?.[0]?.rateToken || 'outbound'}`}
-                      flight={selectedFlights.outbound}
-                      isSelected={true}
-                      fromLabel={selectedFlights.outbound.segments?.[0]?.departure || getIata(searchParams.origem)}
-                      toLabel={selectedFlights.outbound.segments?.[selectedFlights.outbound.segments.length - 1]?.arrival || getIata(searchParams.destino)}
-                      selectionMessage="Voo selecionado"
-                      allFlights={filteredByAirline}
-                      isRoundTrip={!searchParams.soIda}
-                      isSelectingReturn={false}
-                      selectedOutboundFlight={selectedFlights.outbound}
-                      onChooseOutbound={undefined}
-                      onChooseReturn={undefined}
-                      isFinalSummary={true}
-                    />
-                  </div>
-
-                  {/* Voo de Volta */}
-                  <div className="bg-white rounded-lg shadow-lg p-6">
-                    <h3 className="text-xl font-bold text-[#060D1C] mb-4">Voo de Volta</h3>
-                    <FlightResultCard
-                      key={`final-return-${selectedFlights.return.segments?.[0]?.rateToken || 'return'}`}
-                      flight={selectedFlights.return}
-                      isSelected={true}
-                      fromLabel={selectedFlights.return.segments?.[0]?.departure || getIata(searchParams.destino)}
-                      toLabel={selectedFlights.return.segments?.[selectedFlights.return.segments.length - 1]?.arrival || getIata(searchParams.origem)}
-                      selectionMessage="Voo selecionado"
-                      allFlights={filteredByAirline}
-                      isRoundTrip={!searchParams.soIda}
-                      isSelectingReturn={false}
-                      selectedOutboundFlight={selectedFlights.outbound}
-                      onChooseOutbound={undefined}
-                      onChooseReturn={undefined}
-                      isFinalSummary={true}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <>
                   {/* Header com título e botões */}
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+                  <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-xl md:text-2xl font-bold text-[#060D1C] mb-2">
+                      <h2 className="text-2xl font-semibold text-gray-900">
                         {isSelectingReturn ? 'Voos de volta' : `${getCurrentFlights.length} voos encontrados`}
                       </h2>
-                      <p className="text-sm md:text-base text-gray-600">
+                      <p className="text-sm text-gray-600 mt-1">
                         {isSelectingReturn
                           ? `${searchParams.destino} → ${searchParams.origem} • ${searchParams.volta || searchParams.ida}`
                           : `${searchParams.origem} → ${searchParams.destino} • ${searchParams.ida}`}
@@ -1268,26 +1317,26 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                       </p>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex gap-2">
                       {(selectedFlights.outbound && !searchParams.soIda) && (
                         <button
                           onClick={resetSelection}
-                          className="px-4 md:px-6 py-2 md:py-3 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm md:text-base"
+                          className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                         >
-                          Recomeçar seleção
+                          Recomeçar
                         </button>
                       )}
                       <button
                         onClick={onNewSearch}
-                        className="px-4 md:px-6 py-2 md:py-3 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors font-medium text-sm md:text-base"
+                        className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800 transition-colors"
                       >
-                        Nova Busca Completa
+                        Nova busca
                       </button>
                     </div>
                   </div>
 
-                  {/* ✅ CARD COMPACTO DO VOO DE IDA SELECIONADO */}
-                  {isSelectingReturn && !showFinalSelection && selectedFlights.outbound && (
+                  {/* ✅ CARD COMPACTO DO VOO DE IDA SELECIONADO (condicional) */}
+                  {showCompactCard && isSelectingReturn && !showFinalSelection && selectedFlights.outbound && (
                     <div className="mb-6">
                       <CompactFlightCard
                         flight={selectedFlights.outbound}
@@ -1303,139 +1352,68 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                     </div>
                   )}
 
-                  {/* Layout de duas colunas: Dinheiro e Milhas (quando ainda selecionando) */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-                  {/* Coluna Dinheiro */}
-                  <div className="bg-white rounded-lg shadow-lg p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-xl font-bold text-[#060D1C] flex items-center">
-                        Dinheiro
+                  {/* Grid de duas colunas: Dinheiro e Milhas */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Coluna 1: Voos em Dinheiro */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
+                        Dinheiro ({getCurrentFlights.filter((f: any) => !f.isMiles).length} voos)
                       </h3>
-                    <span className="text-sm text-gray-600">
-                      {getCurrentFlights.filter((f: any) => !f.isMiles).length} voos
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {getCurrentFlights
-                      .filter((flight: any) => !flight.isMiles)
-                      .slice(moneyPage * 10, (moneyPage + 1) * 10)
-                      .map((flight: any, index: number) => (
-                        <FlightResultCard
-                          key={`money-${flight.rateToken || index}`}
-                          flight={flight}
-                          isSelected={false}
-                          fromLabel={flight.segments?.[0]?.departure || (isSelectingReturn ? getIata(searchParams.destino) : getIata(searchParams.origem))}
-                          toLabel={flight.segments?.[flight.segments.length - 1]?.arrival || (isSelectingReturn ? getIata(searchParams.origem) : getIata(searchParams.destino))}
-                          selectionMessage={getSelectionMessage(flight)}
-                          allFlights={filteredByAirline}
-                          isRoundTrip={!searchParams.soIda}
-                          isSelectingReturn={isSelectingReturn}
-                          selectedOutboundFlight={selectedFlights.outbound}
-                          onChooseOutbound={!isSelectingReturn && !selectedFlights.outbound ? handleChooseOutbound : undefined}
-                          onChooseReturn={isSelectingReturn || (selectedFlights.outbound && !selectedFlights.return) ? handleChooseReturn : undefined}
-                          isFinalSummary={!!(selectedFlights.outbound && selectedFlights.return)}
-                        />
-                      ))}
-                  </div>
-                  
-                  {/* Paginação para Dinheiro */}
-                  {getCurrentFlights.filter((f: any) => !f.isMiles).length > 10 && (
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t">
-                      <button
-                        onClick={() => setMoneyPage(moneyPage - 1)}
-                        disabled={moneyPage === 0}
-                        className="px-4 py-2 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Anterior
-                      </button>
-                      <span className="text-sm text-gray-600">
-                        Página {moneyPage + 1} de {Math.ceil(getCurrentFlights.filter((f: any) => !f.isMiles).length / 10)}
-                      </span>
-                      <button
-                        onClick={() => setMoneyPage(moneyPage + 1)}
-                        disabled={(moneyPage + 1) * 10 >= getCurrentFlights.filter((f: any) => !f.isMiles).length}
-                        className="px-4 py-2 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Próxima
-                      </button>
+                      <div className="space-y-2">
+                        {getCurrentFlights
+                          .filter((f: any) => !f.isMiles)
+                          .slice(currentPage * flightsPerPage, (currentPage + 1) * flightsPerPage)
+                          .map((flight: any, index: number) => (
+                            <FlightResultCard
+                              key={`money-flight-${flight.rateToken || index}`}
+                              flight={flight}
+                              isSelected={false}
+                              fromLabel={flight.segments?.[0]?.departure || (isSelectingReturn ? getIata(searchParams.destino) : getIata(searchParams.origem))}
+                              toLabel={flight.segments?.[flight.segments.length - 1]?.arrival || (isSelectingReturn ? getIata(searchParams.origem) : getIata(searchParams.destino))}
+                              selectionMessage={getSelectionMessage(flight)}
+                              allFlights={filteredByAirline}
+                              isRoundTrip={!searchParams.soIda}
+                              isSelectingReturn={isSelectingReturn}
+                              selectedOutboundFlight={selectedFlights.outbound}
+                              onChooseOutbound={!isSelectingReturn && !selectedFlights.outbound ? handleChooseOutbound : undefined}
+                              onChooseReturn={isSelectingReturn || (selectedFlights.outbound && !selectedFlights.return) ? handleChooseReturn : undefined}
+                              isFinalSummary={!!(selectedFlights.outbound && selectedFlights.return)}
+                            />
+                          ))}
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Coluna Milhas */}
-                <div className="bg-white rounded-lg shadow-lg p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-[#060D1C] flex items-center">
-                      Milhas
-                    </h3>
-                    <span className="text-sm text-gray-600">
-                      {getCurrentFlights.filter((f: any) => f.isMiles).length} voos
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {getCurrentFlights
-                      .filter((flight: any) => flight.isMiles)
-                      .slice(milesPage * 10, (milesPage + 1) * 10)
-                      .map((flight: any, index: number) => (
-                        <FlightResultCard
-                          key={`miles-${flight.rateToken || index}`}
-                          flight={flight}
-                          isSelected={false}
-                          fromLabel={flight.segments?.[0]?.departure || (isSelectingReturn ? getIata(searchParams.destino) : getIata(searchParams.origem))}
-                          toLabel={flight.segments?.[flight.segments.length - 1]?.arrival || (isSelectingReturn ? getIata(searchParams.origem) : getIata(searchParams.destino))}
-                          selectionMessage={getSelectionMessage(flight)}
-                          allFlights={filteredByAirline}
-                          isRoundTrip={!searchParams.soIda}
-                          isSelectingReturn={isSelectingReturn}
-                          selectedOutboundFlight={selectedFlights.outbound}
-                          onChooseOutbound={!isSelectingReturn && !selectedFlights.outbound ? handleChooseOutbound : undefined}
-                          onChooseReturn={isSelectingReturn || (selectedFlights.outbound && !selectedFlights.return) ? handleChooseReturn : undefined}
-                          isFinalSummary={!!(selectedFlights.outbound && selectedFlights.return)}
-                        />
-                      ))}
-                  </div>
-                  
-                  {/* Paginação para Milhas */}
-                  {getCurrentFlights.filter((f: any) => f.isMiles).length > 10 && (
-                    <div className="flex justify-between items-center mt-6 pt-4 border-t">
-                      <button
-                        onClick={() => setMilesPage(milesPage - 1)}
-                        disabled={milesPage === 0}
-                        className="px-4 py-2 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Anterior
-                      </button>
-                      <span className="text-sm text-gray-600">
-                        Página {milesPage + 1} de {Math.ceil(getCurrentFlights.filter((f: any) => f.isMiles).length / 10)}
-                      </span>
-                      <button
-                        onClick={() => setMilesPage(milesPage + 1)}
-                        disabled={(milesPage + 1) * 10 >= getCurrentFlights.filter((f: any) => f.isMiles).length}
-                        className="px-4 py-2 bg-[#E4E4E4] text-[#060D1C] rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Próxima
-                      </button>
+                    {/* Coluna 2: Voos em Milhas */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
+                        Milhas ({getCurrentFlights.filter((f: any) => f.isMiles).length} voos)
+                      </h3>
+                      <div className="space-y-2">
+                        {getCurrentFlights
+                          .filter((f: any) => f.isMiles)
+                          .slice(currentPage * flightsPerPage, (currentPage + 1) * flightsPerPage)
+                          .map((flight: any, index: number) => (
+                            <FlightResultCard
+                              key={`miles-flight-${flight.rateToken || index}`}
+                              flight={flight}
+                              isSelected={false}
+                              fromLabel={flight.segments?.[0]?.departure || (isSelectingReturn ? getIata(searchParams.destino) : getIata(searchParams.origem))}
+                              toLabel={flight.segments?.[flight.segments.length - 1]?.arrival || (isSelectingReturn ? getIata(searchParams.origem) : getIata(searchParams.destino))}
+                              selectionMessage={getSelectionMessage(flight)}
+                              allFlights={filteredByAirline}
+                              isRoundTrip={!searchParams.soIda}
+                              isSelectingReturn={isSelectingReturn}
+                              selectedOutboundFlight={selectedFlights.outbound}
+                              onChooseOutbound={!isSelectingReturn && !selectedFlights.outbound ? handleChooseOutbound : undefined}
+                              onChooseReturn={isSelectingReturn || (selectedFlights.outbound && !selectedFlights.return) ? handleChooseReturn : undefined}
+                              isFinalSummary={!!(selectedFlights.outbound && selectedFlights.return)}
+                            />
+                          ))}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-              </>
-              )}
+                  </div>
             </>
           )}
-
-        {/* Modal de seleção de voo de volta - REMOVIDO COMPLETAMENTE */}
-        {/* <ReturnFlightModal
-          isOpen={isReturnModalOpen}
-          onClose={() => setIsReturnModalOpen(false)}
-          outboundFlight={selectedOutboundForReturn}
-          returnFlights={returnFlights}
-          onSelectReturn={handleChooseReturn}
-          searchParams={searchParams}
-        /> */}
 
         {/* Modais */}
         <SelectionModal

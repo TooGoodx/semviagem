@@ -3,6 +3,10 @@
 
 /* Global styles - Sem Viagem Brand Colors */
 :root {
+  /* ========================================
+     DESIGN SYSTEM v2.0 - SEMANTIC TOKENS
+     ======================================== */
+
   /* Sem Viagem Brand Colors */
   --brand-dark: #060D1C;
   --brand-yellow: #F0C72F;
@@ -44,6 +48,47 @@
   /* Accent colors */
   --accent-light: #E4E4E4;
   --accent-dark: #060D1C;
+
+  /* ========================================
+     DESIGN SYSTEM v2.0 TOKENS
+     ======================================== */
+
+  /* Colors - Semantic */
+  --ds-brand-yellow: #F0C72F;
+  --ds-brand-dark: #060D1C;
+  --ds-brand-blue: #4896C7;
+  --ds-neutral-light: #E4E4E4;
+  --ds-neutral-100: #FFFFFF;
+  --ds-border: rgba(6, 13, 28, 0.06);
+  --ds-text-primary: #060D1C;
+  --ds-text-secondary: #1F2937;
+  --ds-text-muted: #6B7280;
+
+  /* Spacing Tokens */
+  --ds-spacing-xs: 4px;
+  --ds-spacing-sm: 8px;
+  --ds-spacing-md: 16px;
+  --ds-spacing-lg: 24px;
+  --ds-spacing-xl: 32px;
+  --ds-spacing-2xl: 48px;
+
+  /* Border Radius Tokens */
+  --ds-radius-sm: 8px;
+  --ds-radius-md: 12px;
+  --ds-radius-lg: 18px;
+  --ds-radius-xl: 24px;
+  --ds-radius-pill: 9999px;
+
+  /* Shadow Tokens */
+  --ds-shadow-sm: 0 1px 2px rgba(6, 13, 28, 0.05);
+  --ds-shadow-card: 0 10px 30px rgba(6, 13, 28, 0.08);
+  --ds-shadow-card-hover: 0 20px 40px rgba(6, 13, 28, 0.12);
+
+  /* Icon Sizes */
+  --ds-icon-lg: 56px;
+  --ds-icon-md: 40px;
+  --ds-icon-sm: 28px;
+  --ds-icon-xs: 20px;
 }
 
 /* Base styles */
@@ -390,5 +435,96 @@ svg {
     font-size: clamp(22px, 6.5vw, 30px);
     max-width: 360px;
     line-height: 1.15;
+  }
+}
+
+/* Flight Card Utilities */
+.sv-flight-card {
+  box-sizing: border-box;
+  overflow: hidden;
+  background-clip: padding-box;
+}
+
+.sv-col-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Flight Card Responsive Typography */
+.sv-flight-time {
+  font-size: 24px;
+}
+
+.sv-flight-price {
+  font-size: 20px;
+}
+
+.sv-flight-duration {
+  font-size: 13px;
+}
+
+.sv-flight-airport {
+  font-size: 14px;
+}
+
+/* Box informativo responsivo */
+@media (max-width: 767px) {
+  .sv-info-box {
+    padding: 12px !important;
+    margin: 16px 0 !important;
+  }
+
+  .sv-info-box__inner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    text-align: center;
+  }
+
+  .sv-info-box__title {
+    font-size: 15px !important;
+  }
+
+  .sv-info-box__desc {
+    font-size: 12px !important;
+  }
+}
+
+/* Tablet breakpoint: reduce by 10% */
+@media (max-width: 1024px) {
+  .sv-flight-time {
+    font-size: 21.6px; /* 24px * 0.9 */
+  }
+
+  .sv-flight-price {
+    font-size: 18px; /* 20px * 0.9 */
+  }
+
+  .sv-flight-duration {
+    font-size: 11.7px; /* 13px * 0.9 */
+  }
+
+  .sv-flight-airport {
+    font-size: 12.6px; /* 14px * 0.9 */
+  }
+}
+
+/* Mobile breakpoint */
+@media (max-width: 420px) {
+  .sv-flight-time {
+    font-size: 18px;
+  }
+
+  .sv-flight-price {
+    font-size: 16px;
+  }
+
+  .sv-flight-duration {
+    font-size: 11px;
+  }
+
+  .sv-flight-airport {
+    font-size: 12px;
   }
 }
