@@ -1,6 +1,10 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || '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');
+import Stripe from 'stripe';
 
-exports.handler = async (event, context) => {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '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', {
+  apiVersion: '2023-10-16'
+});
+
+export async function handler(event, context) {
   // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -28,7 +32,7 @@ exports.handler = async (event, context) => {
 
   try {
     const { priceId, userId, userEmail, successUrl, cancelUrl } = JSON.parse(event.body);
-    
+
     console.log('Checkout request:', { priceId, userId, userEmail });
 
     // Create or retrieve Stripe customer
@@ -38,7 +42,7 @@ exports.handler = async (event, context) => {
         email: userEmail,
         limit: 1
       });
-      
+
       if (customers.data.length > 0) {
         customer = customers.data[0];
       } else {
@@ -80,9 +84,9 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         url: session.url,
-        id: session.id 
+        id: session.id
       })
     };
 
@@ -94,4 +98,4 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: error.message })
     };
   }
-};
+}

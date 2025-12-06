@@ -8,6 +8,8 @@
 
 # Function configuration
 [functions]
+  # Use esbuild for ESM support
+  node_bundler = "esbuild"
   # Functions directory
   external_node_modules = ["https"]
 
