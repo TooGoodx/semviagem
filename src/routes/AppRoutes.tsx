@@ -37,6 +37,7 @@ import Profile from '../pages/Profile';
 import BuscarVoos from '../pages/BuscarVoos';
 import ClaudeThinkDemo from '../pages/ClaudeThinkDemo';
 import AuthCallback from '../pages/AuthCallback';
+import { PaywallTest } from '../pages/PaywallTest';
 
 // Guest Route component (for login/register pages)
 const GuestRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -69,6 +70,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/test-airport" element={<TestAirportSearch />} />
       <Route path="/fare-test" element={<FareTestPage />} />
       <Route path="/claude-think-demo" element={<ClaudeThinkDemo />} />
+      <Route path="/paywall-test" element={<PaywallTest />} />
 
       {/* Guest only routes */}
       <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
