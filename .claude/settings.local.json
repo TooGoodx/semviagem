@@ -11,7 +11,18 @@
       "Bash(node:*)",
       "Bash(pkill:*)",
       "Bash(npm run dev:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm run build:*)",
+      "Bash(cat:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git -C /Users/bruno/Downloads/buscadorReact-main status --short src/components/FlightResults.tsx)",
+      "Bash(git -C /Users/bruno/Downloads/buscadorReact-main log --oneline -5)",
+      "Bash(git -C /Users/bruno/Downloads/buscadorReact-main diff --stat src/components/FlightResults.tsx)",
+      "Bash(git -c /Users/bruno/Downloads/buscadorReact-main status --short src/components/FlightResults.tsx)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

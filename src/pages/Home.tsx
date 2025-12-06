@@ -1379,10 +1379,10 @@ const Home: React.FC = () => {
         <div className="container mx-auto relative z-20 pb-16 pt-24 px-8 sm:px-12 lg:px-16">
           <div className="max-w-[1350px] mx-auto text-center px-4">
             <h1 className="hero-title mb-8" style={{color: '#FFFFFF'}}>
-              A forma mais <span style={{color: '#F0C730', fontWeight: 'bold'}}>inteligente</span> de viajar com <span style={{color: '#F0C730', fontWeight: 'bold'}}>milhas</span>. sem truques, sem taxas, <span style={{color: '#4896C7', fontWeight: 'bold'}}>Sem</span> <span style={{color: '#F0C730', fontWeight: 'bold'}}>Viagem</span>!
+              O maior <span style={{color: '#F0C730', fontWeight: 'bold'}}>ecossistema</span> de viagens <span style={{color: '#4896C7', fontWeight: 'bold'}}>baratas</span> do Brasil, sem truques, <span style={{color: '#4896C7', fontWeight: 'bold'}}>Sem</span> <span style={{color: '#F0C730', fontWeight: 'bold'}}>Viagem</span>!
             </h1>
             <p className="hero__subtitle text-base md:text-lg font-light mb-6 max-w-4xl mx-auto" style={{lineHeight: '1.8', color: 'rgba(255,255,255,0.95)'}}>
-              <span className="font-semibold">Preço real, alertas avançados, estratégias personalizadas</span> e tudo o que você precisa para transformar milhas em experiências pelo mundo — <span className="italic font-bold" style={{color: '#F0C730', fontFamily: "'Playfair Display', serif"}}>quase de graça</span>.
+              Encontre os vôos, aprenda a acumular, emitir e viver as melhores experiências do mundo usando milhas - <span className="italic font-bold" style={{color: '#F0C730', fontFamily: "'Playfair Display', serif"}}>quase de graça</span>.
             </p>
           </div>
 
@@ -1720,8 +1720,8 @@ const Home: React.FC = () => {
 
           {/* Section Header */}
           <div className="text-center mb-16">
-            <p className="text-xl" style={{color: 'var(--muted)', lineHeight: '140%'}}>
-              Economize, simplifique e voe leve — com transparência total.
+            <p className="text-xl" style={{color: '#4896C7', lineHeight: '140%'}}>
+              Tudo o que você precisa para aprender a viajar o mundo - <span style={{color: '#F0C730', fontFamily: 'Playfair Display, serif'}}>quase de graça</span>, <span style={{fontWeight: 'bold'}}>Assine Agora!</span>
             </p>
           </div>
 

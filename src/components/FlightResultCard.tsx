@@ -1110,15 +1110,15 @@ const getAirlineLogoPath = (flight: any): string => {
                   onClick={handleChooseOutbound}
                   className="font-medium transition-colors active:scale-95"
                   style={{
-                    padding: '10px 20px',
-                    borderRadius: '12px',
+                    padding: '8px 17px',
+                    borderRadius: '10px',
                     backgroundColor: designSystem.colors.success,
                     color: '#FFFFFF',
-                    fontSize: 'clamp(13px, 3vw, 15px)',
+                    fontSize: 'clamp(11px, 3vw, 13px)',
                     border: 'none',
                     cursor: 'pointer',
-                    minHeight: '44px',
-                    minWidth: '80px',
+                    minHeight: '37px',
+                    minWidth: '68px',
                     WebkitTapHighlightColor: 'transparent',
                   }}
                   onMouseEnter={(e) => {
@@ -1135,15 +1135,15 @@ const getAirlineLogoPath = (flight: any): string => {
                   onClick={handleChooseReturn}
                   className="font-medium transition-colors active:scale-95"
                   style={{
-                    padding: '10px 20px',
-                    borderRadius: '12px',
+                    padding: '8px 17px',
+                    borderRadius: '10px',
                     backgroundColor: designSystem.colors.success,
                     color: '#FFFFFF',
-                    fontSize: 'clamp(13px, 3vw, 15px)',
+                    fontSize: 'clamp(11px, 3vw, 13px)',
                     border: 'none',
                     cursor: 'pointer',
-                    minHeight: '44px',
-                    minWidth: '80px',
+                    minHeight: '37px',
+                    minWidth: '68px',
                     WebkitTapHighlightColor: 'transparent',
                   }}
                   onMouseEnter={(e) => {

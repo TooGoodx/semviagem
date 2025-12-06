@@ -9,6 +9,7 @@ import { getAirlineLogo, getDisplayAirlineName } from '../utils/airlineLogos';
 import CompactFlightCard from './CompactFlightCard';
 import moblixApiService from '../services/moblixApiService';
 import { logger } from '../utils/logger';
+import { getAirlineLinks, normalizeAirlineName } from '../data/airlineLinks';
 
 // Interfaces
 interface Airport {
@@ -660,8 +661,23 @@ const FlightResults: React.FC<FlightResultsProps> = ({
   };
 
   const goToAirlineSite = (flight: Flight) => {
-    const url = getAirlineWebsite(flight.airline || '');
-    if (typeof window !== 'undefined') window.open(url, '_blank');
+    // Normalize airline name and get links
+    const normalizedName = normalizeAirlineName(flight.airline);
+    const airlineLinks = getAirlineLinks(normalizedName);
+
+    if (!airlineLinks) {
+      console.warn(`No links found for airline: ${flight.airline}`);
+      // Fallback to existing function
+      const fallbackUrl = getAirlineWebsite(flight.airline || '');
+      if (typeof window !== 'undefined') window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // Use 'redeem' link for miles flights, 'search' for cash flights
+    const targetUrl = flight.isMiles ? airlineLinks.redeem : airlineLinks.search;
+
+    console.log(`Opening ${flight.isMiles ? 'redeem' : 'search'} URL for ${normalizedName}: ${targetUrl}`);
+    if (typeof window !== 'undefined') window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
   const formatMiles = (value: number) => {
@@ -1249,55 +1265,96 @@ const FlightResults: React.FC<FlightResultsProps> = ({
               {/* Resumo Final - Ida e Volta Selecionados */}
               <div className="bg-gray-50 rounded-lg p-6 mb-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Voo de Ida */}
-                  <div className="bg-white rounded-lg shadow-lg border-2 border-[#F0C72F]">
-                    <div className="bg-[#F0C72F] px-4 py-2 rounded-t-lg">
-                      <h4 className="text-lg font-semibold text-[#060D1C] mb-3">
-                        Voo de Ida
-                      </h4>
-                    </div>
-                    {(selectedFlights.outbound || displayedFlights[0]) && (
-                      <FlightResultCard
-                        flight={selectedFlights.outbound || displayedFlights[0]}
-                        isSelected={true}
-                        fromLabel={getIata(searchParams.origem)}
-                        toLabel={getIata(searchParams.destino)}
-                        selectionMessage={''}
-                        allFlights={filteredByAirline}
-                        isRoundTrip={!searchParams.soIda}
-                        isSelectingReturn={false}
-                        selectedOutboundFlight={selectedFlights.outbound || displayedFlights[0]}
-                        onChooseOutbound={undefined}
-                        onChooseReturn={undefined}
-                        isFinalSummary={true}
-                      />
+
+                  {/* Voo de Ida Section */}
+                  <div className="space-y-4">
+                    {/* Booking Button Above Card */}
+                    {selectedFlights.outbound && (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => goToAirlineSite(selectedFlights.outbound!)}
+                          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
+                          style={{ minHeight: '44px' }}
+                        >
+                          Emitir Passagem de Ida
+                        </button>
+                      </div>
                     )}
+
+                    {/* Voo de Ida Card */}
+                    <div className="bg-white rounded-lg shadow-lg border-2 border-[#F0C72F]">
+                      <div className="bg-[#F0C72F] px-4 py-2 rounded-t-lg">
+                        <h4 className="text-lg font-semibold text-[#060D1C] mb-3">
+                          Voo de Ida
+                        </h4>
+                      </div>
+                      {(selectedFlights.outbound || displayedFlights[0]) && (
+                        <FlightResultCard
+                          flight={selectedFlights.outbound || displayedFlights[0]}
+                          isSelected={true}
+                          fromLabel={getIata(searchParams.origem)}
+                          toLabel={getIata(searchParams.destino)}
+                          selectionMessage={''}
+                          allFlights={filteredByAirline}
+                          isRoundTrip={!searchParams.soIda}
+                          isSelectingReturn={false}
+                          selectedOutboundFlight={selectedFlights.outbound || displayedFlights[0]}
+                          onChooseOutbound={undefined}
+                          onChooseReturn={undefined}
+                          isFinalSummary={true}
+                        />
+                      )}
+                    </div>
                   </div>
 
-                  {/* Voo de Volta */}
-                  <div className="bg-white rounded-lg shadow-lg border-2 border-[#F0C72F]">
-                    <div className="bg-[#F0C72F] px-4 py-2 rounded-t-lg">
-                      <h4 className="text-lg font-semibold text-[#060D1C] mb-3">
-                        Voo de Volta
-                      </h4>
-                    </div>
-                    {(selectedFlights.return || displayedFlights[1]) && (
-                      <FlightResultCard
-                        flight={selectedFlights.return || displayedFlights[1]}
-                        isSelected={true}
-                        fromLabel={getIata(searchParams.destino)}
-                        toLabel={getIata(searchParams.origem)}
-                        selectionMessage={''}
-                        allFlights={filteredByAirline}
-                        isRoundTrip={!searchParams.soIda}
-                        isSelectingReturn={false}
-                        selectedOutboundFlight={selectedFlights.outbound || displayedFlights[0]}
-                        onChooseOutbound={undefined}
-                        onChooseReturn={undefined}
-                        isFinalSummary={true}
-                      />
+                  {/* Voo de Volta Section */}
+                  <div className="space-y-4">
+                    {/* Booking Button Above Card */}
+                    {selectedFlights.return && (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => goToAirlineSite(selectedFlights.return!)}
+                          className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors shadow-sm"
+                          style={{ minHeight: '44px' }}
+                        >
+                          Emitir Passagem de Volta
+                        </button>
+                      </div>
                     )}
+
+                    {/* Voo de Volta Card */}
+                    <div className="bg-white rounded-lg shadow-lg border-2 border-[#F0C72F]">
+                      <div className="bg-[#F0C72F] px-4 py-2 rounded-t-lg">
+                        <h4 className="text-lg font-semibold text-[#060D1C] mb-3">
+                          Voo de Volta
+                        </h4>
+                      </div>
+                      {(selectedFlights.return || displayedFlights[1]) && (
+                        <FlightResultCard
+                          flight={selectedFlights.return || displayedFlights[1]}
+                          isSelected={true}
+                          fromLabel={getIata(searchParams.destino)}
+                          toLabel={getIata(searchParams.origem)}
+                          selectionMessage={''}
+                          allFlights={filteredByAirline}
+                          isRoundTrip={!searchParams.soIda}
+                          isSelectingReturn={false}
+                          selectedOutboundFlight={selectedFlights.outbound || displayedFlights[0]}
+                          onChooseOutbound={undefined}
+                          onChooseReturn={undefined}
+                          isFinalSummary={true}
+                        />
+                      )}
+                    </div>
                   </div>
+
+                </div>
+
+                {/* Info text below cards */}
+                <div className="text-center mt-6">
+                  <p className="text-sm text-gray-600 max-w-md mx-auto">
+                    Você será redirecionado para o site oficial da companhia aérea para finalizar sua compra.
+                  </p>
                 </div>
               </div>
             </>
@@ -1335,8 +1392,8 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                     </div>
                   </div>
 
-                  {/* ✅ CARD COMPACTO DO VOO DE IDA SELECIONADO (condicional) */}
-                  {showCompactCard && isSelectingReturn && !showFinalSelection && selectedFlights.outbound && (
+                  {/* REMOVED: Compact card showing selected IDA flight - cleaner UX without green box */}
+                  {false && showCompactCard && isSelectingReturn && !showFinalSelection && selectedFlights.outbound && (
                     <div className="mb-6">
                       <CompactFlightCard
                         flight={selectedFlights.outbound}
@@ -1350,6 +1407,13 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                         Escolha um voo de volta
                       </h2>
                     </div>
+                  )}
+
+                  {/* Clean section title for return flights */}
+                  {isSelectingReturn && !showFinalSelection && selectedFlights.outbound && (
+                    <h2 className="text-2xl font-bold text-[#060D1C] mb-6">
+                      Escolha um voo de volta
+                    </h2>
                   )}
 
                   {/* Grid de duas colunas: Dinheiro e Milhas */}
@@ -1381,6 +1445,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                             />
                           ))}
                       </div>
+
                     </div>
 
                     {/* Coluna 2: Voos em Milhas */}
@@ -1412,6 +1477,63 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                       </div>
                     </div>
                   </div>
+
+                  {/* Paginação minimalista com números */}
+                  {getCurrentFlights.length > flightsPerPage && (() => {
+                    const totalPages = Math.ceil(getCurrentFlights.length / flightsPerPage);
+                    const maxVisiblePages = 5;
+                    let startPage = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
+                    let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 1);
+
+                    // Ajustar startPage se estiver no final
+                    if (endPage - startPage < maxVisiblePages - 1) {
+                      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+                    }
+
+                    const visiblePages = Array.from(
+                      { length: endPage - startPage + 1 },
+                      (_, i) => startPage + i
+                    );
+
+                    return (
+                      <div className="mt-6 flex justify-center items-center gap-2">
+                        {/* Botão Anterior */}
+                        <button
+                          onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                          disabled={currentPage === 0}
+                          className="w-8 h-8 rounded-full text-sm transition-colors text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                          aria-label="Página anterior"
+                        >
+                          ←
+                        </button>
+
+                        {/* Números de página */}
+                        {visiblePages.map((i) => (
+                          <button
+                            key={i}
+                            onClick={() => setCurrentPage(i)}
+                            className={`w-8 h-8 text-sm transition-colors ${
+                              currentPage === i
+                                ? 'font-bold text-[#4896C7]'
+                                : 'text-gray-600 hover:text-[#4896C7]'
+                            }`}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+
+                        {/* Botão Próximo */}
+                        <button
+                          onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                          disabled={currentPage === totalPages - 1}
+                          className="w-8 h-8 rounded-full text-sm transition-colors text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                          aria-label="Próxima página"
+                        >
+                          →
+                        </button>
+                      </div>
+                    );
+                  })()}
             </>
           )}
 
