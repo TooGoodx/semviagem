@@ -54,6 +54,7 @@
     "autoprefixer": "^10.4.20",
     "axios": "^1.11.0",
     "axios-retry": "^4.5.0",
+    "call-bound": "^1.0.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
