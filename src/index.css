@@ -16,12 +16,24 @@
   --brand-light: #E4E4E4;
   --brand-white: #FFFFFF;
 
+  /* Legacy brand aliases */
+  --ds-brand-dark: #060D1C;
+  --ds-brand-yellow: #F0C72F;
+  --ds-brand-blue: #4896C7;
+  --ds-neutral-light: #E4E4E4;
+  --ds-neutral-100: #FFFFFF;
+
   /* Text Colors */
   --text-primary: #060D1C;
   --text-secondary: #1F2937;
   --text-muted: #6B7280;
   --text-on-yellow: #060D1C;
   --text-on-navy: #FFFFFF;
+
+  /* Legacy text aliases */
+  --ds-text-primary: #060D1C;
+  --ds-text-secondary: #1F2937;
+  --ds-text-muted: #6B7280;
 
   /* CTA Colors V2 (Navy is Primary) */
   --cta-primary: #060D1C;
@@ -45,6 +57,9 @@
   --border-default: rgba(6, 13, 28, 0.06);
   --border-dark: #060D1C;
 
+  /* Legacy border aliases */
+  --ds-border: rgba(6, 13, 28, 0.06);
+
   /* Spacing */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
@@ -53,11 +68,25 @@
   --spacing-xl: 32px;
   --spacing-xxl: 48px;
 
+  /* Legacy spacing aliases */
+  --ds-spacing-xs: 4px;
+  --ds-spacing-sm: 8px;
+  --ds-spacing-md: 16px;
+  --ds-spacing-lg: 24px;
+  --ds-spacing-xl: 32px;
+  --ds-spacing-2xl: 48px;
+
   /* Border Radius */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+
+  /* Legacy radius aliases */
+  --ds-radius-sm: 8px;
+  --ds-radius-md: 12px;
+  --ds-radius-lg: 16px;
+  --ds-radius-xl: 24px;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(6, 13, 28, 0.05);
@@ -66,6 +95,14 @@
   --shadow-xl: 0 20px 40px rgba(6, 13, 28, 0.12);
   --shadow-card: 0 10px 30px rgba(6, 13, 28, 0.08);
   --shadow-hover: 0 20px 40px rgba(6, 13, 28, 0.12);
+
+  /* Legacy shadow aliases */
+  --ds-shadow-sm: 0 1px 2px rgba(6, 13, 28, 0.05);
+  --ds-shadow-md: 0 10px 15px rgba(6, 13, 28, 0.08);
+  --ds-shadow-lg: 0 10px 30px rgba(6, 13, 28, 0.08);
+  --ds-shadow-xl: 0 20px 40px rgba(6, 13, 28, 0.12);
+  --ds-shadow-card: 0 10px 30px rgba(6, 13, 28, 0.08);
+  --ds-shadow-card-hover: 0 20px 40px rgba(6, 13, 28, 0.12);
 
   /* Icon Sizes */
   --icon-lg: 56px;
