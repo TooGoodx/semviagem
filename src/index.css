@@ -4,91 +4,83 @@
 /* Global styles - Sem Viagem Brand Colors */
 :root {
   /* ========================================
-     DESIGN SYSTEM v2.0 - SEMANTIC TOKENS
+     DESIGN SYSTEM V2 - SemViagem
+     Navy (#060D1C) = PRIMARY CTA
+     Yellow (#F0C72F) = ACCENT only (badges, bullets)
      ======================================== */
 
-  /* Sem Viagem Brand Colors */
-  --brand-dark: #060D1C;
-  --brand-yellow: #F0C72F;
+  /* Brand Colors V2 */
+  --brand-dark: #060D1C;       /* Navy - PRIMARY CTA */
+  --brand-yellow: #F0C72F;     /* Yellow - ACCENT (badges, bullets) */
+  --brand-blue: #4896C7;       /* Blue - Secondary */
   --brand-light: #E4E4E4;
-  --brand-white: #FDFDFD;
+  --brand-white: #FFFFFF;
 
-  /* New Design System Colors */
-  --yellow: #FFC72F;
-  --navy: #001D3D;
-  --blue: #0077B6;
-  --red: #E53946;
-  --muted: #4B5563;
-  --bg: #F9FAFB;
+  /* Text Colors */
+  --text-primary: #060D1C;
+  --text-secondary: #1F2937;
+  --text-muted: #6B7280;
+  --text-on-yellow: #060D1C;
+  --text-on-navy: #FFFFFF;
 
-  /* Primary colors - Based on brand dark */
-  --primary-50: #f8f9fb;
-  --primary-100: #f1f3f6;
-  --primary-200: #e3e7ed;
-  --primary-300: #d5dbe4;
-  --primary-400: #b9c3d1;
-  --primary-500: #9dabbe;
-  --primary-600: #6b7a8f;
-  --primary-700: #4a5968;
-  --primary-800: #2a3441;
-  --primary-900: #060D1C;
+  /* CTA Colors V2 (Navy is Primary) */
+  --cta-primary: #060D1C;
+  --cta-primary-hover: #0a1428;
+  --cta-secondary: #4896C7;
+  --cta-secondary-hover: #3a7ab0;
 
-  /* Secondary colors - Based on brand yellow */
-  --secondary-50: #fefcf0;
-  --secondary-100: #fdf9e1;
-  --secondary-200: #fbf3c3;
-  --secondary-300: #f9eda5;
-  --secondary-400: #f5e169;
-  --secondary-500: #F0C72F;
-  --secondary-600: #d8b329;
-  --secondary-700: #b59622;
-  --secondary-800: #91791b;
-  --secondary-900: #766316;
+  /* Semantic Colors */
+  --success: #16A34A;
+  --danger: #DC2626;
+  --warning: #F59E0B;
+  --info: #3B82F6;
 
-  /* Accent colors */
-  --accent-light: #E4E4E4;
-  --accent-dark: #060D1C;
+  /* Backgrounds */
+  --bg-white: #FFFFFF;
+  --bg-surface: #E4E4E4;
+  --bg-surface-alt: #F5F5F5;
 
-  /* ========================================
-     DESIGN SYSTEM v2.0 TOKENS
-     ======================================== */
+  /* Borders */
+  --border-light: #E9EEF3;
+  --border-default: rgba(6, 13, 28, 0.06);
+  --border-dark: #060D1C;
 
-  /* Colors - Semantic */
-  --ds-brand-yellow: #F0C72F;
-  --ds-brand-dark: #060D1C;
-  --ds-brand-blue: #4896C7;
-  --ds-neutral-light: #E4E4E4;
-  --ds-neutral-100: #FFFFFF;
-  --ds-border: rgba(6, 13, 28, 0.06);
-  --ds-text-primary: #060D1C;
-  --ds-text-secondary: #1F2937;
-  --ds-text-muted: #6B7280;
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
 
-  /* Spacing Tokens */
-  --ds-spacing-xs: 4px;
-  --ds-spacing-sm: 8px;
-  --ds-spacing-md: 16px;
-  --ds-spacing-lg: 24px;
-  --ds-spacing-xl: 32px;
-  --ds-spacing-2xl: 48px;
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
 
-  /* Border Radius Tokens */
-  --ds-radius-sm: 8px;
-  --ds-radius-md: 12px;
-  --ds-radius-lg: 18px;
-  --ds-radius-xl: 24px;
-  --ds-radius-pill: 9999px;
-
-  /* Shadow Tokens */
-  --ds-shadow-sm: 0 1px 2px rgba(6, 13, 28, 0.05);
-  --ds-shadow-card: 0 10px 30px rgba(6, 13, 28, 0.08);
-  --ds-shadow-card-hover: 0 20px 40px rgba(6, 13, 28, 0.12);
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(6, 13, 28, 0.05);
+  --shadow-md: 0 10px 15px rgba(6, 13, 28, 0.08);
+  --shadow-lg: 0 10px 30px rgba(6, 13, 28, 0.08);
+  --shadow-xl: 0 20px 40px rgba(6, 13, 28, 0.12);
+  --shadow-card: 0 10px 30px rgba(6, 13, 28, 0.08);
+  --shadow-hover: 0 20px 40px rgba(6, 13, 28, 0.12);
 
   /* Icon Sizes */
-  --ds-icon-lg: 56px;
-  --ds-icon-md: 40px;
-  --ds-icon-sm: 28px;
-  --ds-icon-xs: 20px;
+  --icon-lg: 56px;
+  --icon-md: 40px;
+  --icon-sm: 28px;
+  --icon-xs: 20px;
+
+  /* Typography */
+  --font-primary: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-display: 'Merriweather', Georgia, serif;
+
+  /* Legacy support (to be deprecated) */
+  --primary-900: #060D1C;
+  --secondary-500: #F0C72F;
+  --secondary-600: #d8b329;
 }
 
 /* Base styles */
@@ -114,55 +106,8 @@ code {
     monospace;
 }
 
-/* Custom color utilities */
-.bg-primary-50 { background-color: var(--primary-50); }
-.bg-primary-100 { background-color: var(--primary-100); }
-.bg-primary-200 { background-color: var(--primary-200); }
-.bg-primary-300 { background-color: var(--primary-300); }
-.bg-primary-400 { background-color: var(--primary-400); }
-.bg-primary-500 { background-color: var(--primary-500); }
-.bg-primary-600 { background-color: var(--primary-600); }
-.bg-primary-700 { background-color: var(--primary-700); }
-.bg-primary-800 { background-color: var(--primary-800); }
-.bg-primary-900 { background-color: var(--primary-900); }
 
-.bg-secondary-50 { background-color: var(--secondary-50); }
-.bg-secondary-100 { background-color: var(--secondary-100); }
-.bg-secondary-200 { background-color: var(--secondary-200); }
-.bg-secondary-300 { background-color: var(--secondary-300); }
-.bg-secondary-400 { background-color: var(--secondary-400); }
-.bg-secondary-500 { background-color: var(--secondary-500); }
-.bg-secondary-600 { background-color: var(--secondary-600); }
-.bg-secondary-700 { background-color: var(--secondary-700); }
-.bg-secondary-800 { background-color: var(--secondary-800); }
-.bg-secondary-900 { background-color: var(--secondary-900); }
-
-.text-primary-50 { color: var(--primary-50); }
-.text-primary-100 { color: var(--primary-100); }
-.text-primary-200 { color: var(--primary-200); }
-.text-primary-300 { color: var(--primary-300); }
-.text-primary-400 { color: var(--primary-400); }
-.text-primary-500 { color: var(--primary-500); }
-.text-primary-600 { color: var(--primary-600); }
-.text-primary-700 { color: var(--primary-700); }
-.text-primary-800 { color: var(--primary-800); }
-.text-primary-900 { color: var(--primary-900); }
-
-.text-secondary-50 { color: var(--secondary-50); }
-.text-secondary-100 { color: var(--secondary-100); }
-.text-secondary-200 { color: var(--secondary-200); }
-.text-secondary-300 { color: var(--secondary-300); }
-.text-secondary-400 { color: var(--secondary-400); }
-.text-secondary-500 { color: var(--secondary-500); }
-.text-secondary-600 { color: var(--secondary-600); }
-.text-secondary-700 { color: var(--secondary-700); }
-.text-secondary-800 { color: var(--secondary-800); }
-.text-secondary-900 { color: var(--secondary-900); }
-
-.text-accent-light { color: var(--accent-light); }
-.text-accent-dark { color: var(--accent-dark); }
-
-/* Component styles */
+/* Component styles - V2: Navy Primary CTA */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -170,20 +115,49 @@ code {
   padding: 0.75rem 1.5rem;
   border: 1px solid transparent;
   font-size: 1rem;
-  font-weight: 500;
-  border-radius: 0.5rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
   transition: all 0.2s;
   outline: none;
-  background-color: var(--brand-yellow);
-  color: var(--brand-dark);
+  background-color: var(--cta-primary);
+  color: var(--text-on-navy);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-primary:hover {
-  background-color: var(--secondary-600);
+  background-color: var(--cta-primary-hover);
+  box-shadow: var(--shadow-lg);
 }
 
-.btn-primary:focus {
-  box-shadow: 0 0 0 2px var(--secondary-500);
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(6, 13, 28, 0.3);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+  outline: none;
+  background-color: var(--cta-secondary);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary:hover {
+  background-color: var(--cta-secondary-hover);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-secondary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(72, 150, 199, 0.3);
 }
 
 .card {
@@ -264,32 +238,6 @@ code {
   height: 100%;
   object-fit: cover;
   object-position: center;
-}
-
-/* Remove all blue borders and backgrounds */
-#root {
-  margin: 0;
-  padding: 0;
-  background-color: white !important;
-  width: 100%;
-  height: 100%;
-}
-
-#app {
-  margin: 0;
-  padding: 0;
-  background-color: white !important;
-  width: 100%;
-  min-height: 100vh;
-}
-
-/* Force white background on all primary colors */
-.bg-primary-900,
-.bg-primary-800,
-.bg-primary-700,
-.bg-primary-600,
-.bg-primary-500 {
-  background-color: white !important;
 }
 
 /* Base styles */
