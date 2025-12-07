@@ -97,7 +97,9 @@ const PremiumUpgradeModal: React.FC<PremiumUpgradeModalProps> = ({
           {/* Actions */}
           <div className="flex justify-center">
             <button
-              onClick={handleUpgrade}
+              onClick={() => {
+                window.location.href = 'https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02'
+              }}
               className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 py-3 px-6 rounded-lg font-semibold hover:from-yellow-500 hover:to-yellow-600 transition-all duration-200 flex items-center space-x-2"
             >
               <span>🔔</span>

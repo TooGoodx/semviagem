@@ -1474,13 +1474,15 @@ const Flights: React.FC = () => {
                     type="button"
                     onClick={() => setSearchParams(prev => ({ ...prev, soIda: false }))}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      !searchParams.soIda 
-                        ? 'text-white border-2' 
-                        : 'text-white hover:opacity-80'
+                      !searchParams.soIda
+                        ? 'text-white border-2'
+                        : 'hover:bg-[#060D1C]/10'
                     }`}
                     style={{
-                      backgroundColor: !searchParams.soIda ? '#F0C72F' : '#4896C7',
-                      borderColor: !searchParams.soIda ? '#F0C72F' : '#4896C7'
+                      backgroundColor: !searchParams.soIda ? '#060D1C' : 'transparent',
+                      borderColor: '#060D1C',
+                      border: '2px solid',
+                      color: !searchParams.soIda ? '#FFFFFF' : '#060D1C'
                     }}
                   >
                     ✓ Ida e volta
@@ -1489,13 +1491,15 @@ const Flights: React.FC = () => {
                     type="button"
                     onClick={() => setSearchParams(prev => ({ ...prev, soIda: true, volta: '' }))}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      searchParams.soIda 
-                        ? 'text-white border-2' 
-                        : 'text-white hover:opacity-80'
+                      searchParams.soIda
+                        ? 'text-white border-2'
+                        : 'hover:bg-[#060D1C]/10'
                     }`}
                     style={{
-                      backgroundColor: searchParams.soIda ? '#F0C72F' : '#4896C7',
-                      borderColor: searchParams.soIda ? '#F0C72F' : '#4896C7'
+                      backgroundColor: searchParams.soIda ? '#060D1C' : 'transparent',
+                      borderColor: '#060D1C',
+                      border: '2px solid',
+                      color: searchParams.soIda ? '#FFFFFF' : '#060D1C'
                     }}
                   >
                     Somente ida

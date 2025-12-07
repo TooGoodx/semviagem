@@ -91,9 +91,9 @@ export default {
       // SemViagem Typography
       fontFamily: {
         primary: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Merriweather', 'Georgia', 'serif'],
+        display: ['Cormorant Garamond', 'Playfair Display', 'serif'],
         sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
-        serif: ['Merriweather', 'Georgia', 'serif'],
+        serif: ['Cormorant Garamond', 'Playfair Display', 'serif'],
       },
       // SemViagem Border Radius
       borderRadius: {

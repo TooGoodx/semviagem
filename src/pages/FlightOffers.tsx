@@ -202,8 +202,8 @@ const FlightOffers: React.FC = () => {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`px-6 py-3 rounded-full font-medium transition-all duration-200`}
                 style={{
-                  backgroundColor: selectedCategory === category.id ? '#F0C72F' : 'white',
-                  color: selectedCategory === category.id ? '#060D1C' : '#060D1C',
+                  backgroundColor: selectedCategory === category.id ? '#060D1C' : 'white',
+                  color: selectedCategory === category.id ? '#FFFFFF' : '#060D1C',
                   border: '1px solid #060D1C'
                 }}
               >
@@ -299,8 +299,8 @@ const FlightOffers: React.FC = () => {
                   onClick={() => bookOffer(offer)}
                   className="w-full font-bold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105"
                   style={{
-                    backgroundColor: '#F0C72F',
-                    color: '#060D1C',
+                    backgroundColor: '#060D1C',
+                    color: '#FFFFFF',
                     border: '1px solid #060D1C'
                   }}
                 >
@@ -323,8 +323,8 @@ const FlightOffers: React.FC = () => {
               onClick={() => setSelectedCategory('all')}
               className="font-bold py-3 px-6 rounded-lg"
               style={{
-                backgroundColor: '#F0C72F',
-                color: '#060D1C',
+                backgroundColor: '#060D1C',
+                color: '#FFFFFF',
                 border: '1px solid #060D1C'
               }}
             >
@@ -354,8 +354,8 @@ const FlightOffers: React.FC = () => {
               onClick={() => toast.success('E-mail cadastrado com sucesso!')}
               className="px-6 py-3 rounded-r-lg font-bold transition-colors"
               style={{
-                backgroundColor: '#F0C72F',
-                color: '#060D1C',
+                backgroundColor: '#060D1C',
+                color: '#FFFFFF',
                 border: '1px solid #060D1C'
               }}
             >

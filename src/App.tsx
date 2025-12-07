@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { UserProvider } from './context/UserContext';
 import { SelectionProvider } from './context/SelectionContext';
+import { PaywallProvider } from './components/paywall';
 import Navbar from './components/Navbar';
 import AppRoutes from './routes/AppRoutes';
 
@@ -28,25 +29,27 @@ function App() {
   return (
     <AuthProvider>
       <UserProvider>
-        <SelectionProvider>
-          <Router>
-            <Routes>
-              <Route path="/*" element={<Layout />}>
-                <Route path="*" element={<AppRoutes />} />
-              </Route>
-            </Routes>
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 5000,
-                style: {
-                  background: '#374151',
-                  color: '#f8fafc',
-                },
-              }}
-            />
-          </Router>
-        </SelectionProvider>
+        <PaywallProvider>
+          <SelectionProvider>
+            <Router>
+              <Routes>
+                <Route path="/*" element={<Layout />}>
+                  <Route path="*" element={<AppRoutes />} />
+                </Route>
+              </Routes>
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 5000,
+                  style: {
+                    background: '#374151',
+                    color: '#f8fafc',
+                  },
+                }}
+              />
+            </Router>
+          </SelectionProvider>
+        </PaywallProvider>
       </UserProvider>
     </AuthProvider>
   );

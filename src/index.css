@@ -112,7 +112,9 @@
 
   /* Typography */
   --font-primary: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-display: 'Merriweather', Georgia, serif;
+  --font-display: 'Cormorant Garamond', 'Playfair Display', serif;
+  --ds-font-ui: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --ds-font-display: 'Cormorant Garamond', 'Playfair Display', serif;
 
   /* Legacy support (to be deprecated) */
   --primary-900: #060D1C;

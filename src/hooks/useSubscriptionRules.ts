@@ -20,17 +20,17 @@ export type SubscriptionTier = 'free' | 'busca_ilimitada' | 'alertas_inteligente
 const SUBSCRIPTION_CONFIG: Record<SubscriptionTier, SubscriptionRules> = {
   free: {
     maxSearchDays: 60,
-    canAccessFlights: false,
+    canAccessFlights: true,
     canAccessHistory: false,
     canAccessAlerts: false,
     canCreateAlerts: false,
     maxAlerts: 0,
     planName: 'Gratuito',
-    planDescription: 'Busca básica com limitações',
+    planDescription: 'Busca básica até 60 dias',
     monthlyPrice: 0,
     features: [
       'Busca de voos até 60 dias',
-      'Visualização limitada de resultados',
+      'Visualização completa de resultados',
       'Suporte básico'
     ]
   },
@@ -43,7 +43,7 @@ const SUBSCRIPTION_CONFIG: Record<SubscriptionTier, SubscriptionRules> = {
     maxAlerts: 0,
     planName: 'Busca Ilimitada',
     planDescription: 'Acesso completo a buscas e histórico',
-    monthlyPrice: 29.90,
+    monthlyPrice: 19.90,
     features: [
       'Busca ilimitada até 365 dias',
       'Acesso completo aos resultados',
@@ -61,7 +61,7 @@ const SUBSCRIPTION_CONFIG: Record<SubscriptionTier, SubscriptionRules> = {
     maxAlerts: 2,
     planName: 'Alertas Inteligentes',
     planDescription: 'Funcionalidades premium + alertas automáticos',
-    monthlyPrice: 49.90,
+    monthlyPrice: 29.90,
     features: [
       'Todas as funcionalidades do Busca Ilimitada',
       'Alertas inteligentes de preços',

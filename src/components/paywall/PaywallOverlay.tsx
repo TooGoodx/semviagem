@@ -1,19 +1,34 @@
 import React from 'react'
+import IconBusca from '../icons/IconBusca'
 
 interface PaywallOverlayProps {
   isVisible: boolean
   onClose: () => void
   flightCount?: number
-  context?: 'flights' | 'search'
+  searchDates?: { ida?: string; volta?: string }
 }
 
 export function PaywallOverlay({
   isVisible,
   onClose,
   flightCount = 0,
-  context = 'flights'
+  searchDates
 }: PaywallOverlayProps) {
   if (!isVisible) return null
+
+  // Helper to safely parse and format dates
+  const formatSearchDate = (dateString: string): string => {
+    // Try parsing as ISO format first
+    let date = new Date(dateString)
+
+    // If invalid, try DD/MM/YYYY format
+    if (isNaN(date.getTime()) && dateString.includes('/')) {
+      const [day, month, year] = dateString.split('/')
+      date = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`)
+    }
+
+    return !isNaN(date.getTime()) ? date.toLocaleDateString('pt-BR') : dateString
+  }
 
   return (
     <div
@@ -41,16 +56,19 @@ export function PaywallOverlay({
           </button>
 
           <div className="text-center">
-            <div className="text-3xl mb-2" aria-hidden="true">✈️</div>
+            {/* Professional icon - Busca Voos */}
+            <div className="w-20 h-20 mx-auto mb-3 flex items-center justify-center">
+              <IconBusca size={80} ariaHidden />
+            </div>
             <h3
               id="paywall-title"
               className="text-xl font-bold mb-1"
-              style={{ fontFamily: 'Playfair Display, serif' }}
+              style={{ fontFamily: 'Cormorant Garamond, serif' }}
             >
               {flightCount > 0 ? `${flightCount} Voos Encontrados!` : 'Voos Disponíveis!'}
             </h3>
             <p className="text-blue-100 italic text-sm">
-              Viaje o mundo <span style={{ fontFamily: 'Playfair Display, serif' }}>quase de graça</span>
+              Viaje o mundo <span style={{ fontFamily: 'Cormorant Garamond, serif' }}>quase de graça</span>
             </p>
           </div>
         </div>
@@ -58,8 +76,17 @@ export function PaywallOverlay({
         {/* Content */}
         <div className="p-6">
           <p className="text-gray-600 text-center mb-6">
-            Para ver todos os resultados e comparar preços,
-            assine o <strong>Busca Ilimitada</strong>.
+            {searchDates?.ida ? (
+              <>
+                Para buscar voos em{' '}
+                <strong>{formatSearchDate(searchDates.ida)}</strong>
+                {searchDates.volta && (
+                  <> até <strong>{formatSearchDate(searchDates.volta)}</strong></>
+                )}, assine o <strong>Busca Ilimitada</strong>.
+              </>
+            ) : (
+              <>Para ver todos os resultados e comparar preços, assine o <strong>Busca Ilimitada</strong>.</>
+            )}
           </p>
 
           {/* Benefits with brand styling */}
@@ -70,20 +97,20 @@ export function PaywallOverlay({
             <ul className="space-y-2" role="list">
               {flightCount > 0 && (
                 <li className="flex items-center text-sm text-gray-700">
-                  <span className="mr-3" style={{ color: '#22C55E' }} aria-hidden="true">✓</span>
+                  <span className="w-1.5 h-1.5 rounded-full mr-3" style={{ backgroundColor: '#22C55E' }} aria-hidden="true"></span>
                   Ver todos os {flightCount} voos encontrados
                 </li>
               )}
               <li className="flex items-center text-sm text-gray-700">
-                <span className="mr-3" style={{ color: '#22C55E' }} aria-hidden="true">✓</span>
+                <span className="w-1.5 h-1.5 rounded-full mr-3" style={{ backgroundColor: '#22C55E' }} aria-hidden="true"></span>
                 Buscar até 365 dias no futuro
               </li>
               <li className="flex items-center text-sm text-gray-700">
-                <span className="mr-3" style={{ color: '#22C55E' }} aria-hidden="true">✓</span>
+                <span className="w-1.5 h-1.5 rounded-full mr-3" style={{ backgroundColor: '#22C55E' }} aria-hidden="true"></span>
                 Histórico completo de buscas
               </li>
               <li className="flex items-center text-sm text-gray-700">
-                <span className="mr-3" style={{ color: '#22C55E' }} aria-hidden="true">✓</span>
+                <span className="w-1.5 h-1.5 rounded-full mr-3" style={{ backgroundColor: '#22C55E' }} aria-hidden="true"></span>
                 Comparar preços entre companhias
               </li>
             </ul>
@@ -96,16 +123,18 @@ export function PaywallOverlay({
               style={{ backgroundColor: '#F0C730', color: '#1F2937' }}
             >
               <span className="font-bold text-lg">
-                R$ 29,90<span className="text-sm font-normal">/mês</span>
+                R$ 19,90<span className="text-sm font-normal">/mês</span>
               </span>
             </div>
           </div>
 
           {/* CTA with brand color (V2: Navy Primary) */}
           <button
-            onClick={() => {
-              // Navigate to checkout (will be implemented in future sprint)
-              window.location.href = '/checkout?plan=busca_ilimitada'
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🔗 Redirecionando para Stripe - Busca Ilimitada');
+              window.location.href = 'https://buy.stripe.com/cNibJ3eAJetJ0ovfERdMI05';
             }}
             className="w-full text-white font-bold py-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] mb-3 shadow-md hover:shadow-lg"
             style={{ backgroundColor: '#060D1C' }}

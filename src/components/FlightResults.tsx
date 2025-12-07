@@ -1,15 +1,28 @@
-import React, { useState, useEffect, useRef, useMemo, useContext } from 'react';
-import FlightResultCard from './FlightResultCard';
-import InteractiveFilters from './InteractiveFilters';
-import SelectionModal from './SelectionModal';
-import ReturnFlightModal from './ReturnFlightModal';
-import { useSelection, SelectionContext } from '../context/SelectionContext';
+// React imports
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+
+// Third-party libraries
 import { useNavigate } from 'react-router-dom';
-import { getAirlineLogo, getDisplayAirlineName } from '../utils/airlineLogos';
-import CompactFlightCard from './CompactFlightCard';
-import moblixApiService from '../services/moblixApiService';
-import { logger } from '../utils/logger';
+
+// Context and hooks
+import { SelectionContext, useSelection } from '../context/SelectionContext';
+import { usePaywall } from './paywall';
+
+// Data and services
 import { getAirlineLinks, normalizeAirlineName } from '../data/airlineLinks';
+import moblixApiService from '../services/moblixApiService';
+import { getAirlineLogo, getDisplayAirlineName } from '../utils/airlineLogos';
+import { logger } from '../utils/logger';
+
+// Components
+import CompactFlightCard from './CompactFlightCard';
+import FlightResultCard from './FlightResultCard';
+import IconBusca from './icons/IconBusca';
+import InteractiveFilters from './InteractiveFilters';
+import { PaywallOverlay } from './paywall';
+import ReturnFlightModal from './ReturnFlightModal';
+import SelectionModal from './SelectionModal';
+import { UpgradePrompt } from './paywall';
 
 // Interfaces
 interface Airport {
@@ -104,6 +117,23 @@ const FlightResults: React.FC<FlightResultsProps> = ({
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [showFinalSelection, setShowFinalSelection] = useState(false);
 
+  // Paywall hooks
+  const {
+    shouldShowPaywall,
+    showPaywallModal,
+    hidePaywallModal,
+    isModalVisible,
+    modalFlightCount,
+    modalSearchDates,
+    subscriptionRules
+  } = usePaywall();
+
+  // Create search dates object for paywall checks
+  const searchDates = {
+    ida: searchParams.ida,
+    volta: searchParams.volta
+  };
+
   // 🆕 STATE MACHINE - Determina automaticamente qual etapa estamos e quais voos mostrar
   const flightState = useMemo(() => {
     // ETAPA 3: Resumo Final (ambos selecionados)
@@ -168,17 +198,6 @@ const FlightResults: React.FC<FlightResultsProps> = ({
       }
     });
   }, [selectedFlights.outbound, selectedFlights.return, showFinalSelection]);
-
-  // 🔥 DEBUG - Rastrear re-renderizações do FlightResults
-  useEffect(() => {
-    console.log('🔥 FLIGHTRESULTS - RENDERIZOU com selectedFlights:', {
-      outbound: selectedFlights.outbound?.airline || 'NULL',
-      return: selectedFlights.return?.airline || 'NULL',
-      outboundPrice: selectedFlights.outbound?.totalPrice || 'N/A',
-      returnPrice: selectedFlights.return?.totalPrice || 'N/A',
-      timestamp: new Date().toISOString()
-    });
-  }, [selectedFlights]);
 
   // Listener para abrir modal da volta
   useEffect(() => {
@@ -676,7 +695,6 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     // Use 'redeem' link for miles flights, 'search' for cash flights
     const targetUrl = flight.isMiles ? airlineLinks.redeem : airlineLinks.search;
 
-    console.log(`Opening ${flight.isMiles ? 'redeem' : 'search'} URL for ${normalizedName}: ${targetUrl}`);
     if (typeof window !== 'undefined') window.open(targetUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -1416,8 +1434,94 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                     </h2>
                   )}
 
+                  {/* Upgrade prompt banner for free users */}
+                  {shouldShowPaywall(searchDates) && getCurrentFlights.length > 0 && (
+                    <UpgradePrompt
+                      context="search-limit"
+                      onUpgrade={() => {
+                        console.log('🔗 [Banner] Redirecionando para Stripe - Busca Ilimitada');
+                        window.location.href = 'https://buy.stripe.com/cNibJ3eAJetJ0ovfERdMI05';
+                      }}
+                      onDismiss={() => {}}
+                    />
+                  )}
+
                   {/* Grid de duas colunas: Dinheiro e Milhas */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className={`relative ${shouldShowPaywall(searchDates) ? 'pointer-events-none' : ''}`}>
+                    {/* Professional paywall overlay for free users */}
+                    {shouldShowPaywall(searchDates) && (
+                      <div className="absolute inset-0 backdrop-blur-[1px] flex items-center justify-center z-10 p-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.4)' }}>
+                        <div className="bg-white rounded-2xl p-8 shadow-2xl border border-gray-100 text-center max-w-md w-full">
+                          {/* Professional icon - Busca Voos */}
+                          <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                            <IconBusca size={80} ariaHidden />
+                          </div>
+
+                          <h3
+                            className="text-xl font-bold mb-2"
+                            style={{ fontFamily: 'Cormorant Garamond, serif', color: '#060D1C' }}
+                          >
+                            Busca além de {subscriptionRules.maxSearchDays} dias
+                          </h3>
+
+                          <p className="text-gray-600 mb-6 text-sm">
+                            Pesquise até 365 dias no futuro e encontre as melhores ofertas
+                          </p>
+
+                          {/* Benefits list with professional dot icons */}
+                          <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
+                            <ul className="space-y-2">
+                              <li className="flex items-center text-sm text-gray-700">
+                                <span className="w-1.5 h-1.5 rounded-full mr-3" style={{ backgroundColor: '#22C55E' }}></span>
+                                Buscar até 365 dias no futuro
+                              </li>
+                              <li className="flex items-center text-sm text-gray-700">
+                                <span className="w-1.5 h-1.5 rounded-full mr-3" style={{ backgroundColor: '#22C55E' }}></span>
+                                Histórico completo de buscas
+                              </li>
+                              <li className="flex items-center text-sm text-gray-700">
+                                <span className="w-1.5 h-1.5 rounded-full mr-3" style={{ backgroundColor: '#22C55E' }}></span>
+                                Comparar preços entre companhias
+                              </li>
+                            </ul>
+                          </div>
+
+                          {/* Pricing badge */}
+                          <div className="mb-6">
+                            <div
+                              className="inline-block rounded-lg px-4 py-2"
+                              style={{ backgroundColor: '#F0C730', color: '#1F2937' }}
+                            >
+                              <span className="font-bold text-lg">
+                                R$ 19,90<span className="text-sm font-normal">/mês</span>
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Professional CTA button */}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log('🔗 [FlightResults] Redirecionando para Stripe - Busca Ilimitada');
+                              window.location.href = 'https://buy.stripe.com/cNibJ3eAJetJ0ovfERdMI05';
+                            }}
+                            className="w-full text-white font-bold py-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-md hover:shadow-lg"
+                            style={{ backgroundColor: '#060D1C' }}
+                            onMouseEnter={(e) => {
+                              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#0a1428';
+                            }}
+                            onMouseLeave={(e) => {
+                              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#060D1C';
+                            }}
+                          >
+                            Assinar Busca Ilimitada
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                  <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${shouldShowPaywall(searchDates) ? 'opacity-95' : ''}`}>
                     {/* Coluna 1: Voos em Dinheiro */}
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
@@ -1534,6 +1638,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                       </div>
                     );
                   })()}
+                  </div>
             </>
           )}
 
@@ -1548,6 +1653,14 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             }
             setIsSelectionModalOpen(false);
           }}
+        />
+
+        {/* Paywall Modal */}
+        <PaywallOverlay
+          isVisible={isModalVisible}
+          onClose={hidePaywallModal}
+          flightCount={modalFlightCount}
+          searchDates={modalSearchDates}
         />
         </div>
       </div>

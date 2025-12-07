@@ -85,11 +85,13 @@ const PlanUpgradeOverlay: React.FC<PlanUpgradeOverlayProps> = ({
         )}
 
         <Button
-          onClick={onUpgradeClick}
+          onClick={() => {
+            window.location.href = 'https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02'
+          }}
           size="lg"
           className="w-full bg-[#F0C72F] text-[#060D1C] hover:bg-[#d8b329] font-semibold"
         >
-          {ctaText}
+          Assinar Alertas Inteligentes
         </Button>
 
         {currentPlan === 'free' && (

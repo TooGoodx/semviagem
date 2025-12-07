@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
           </div>
           <Button
             onClick={handleLogout}
-            className={componentClasses.button.accent}
+            className={componentClasses.button.outline}
           >
             Sair
           </Button>
@@ -122,7 +122,7 @@ const Dashboard: React.FC = () => {
               {!isPremium && (
                 <Button
                   onClick={() => navigate("/premium")}
-                  className={componentClasses.button.accent}
+                  className={componentClasses.button.primary}
                 >
                   Ver benefícios do plano PRO
                 </Button>
@@ -141,7 +141,7 @@ const Dashboard: React.FC = () => {
               <CardContent className="pb-6">
                 <Button
                   onClick={action.onClick}
-                  className={componentClasses.button.accent}
+                  className={componentClasses.button.primary}
                 >
                   {action.cta}
                 </Button>
@@ -168,7 +168,7 @@ const Dashboard: React.FC = () => {
               <Button
                 asChild
                 variant="secondary"
-                className={componentClasses.button.accent}
+                className={componentClasses.button.primary}
               >
                 <a href="https://wm.me/5531997334728" target="_blank" rel="noreferrer">
                   Abrir WhatsApp

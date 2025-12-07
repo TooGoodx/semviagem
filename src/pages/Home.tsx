@@ -1382,7 +1382,7 @@ const Home: React.FC = () => {
               O maior <span style={{color: '#F0C730', fontWeight: 'bold'}}>ecossistema</span> de viagens <span style={{color: '#4896C7', fontWeight: 'bold'}}>baratas</span> do Brasil, sem truques, <span style={{color: '#4896C7', fontWeight: 'bold'}}>Sem</span> <span style={{color: '#F0C730', fontWeight: 'bold'}}>Viagem</span>!
             </h1>
             <p className="hero__subtitle text-base md:text-lg font-light mb-6 max-w-4xl mx-auto" style={{lineHeight: '1.8', color: 'rgba(255,255,255,0.95)'}}>
-              Encontre os vôos, aprenda a acumular, emitir e viver as melhores experiências do mundo usando milhas - <span className="italic font-bold" style={{color: '#F0C730', fontFamily: "'Playfair Display', serif"}}>quase de graça</span>.
+              Encontre os vôos, aprenda a acumular, emitir e viver as melhores experiências do mundo usando milhas - <span className="italic font-bold" style={{color: '#F0C730', fontFamily: "'Cormorant Garamond', serif"}}>quase de graça</span>.
             </p>
           </div>
 
@@ -1400,8 +1400,8 @@ const Home: React.FC = () => {
                             onClick={() => setSearchParams(prev => ({ ...prev, soIda: false }))}
                             className={`px-6 py-3 h-[44px] rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
                               !searchParams.soIda
-                                ? 'text-white border-2 bg-[#F0C72F] border-[#F0C72F]'
-                                : 'text-white bg-[#4896C7] border-2 border-[#4896C7] hover:opacity-80'
+                                ? 'text-white border-2 bg-[#060D1C] border-[#060D1C]'
+                                : 'text-[#060D1C] bg-transparent border-2 border-[#060D1C] hover:bg-[#060D1C]/10'
                             }`}
                           >
                             ✓ Ida e volta
@@ -1411,8 +1411,8 @@ const Home: React.FC = () => {
                             onClick={() => setSearchParams(prev => ({ ...prev, soIda: true, volta: '' }))}
                             className={`px-6 py-3 h-[44px] rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
                               searchParams.soIda
-                                ? 'text-white border-2 bg-[#F0C72F] border-[#F0C72F]'
-                                : 'text-white bg-[#4896C7] border-2 border-[#4896C7] hover:opacity-80'
+                                ? 'text-white border-2 bg-[#060D1C] border-[#060D1C]'
+                                : 'text-[#060D1C] bg-transparent border-2 border-[#060D1C] hover:bg-[#060D1C]/10'
                             }`}
                           >
                             Somente ida
@@ -1721,7 +1721,7 @@ const Home: React.FC = () => {
           {/* Section Header */}
           <div className="text-center mb-16">
             <p className="text-xl" style={{color: '#4896C7', lineHeight: '140%'}}>
-              Tudo o que você precisa para aprender a viajar o mundo - <span style={{color: '#F0C730', fontFamily: 'Playfair Display, serif'}}>quase de graça</span>, <span style={{fontWeight: 'bold'}}>Assine Agora!</span>
+              Tudo o que você precisa para <strong>aprender a viajar o mundo - quase de graça!</strong>
             </p>
           </div>
 
@@ -1733,8 +1733,12 @@ const Home: React.FC = () => {
               price="R$ 19,90"
               priceSub="/mês"
               bullets={[
-                "Busca ilimitada de voos com milhas e dinheiro",
+                <>Encontre <strong>voos baratos de verdade</strong>, sem taxas</>,
+                <>Apresentamos os preços reais, <strong>sem comissões</strong></>,
+                <>Busca ilimitada de voos com <strong>milhas e dinheiro</strong></>,
                 "Comparação automática de tarifas reais",
+                "Busca de vôos ilimitada",
+                <>Perfeito para <strong>Agências de Viagem</strong></>,
               ]}
               ctaPrimary={{ label: "Quero Buscar Passagens", href: "https://buy.stripe.com/cNibJ3eAJetJ0ovfERdMI05" }}
             />
@@ -1742,14 +1746,16 @@ const Home: React.FC = () => {
             <PricingCard
               variant="alertas"
               title="Alertas Inteligentes (AI)"
-              badge="MAIS POPULAR"
+              badge="MAIOR VANTAGEM"
               price="R$ 29,90"
               priceSub="/mês"
               bullets={[
-                "Alertas automáticos de queda de preço",
-                "Notificações instantâneas",
-                "Sugestões de emissão",
-                "Acesso a promoções exclusivas",
+                <>Alertas com <strong>1.225 possibilidades por alerta</strong></>,
+                <>Alertas automáticos de <strong>queda de preço</strong></>,
+                <>Notificações instantâneas via <strong>Whatsapp</strong></>,
+                "Agente AI planejador de compras",
+                <>Sugestões de <strong>emissão</strong></>,
+                <>Acesso a <strong>promoções exclusivas</strong></>,
               ]}
               ctaPrimary={{ label: "Ativar meus Alertas", href: "https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02" }}
             />
@@ -1760,7 +1766,10 @@ const Home: React.FC = () => {
               badge="EM BREVE"
               bullets={[
                 "Planejamento completo de viagem com IA",
-                "Sugestões personalizadas",
+                "Investigação de objetivos",
+                "Experiências prioritárias e destinos",
+                "Sugestões personalizadas de viagem",
+                "Voos, Hostéis, Veículos, Experiências e Roteiros",
                 "Agente 24h para emissões VIP",
               ]}
               ctaPrimary={{ label: "Entrar na lista VIP", href: "/register" }}
@@ -1773,8 +1782,8 @@ const Home: React.FC = () => {
       <section id="impacto" className="py-[var(--ds-spacing-2xl)] px-[var(--ds-spacing-lg)]" style={{backgroundColor: '#F8F9FA'}}>
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-[var(--ds-spacing-2xl)]">
-            <h2 className="text-[clamp(24px,3.5vw,32px)] font-bold mb-[var(--ds-spacing-md)] leading-tight" style={{ color: 'var(--ds-text-primary)' }}>
-              Enquanto você viaja, você ajuda na educação das nossas crianças!
+            <h2 className="text-[clamp(18px,2.2vw,22px)] font-medium mb-[var(--ds-spacing-md)] leading-relaxed" style={{ color: 'var(--ds-text-primary)' }}>
+              Enquanto você viaja, você ajuda na <strong>educação das nossas crianças!</strong>
             </h2>
           </div>
 
