@@ -1083,8 +1083,8 @@ const getAirlineLogoPath = (flight: any): string => {
           </div>
         </div>
 
-        {/* COL 3: Preço + Botão - Full width row on mobile, 30% column on desktop */}
-        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center md:w-[30%] gap-3 md:gap-2 w-full md:w-auto">
+        {/* COL 3: Preço + Botão - Full width row on mobile, 220px fixed column on desktop */}
+        <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center md:w-[220px] gap-3 md:gap-2 w-full md:w-auto">
           {/* Preço */}
           <div
             className="font-bold leading-tight"
@@ -1112,7 +1112,7 @@ const getAirlineLogoPath = (flight: any): string => {
                   style={{
                     padding: '8px 17px',
                     borderRadius: '10px',
-                    backgroundColor: designSystem.colors.success,
+                    backgroundColor: designSystem.colors.brand.dark,
                     color: '#FFFFFF',
                     fontSize: 'clamp(11px, 3vw, 13px)',
                     border: 'none',
@@ -1122,10 +1122,10 @@ const getAirlineLogoPath = (flight: any): string => {
                     WebkitTapHighlightColor: 'transparent',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.cta.primaryHover;
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.success;
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.brand.dark;
                   }}
                 >
                   Escolher
@@ -1137,7 +1137,7 @@ const getAirlineLogoPath = (flight: any): string => {
                   style={{
                     padding: '8px 17px',
                     borderRadius: '10px',
-                    backgroundColor: designSystem.colors.success,
+                    backgroundColor: designSystem.colors.brand.dark,
                     color: '#FFFFFF',
                     fontSize: 'clamp(11px, 3vw, 13px)',
                     border: 'none',
@@ -1147,10 +1147,10 @@ const getAirlineLogoPath = (flight: any): string => {
                     WebkitTapHighlightColor: 'transparent',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#15803D';
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.cta.primaryHover;
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.success;
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.brand.dark;
                   }}
                 >
                   Escolher
@@ -1162,8 +1162,8 @@ const getAirlineLogoPath = (flight: any): string => {
                   style={{
                     padding: '10px 20px',
                     borderRadius: '12px',
-                    backgroundColor: designSystem.colors.primary,
-                    color: designSystem.colors.accent,
+                    backgroundColor: designSystem.colors.brand.dark,
+                    color: '#FFFFFF',
                     fontSize: 'clamp(13px, 3vw, 15px)',
                     border: 'none',
                     cursor: 'pointer',
@@ -1172,10 +1172,10 @@ const getAirlineLogoPath = (flight: any): string => {
                     WebkitTapHighlightColor: 'transparent',
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.opacity = '0.9';
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.cta.primaryHover;
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = designSystem.colors.brand.dark;
                   }}
                 >
                   Ver
