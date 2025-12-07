@@ -7,13 +7,43 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: {
+        DEFAULT: '1rem',
+        sm: '1.5rem',
+        lg: '2rem',
+      },
       screens: {
-        "2xl": "1400px",
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
+        '2xl': '1400px',
       },
     },
     extend: {
+      // SemViagem Brand Colors V2
       colors: {
+        // Brand palette
+        brand: {
+          dark: '#060D1C',    // Navy - PRIMARY CTA
+          yellow: '#F0C72F',  // Yellow - ACCENT only
+          blue: '#4896C7',    // Blue - Secondary
+          light: '#E4E4E4',
+          white: '#FFFFFF',
+        },
+        // CTA colors
+        cta: {
+          primary: '#060D1C',
+          'primary-hover': '#0a1428',
+          secondary: '#4896C7',
+          'secondary-hover': '#3a7ab0',
+        },
+        // Semantic colors
+        success: '#16A34A',
+        danger: '#DC2626',
+        warning: '#F59E0B',
+        info: '#3B82F6',
+        // Legacy shadcn/ui colors (keep for compatibility)
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -58,10 +88,28 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      // SemViagem Typography
+      fontFamily: {
+        primary: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Merriweather', 'Georgia', 'serif'],
+        sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['Merriweather', 'Georgia', 'serif'],
+      },
+      // SemViagem Border Radius
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: '8px',
+        md: '12px',
+        lg: '16px',
+        xl: '24px',
+      },
+      // SemViagem Box Shadows
+      boxShadow: {
+        sm: '0 1px 2px rgba(6, 13, 28, 0.05)',
+        md: '0 10px 15px rgba(6, 13, 28, 0.08)',
+        lg: '0 10px 30px rgba(6, 13, 28, 0.08)',
+        xl: '0 20px 40px rgba(6, 13, 28, 0.12)',
+        card: '0 10px 30px rgba(6, 13, 28, 0.08)',
+        hover: '0 20px 40px rgba(6, 13, 28, 0.12)',
       },
       keyframes: {
         "accordion-down": {
