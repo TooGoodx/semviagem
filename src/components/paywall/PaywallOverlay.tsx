@@ -101,14 +101,20 @@ export function PaywallOverlay({
             </div>
           </div>
 
-          {/* CTA with brand color */}
+          {/* CTA with brand color (V2: Navy Primary) */}
           <button
             onClick={() => {
               // Navigate to checkout (will be implemented in future sprint)
               window.location.href = '/checkout?plan=busca_ilimitada'
             }}
             className="w-full text-white font-bold py-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] mb-3 shadow-md hover:shadow-lg"
-            style={{ backgroundColor: '#4896C7' }}
+            style={{ backgroundColor: '#060D1C' }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#0a1428';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#060D1C';
+            }}
           >
             Assinar Busca Ilimitada
           </button>
