@@ -62,6 +62,22 @@ export const designSystem = {
       disabled: '#F3F4F6',
       today: '#F0C72F',
     },
+
+    // ========================================
+    // BACKWARD COMPATIBILITY (Legacy V1)
+    // ========================================
+    primary: '#060D1C',           // Legacy alias for brand.dark
+    accent: '#F0C72F',            // Legacy alias for brand.yellow
+    accentBlue: '#4896C7',        // Legacy alias for brand.blue
+    textPrimary: '#060D1C',       // Legacy alias for text.primary
+    textSecondary: '#1F2937',     // Legacy alias for text.secondary
+    textMuted: '#6B7280',         // Legacy alias for text.muted
+    success: '#16A34A',           // Legacy flat access
+    danger: '#DC2626',            // Legacy flat access
+    warning: '#F59E0B',           // Legacy flat access
+    info: '#3B82F6',              // Legacy flat access
+    outline: '#060D1C',           // Legacy border color
+    borderLight: '#E9EEF3',       // Legacy border.light
   },
 
   // ========================================
@@ -193,6 +209,16 @@ export const componentClasses = {
     base: 'bg-white rounded-2xl p-8 shadow-lg transition-all duration-300',
     hover: 'hover:shadow-xl hover:-translate-y-1',
     compact: 'bg-white rounded-xl p-6 shadow-md',
+  },
+
+  // ========================================
+  // INPUTS (Legacy compatibility)
+  // ========================================
+  input: {
+    base: 'w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#060D1C] focus:border-transparent transition-all',
+    error: 'border-red-500 focus:ring-red-500',
+    success: 'border-green-500 focus:ring-green-500',
+    disabled: 'bg-gray-100 cursor-not-allowed',
   },
 };
 
