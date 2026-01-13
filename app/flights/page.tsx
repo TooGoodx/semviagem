@@ -21,7 +21,7 @@ export default function FlightsPage() {
               </Link>
               <div className="flex items-center space-x-2">
                 <Plane className="h-6 w-6 text-blue-600" />
-                <span className="text-xl font-bold text-gray-900">SemViagem</span>
+                <span className="text-xl font-bold text-gray-900">TripJunto</span>
               </div>
             </div>
             

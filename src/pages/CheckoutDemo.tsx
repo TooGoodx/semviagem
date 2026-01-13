@@ -8,7 +8,7 @@ const CheckoutDemo: React.FC = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <div className="text-center">
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-              Sem Viagem Premium
+              TripJunto Premium
             </h2>
             <p className="mt-2 text-sm text-gray-600">
               Acesso completo à plataforma de busca de voos

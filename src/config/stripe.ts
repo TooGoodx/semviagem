@@ -12,7 +12,7 @@ export const STRIPE_CONFIG = {
 
   // Domain validation
   domainId: 'pmd_1Rx5lSRtN3YwSDWnWAvnPqt3',
-  activeDomain: 'semviagem.com',
+  activeDomain: 'tripjunto.com',
 
   // Webhook configuration - these should only be used on backend
   webhookSecret: import.meta.env.VITE_STRIPE_WEBHOOK_SECRET || 'whsec_M5gEbLtXtwvWNPU8vpmDG7X0xlXbibYx',

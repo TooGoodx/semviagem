@@ -21,7 +21,7 @@ export default {
       },
     },
     extend: {
-      // SemViagem Brand Colors V2
+      // TripJunto Brand Colors V2
       colors: {
         // Brand palette
         brand: {
@@ -88,21 +88,21 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
-      // SemViagem Typography
+      // TripJunto Typography
       fontFamily: {
         primary: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['Cormorant Garamond', 'Playfair Display', 'serif'],
         sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
         serif: ['Cormorant Garamond', 'Playfair Display', 'serif'],
       },
-      // SemViagem Border Radius
+      // TripJunto Border Radius
       borderRadius: {
         sm: '8px',
         md: '12px',
         lg: '16px',
         xl: '24px',
       },
-      // SemViagem Box Shadows
+      // TripJunto Box Shadows
       boxShadow: {
         sm: '0 1px 2px rgba(6, 13, 28, 0.05)',
         md: '0 10px 15px rgba(6, 13, 28, 0.08)',

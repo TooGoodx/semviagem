@@ -1,9 +1,12 @@
 import { useAuth0 } from '@auth0/auth0-react'
 import { useEffect, useState } from 'react'
-import { supabase, type User } from '../lib/supabase'
+import { supabase, type SupabaseUser } from '../lib/supabase'
+
+// Re-export User type as SupabaseUser if it exists in supabase.ts
+type User = SupabaseUser
 
 export function useAuth() {
-  const { user: auth0User, isLoading: auth0Loading } = useAuth0()
+  const { user: auth0User, isLoading: auth0Loading, isAuthenticated: auth0Authenticated } = useAuth0()
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -14,10 +17,12 @@ export function useAuth() {
     if (!auth0User) {
       setUser(null)
       setIsLoading(false)
+      console.log('🚪 User logged out, clearing Supabase state')
       return
     }
 
     // Sync Auth0 user to Supabase
+    console.log('🔄 Auth0 user detected, initiating Supabase sync...')
     syncUserToSupabase(auth0User)
   }, [auth0User, auth0Loading])
 
@@ -26,7 +31,11 @@ export function useAuth() {
       setIsLoading(true)
       setError(null)
 
-      // Buscar usuário existente
+      console.log('🔍 Checking if user is registered...')
+      console.log('  📧 Email:', auth0User.email)
+      console.log('  🆔 Auth0 ID:', auth0User.sub)
+
+      // STEP 1: Check if user exists (DO NOT CREATE)
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
         .select('*')
@@ -35,74 +44,126 @@ export function useAuth() {
 
       if (fetchError && fetchError.code !== 'PGRST116') {
         // PGRST116 = no rows returned (usuário não existe ainda)
+        console.error('❌ Supabase fetch error:', fetchError)
         throw fetchError
       }
 
-      if (existingUser) {
-        // Usuário já existe, apenas atualiza campos básicos se necessário
-        const needsUpdate =
-          existingUser.email !== auth0User.email ||
-          existingUser.full_name !== auth0User.name
+      if (!existingUser) {
+        // User is NOT registered - block access
+        console.log('🚫 User not registered in system')
+        console.log('   Email:', auth0User.email)
+        console.log('   Action: Blocking access, redirecting to registration')
 
-        if (needsUpdate) {
-          const { data: updatedUser, error: updateError } = await supabase
-            .from('users')
-            .update({
-              email: auth0User.email,
-              full_name: auth0User.name,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', existingUser.id)
-            .select()
-            .single()
+        // Set special error state to trigger registration flow
+        setError('USER_NOT_REGISTERED')
+        setUser(null)
 
-          if (updateError) throw updateError
-          setUser(updatedUser)
-        } else {
-          setUser(existingUser)
-        }
-      } else {
-        // Novo usuário, criar registro
-        const newUserData = {
-          auth0_id: auth0User.sub,
+        // Store Auth0 user data for registration form pre-fill
+        sessionStorage.setItem('pendingRegistration', JSON.stringify({
           email: auth0User.email,
-          full_name: auth0User.name || auth0User.email.split('@')[0],
-          subscription_status: 'free' as const,
-          preferences: {
-            favorite_airports: [],
-            preferred_class: 'economica',
-            notification_whatsapp: true,
-            notification_email: true,
-          },
-        }
+          name: auth0User.name,
+          auth0_id: auth0User.sub,
+          picture: auth0User.picture
+        }))
 
-        const { data: newUser, error: insertError } = await supabase
-          .from('users')
-          .insert(newUserData)
-          .select()
-          .single()
-
-        if (insertError) throw insertError
-        setUser(newUser)
+        return // Exit without setting user
       }
+
+      // User exists - allow access
+      console.log('✅ Registered user found:', {
+        id: existingUser.id,
+        email: existingUser.email,
+        subscription_status: existingUser.subscription_status,
+        registered_at: existingUser.created_at
+      })
+
+      // Update last login timestamp and name from Auth0
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('users')
+        .update({
+          email: auth0User.email,
+          full_name: auth0User.name || existingUser.full_name,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingUser.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.warn('⚠️ Failed to update login timestamp:', updateError)
+        // Continue with existing user data
+        setUser(existingUser)
+      } else {
+        setUser(updatedUser)
+        console.log('✅ User data updated with latest from Auth0')
+      }
+
+      console.log('💳 User subscription status:', existingUser.subscription_status)
     } catch (error) {
-      console.error('Erro ao sincronizar usuário Auth0 → Supabase:', error)
-      setError(error instanceof Error ? error.message : 'Erro desconhecido')
+      console.error('💥 Critical sync error:', error)
+      setError(error instanceof Error ? error.message : 'Database sync failed')
+      console.warn('⚠️ Authentication failed - user needs to register')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Development utility functions
+  const forceSync = async () => {
+    if (auth0User) {
+      console.log('🔄 Manual sync triggered')
+      await syncUserToSupabase(auth0User)
+    }
+  }
+
+  const updateSubscriptionStatus = async (newStatus: 'free' | 'busca_ilimitada' | 'alertas_inteligentes') => {
+    if (!user) {
+      console.error('❌ Cannot update subscription: no user loaded')
+      return false
+    }
+
+    try {
+      console.log(`🔄 Updating subscription to: ${newStatus}`)
+      const { data, error: updateError } = await supabase
+        .from('users')
+        .update({
+          subscription_status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('❌ Subscription update failed:', updateError)
+        throw updateError
+      }
+
+      setUser(data)
+      console.log(`✅ Subscription updated to: ${newStatus}`)
+      return true
+    } catch (error) {
+      console.error('💥 Subscription update error:', error)
+      return false
     }
   }
 
   return {
     user,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && auth0Authenticated,
     subscription_status: user?.subscription_status || 'free',
     error,
-    refetch: () => {
-      if (auth0User) {
-        syncUserToSupabase(auth0User)
-      }
-    },
+    refetch: forceSync,
+    // Expose Auth0 user for accessing picture, name, etc.
+    auth0User,
+    // Registration state
+    needsRegistration: error === 'USER_NOT_REGISTERED',
+    pendingUserData: error === 'USER_NOT_REGISTERED' ? auth0User : null,
+    // Development utilities (only available in dev mode)
+    ...(import.meta.env.DEV && {
+      forceSync,
+      updateSubscriptionStatus
+    })
   }
 }

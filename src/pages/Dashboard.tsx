@@ -1,63 +1,130 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import toast from "react-hot-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAuth } from "../context/AuthContext"
-import { useSubscription } from "../hooks/useSubscription"
+import { useAuth0 } from "@auth0/auth0-react"
+import { useUser } from "../context/UserContext"
 import { designSystem, componentClasses } from "../styles/designSystem"
-// import ProfileWizard from "../components/onboarding/ProfileWizard" // Removido - dados já coletados no cadastro
+// DashboardGate removed - dashboard accessible to all logged-in users
+// Premium features are gated individually (alerts, etc)
+import { usePermissions } from "../hooks/usePermissions"
+import AlertsList from "../components/alerts/AlertsList"
+import { getUserAlerts, type Alert } from "../lib/supabase"
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate()
-  const { user, signOut } = useAuth()
-  const { isPremium, isLoading: subscriptionLoading, error: subscriptionError } = useSubscription()
-  // const [showWizard, setShowWizard] = useState(false) // Removido - não mais necessário
+  const { logout } = useAuth0()
+  const { user, subscription_status, auth0User } = useUser()
+  const permissions = usePermissions()
 
-  // useEffect(() => {
-  //   const completed = localStorage.getItem("sv_wizard_completed")
-  //   if (!completed) {
-  //     setShowWizard(true)
-  //   }
-  // }, []) // Removido - não mais necessário
+  // Alerts state
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [isLoadingAlerts, setIsLoadingAlerts] = useState(false)
 
-  useEffect(() => {
-    if (subscriptionError) {
-      // toast.error("Não foi possível verificar sua assinatura no momento.")
-      console.log("ℹ️ Subscription check error (silenced for UX):", subscriptionError)
-    }
-  }, [subscriptionError])
-
-  const quickActions = useMemo(
-    () => [
-      {
-        title: "Buscar voos",
-        description: "Defina origem, destino e receba as melhores combinações de tarifas.",
-        cta: "Abrir busca",
-        onClick: () => navigate("/flights"),
-      },
-      {
-        title: "Alertas inteligentes",
-        description: isPremium
-          ? "Configure destinos favoritos para receber promoções antecipadas."
-          : "Assine o plano PRO para liberar alertas exclusivos por WhatsApp.",
-        cta: isPremium ? "Configurar alertas" : "Conhecer plano PRO",
-        onClick: () => (isPremium ? navigate("/profile") : navigate("/premium")),
-      },
-      {
-        title: "Completar perfil",
-        description: "Atualize seus dados de contato e preferências de viagem.",
-        cta: "Ir para perfil",
-        onClick: () => navigate("/profile"),
-      },
-    ],
-    [isPremium, navigate],
-  )
-
-  const handleLogout = async () => {
+  // Load user alerts
+  const loadAlerts = async () => {
+    if (!user?.id) return
+    setIsLoadingAlerts(true)
     try {
-      await signOut()
-      navigate("/")
+      const userAlerts = await getUserAlerts(user.id)
+      setAlerts(userAlerts)
+      console.log('📊 Loaded alerts:', userAlerts.length)
+    } catch (error) {
+      console.error('Error loading alerts:', error)
+    } finally {
+      setIsLoadingAlerts(false)
+    }
+  }
+
+  // Load alerts on mount and when user changes
+  useEffect(() => {
+    if (user?.id && permissions.canCreateAlerts) {
+      loadAlerts()
+    }
+  }, [user?.id, permissions.canCreateAlerts])
+
+  // Dashboard access logging
+  useEffect(() => {
+    console.log('📊 Dashboard accessed:', {
+      canAccessDashboard: permissions.canAccessDashboard,
+      canCreateAlerts: permissions.canCreateAlerts,
+      maxAlerts: permissions.maxAlerts,
+      canSearchUnlimited: permissions.canSearchUnlimited
+    })
+  }, [permissions])
+
+  // Get subscription display info based on our 3-tier system
+  const getSubscriptionInfo = () => {
+    switch (subscription_status) {
+      case 'alertas_inteligentes':
+        return {
+          badge: 'Alertas Inteligentes',
+          emoji: '⭐',
+          title: 'Aproveite alertas antecipados e buscas ilimitadas',
+          description: 'Você recebe alertas exclusivos no WhatsApp e pode monitorar quantos destinos quiser.',
+          showUpgrade: false,
+          upgradeUrl: null
+        }
+      case 'busca_ilimitada':
+        return {
+          badge: 'Busca Ilimitada',
+          emoji: '🚀',
+          title: 'Busque voos em qualquer data',
+          description: 'Upgrade para Alertas Inteligentes e receba notificações exclusivas no WhatsApp.',
+          showUpgrade: true,
+          upgradeUrl: 'https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02'
+        }
+      default: // free
+        return {
+          badge: 'Plano Gratuito',
+          emoji: '🆓',
+          title: 'Desbloqueie alertas inteligentes e buscas ilimitadas',
+          description: 'Upgrade para receber alertas exclusivos no WhatsApp e buscar voos sem limite de data.',
+          showUpgrade: true,
+          upgradeUrl: 'https://buy.stripe.com/cNibJ3eAJetJ0ovfERdMI05'
+        }
+    }
+  }
+
+  const subscriptionInfo = getSubscriptionInfo()
+
+  // Permission-based quick actions
+  const quickActions = [
+    {
+      title: "Buscar voos",
+      description: permissions.canSearchUnlimited
+        ? "Busque voos em qualquer data, sem limites."
+        : `Busque voos até ${permissions.searchDayLimit} dias no futuro.`,
+      cta: "Abrir busca",
+      onClick: () => navigate("/")
+    },
+    {
+      title: "Alertas de preço",
+      description: permissions.canCreateAlerts
+        ? `Configure até ${permissions.maxAlerts} alertas ativos.`
+        : "Upgrade para receber alertas exclusivos por WhatsApp.",
+      cta: permissions.canCreateAlerts ? "Gerenciar alertas" : "Upgrade para alertas",
+      onClick: () => permissions.canCreateAlerts
+        ? navigate("/alerts")
+        : window.open(subscriptionInfo.upgradeUrl || 'https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02', '_blank')
+    },
+    {
+      title: "Perfil de viagem",
+      description: "Atualize seus dados de contato e preferências.",
+      cta: "Atualizar perfil",
+      onClick: () => navigate("/profile")
+    }
+  ]
+
+  const handleLogout = () => {
+    try {
+      console.log('🚪 Initiating Auth0 logout...')
+      logout({
+        logoutParams: {
+          returnTo: window.location.origin
+        }
+      })
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
       toast.error("Erro ao fazer logout. Tente novamente.")
@@ -66,14 +133,14 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-white to-[#eef2f6]">
-      {/* ProfileWizard removido - dados já coletados no modal de cadastro */}
+        {/* ProfileWizard removido - dados já coletados no modal de cadastro */}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-3xl font-bold" style={{ color: designSystem.colors.textPrimary }}>Dashboard</h2>
             <p className="text-sm" style={{ color: designSystem.colors.textMuted }}>
-              Monitore alertas, configure destinos favoritos e finalize suas reservas com o melhor custo-benefício.
+              Olá {auth0User?.name || user?.full_name || 'Usuário'}! Gerencie suas buscas e alertas.
             </p>
           </div>
           <Button
@@ -94,17 +161,13 @@ const Dashboard: React.FC = () => {
                   color: designSystem.colors.accent
                 }}
               >
-                {subscriptionLoading ? "Carregando..." : isPremium ? "Plano PRO ativo" : "Plano gratuito"}
+                {subscriptionInfo.emoji} {subscriptionInfo.badge}
               </span>
               <h3 className="text-2xl font-bold" style={{ color: designSystem.colors.textPrimary }}>
-                {isPremium
-                  ? "Aproveite alertas antecipados e buscas ilimitadas"
-                  : "Desbloqueie alertas inteligentes e suporte premium"}
+                {subscriptionInfo.title}
               </h3>
               <p className="text-sm" style={{ color: designSystem.colors.textSecondary }}>
-                {isPremium
-                  ? "Você recebe alertas exclusivos no WhatsApp e pode monitorar quantos destinos quiser."
-                  : "Assine o plano PRO para ser avisado antes de todos, direto no seu WhatsApp, assim que surgirem tarifas irresistíveis."}
+                {subscriptionInfo.description}
               </p>
             </div>
             <div className="flex w-full flex-col gap-3 md:w-auto">
@@ -119,17 +182,58 @@ const Dashboard: React.FC = () => {
               >
                 Atualizar meus dados
               </Button>
-              {!isPremium && (
+              {subscriptionInfo.showUpgrade && (
                 <Button
-                  onClick={() => navigate("/premium")}
+                  onClick={() => subscriptionInfo.upgradeUrl && window.open(subscriptionInfo.upgradeUrl, '_blank')}
                   className={componentClasses.button.primary}
                 >
-                  Ver benefícios do plano PRO
+                  {subscription_status === 'free' ? 'Upgrade para Busca Ilimitada' : 'Upgrade para Alertas'}
                 </Button>
               )}
             </div>
           </CardContent>
         </Card>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-none shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Limite de Busca</h3>
+              <div className="text-3xl font-bold text-blue-600 mb-2">
+                {permissions.canSearchUnlimited ? '∞' : `${permissions.searchDayLimit} dias`}
+              </div>
+              <p className="text-gray-600 text-sm">
+                {permissions.canSearchUnlimited ? 'Busca ilimitada ativa' : 'Limite de busca atual'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Alertas Ativos</h3>
+              <div className="text-3xl font-bold text-green-600 mb-2">
+                {permissions.canCreateAlerts ? `${alerts.filter(a => a.is_active).length}/${permissions.maxAlerts}` : '0'}
+              </div>
+              <p className="text-gray-600 text-sm">
+                {permissions.canCreateAlerts
+                  ? `${alerts.length} alertas criados`
+                  : 'Upgrade para criar alertas'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-lg">
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Status da Conta</h3>
+              <div className="text-3xl font-bold text-gray-900 mb-2">
+                {subscriptionInfo.emoji}
+              </div>
+              <p className="text-gray-600 text-sm">
+                {subscriptionInfo.badge}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         <section className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {quickActions.map((action) => (
@@ -149,6 +253,34 @@ const Dashboard: React.FC = () => {
             </Card>
           ))}
         </section>
+
+        {/* Alerts Section - Only for Alertas Inteligentes users */}
+        {permissions.canCreateAlerts && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold" style={{ color: designSystem.colors.textPrimary }}>
+                Meus Alertas de Preço
+              </h2>
+              <Button
+                onClick={() => navigate('/profile')}
+                className={componentClasses.button.primary}
+              >
+                + Criar Novo Alerta
+              </Button>
+            </div>
+
+            <AlertsList
+              alerts={alerts}
+              onAlertUpdated={loadAlerts}
+              onEditAlert={(alert) => {
+                // Navigate to profile with alert id to edit
+                navigate(`/profile?editAlert=${alert.id}`)
+              }}
+              isLoading={isLoadingAlerts}
+              maxAlerts={permissions.maxAlerts}
+            />
+          </section>
+        )}
 
         <section>
           <Card

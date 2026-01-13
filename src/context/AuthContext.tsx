@@ -173,7 +173,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const showStripeCheckout = () => {
     toast((t) => (
       <div className="flex flex-col space-y-2">
-        <div className="font-semibold"> Bem-vindo ao SemViagem!</div>
+        <div className="font-semibold"> Bem-vindo ao TripJunto!</div>
         <div className="text-sm">Para acessar a área logada, você precisa de uma assinatura premium.</div>
         <div className="flex space-x-2">
           <button

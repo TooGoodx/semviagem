@@ -22,7 +22,22 @@
       "Bash(git -C /Users/bruno/Downloads/buscadorReact-main log --oneline -5)",
       "Bash(git -C /Users/bruno/Downloads/buscadorReact-main diff --stat src/components/FlightResults.tsx)",
       "Bash(git -c /Users/bruno/Downloads/buscadorReact-main status --short src/components/FlightResults.tsx)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git clean:*)",
+      "Bash(ls:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git tag:*)",
+      "Bash(test:*)",
+      "Bash(open:*)",
+      "Bash(lsof:*)",
+      "Bash(rm:*)",
+      "Bash(xargs kill:*)",
+      "Bash(source:*)",
+      "Bash(python:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []

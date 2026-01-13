@@ -1,5 +1,5 @@
 // ========================================
-// SEMVIAGEM DESIGN SYSTEM v2.0
+// TRIPJUNTO DESIGN SYSTEM v2.0
 // ========================================
 // Sistema de design completo e escalável
 // Baseado nas otimizações aplicadas em Hero Section,

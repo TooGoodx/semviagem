@@ -1379,7 +1379,7 @@ const Home: React.FC = () => {
         <div className="container mx-auto relative z-20 pb-16 pt-24 px-8 sm:px-12 lg:px-16">
           <div className="max-w-[1350px] mx-auto text-center px-4">
             <h1 className="hero-title mb-8" style={{color: '#FFFFFF'}}>
-              O maior <span style={{color: '#F0C730', fontWeight: 'bold'}}>ecossistema</span> de viagens <span style={{color: '#4896C7', fontWeight: 'bold'}}>baratas</span> do Brasil, sem truques, <span style={{color: '#4896C7', fontWeight: 'bold'}}>Sem</span> <span style={{color: '#F0C730', fontWeight: 'bold'}}>Viagem</span>!
+              O maior <span style={{color: '#F0C730', fontWeight: 'bold'}}>ecossistema</span> de viagens <span style={{color: '#4896C7', fontWeight: 'bold'}}>baratas</span> do Brasil, sem truques, <span style={{color: '#4896C7', fontWeight: 'bold'}}>Trip</span><span style={{color: '#F0C730', fontWeight: 'bold'}}>Junto</span>!
             </h1>
             <p className="hero__subtitle text-base md:text-lg font-light mb-6 max-w-4xl mx-auto" style={{lineHeight: '1.8', color: 'rgba(255,255,255,0.95)'}}>
               Encontre os vôos, aprenda a acumular, emitir e viver as melhores experiências do mundo usando milhas - <span className="italic font-bold" style={{color: '#F0C730', fontFamily: "'Cormorant Garamond', serif"}}>quase de graça</span>.
@@ -1909,7 +1909,7 @@ const Home: React.FC = () => {
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--ds-neutral-100)'}
             >
               <AccordionTrigger className="text-left font-semibold text-[clamp(14px,1.2vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>
-                O que é a Conta PRO SemViagem?
+                O que é a Conta PRO TripJunto?
               </AccordionTrigger>
               <AccordionContent className="pt-2 text-[14px] leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
                 É uma assinatura mensal de R$29,99 que dá acesso a resultados ilimitados, alertas inteligentes e
@@ -1929,11 +1929,11 @@ const Home: React.FC = () => {
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--ds-neutral-100)'}
             >
               <AccordionTrigger className="text-left font-semibold text-[clamp(14px,1.2vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>
-                Como funciona o SemViagem?
+                Como funciona o TripJunto?
               </AccordionTrigger>
               <AccordionContent className="pt-2 text-[14px] leading-relaxed" style={{ color: 'var(--ds-text-muted)' }}>
                 <p className="mb-3">
-                  O SemViagem coleta dados de tráfego aéreo mundial em tempo real e disponibiliza passagens a preços
+                  O TripJunto coleta dados de tráfego aéreo mundial em tempo real e disponibiliza passagens a preços
                   realmente baixos.
                 </p>
                 <p className="mb-3">
@@ -2049,7 +2049,7 @@ const Home: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-[clamp(16px,1.3vw,18px)] font-semibold" style={{ color: 'var(--ds-text-primary)' }}>E-mail</h4>
-                    <p className="text-[clamp(14px,1.1vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>contato@semviagem.com.br</p>
+                    <p className="text-[clamp(14px,1.1vw,16px)]" style={{ color: 'var(--ds-text-primary)' }}>contato@tripjunto.com</p>
                     <p className="text-[13px] mt-[var(--ds-spacing-xs)]" style={{ color: 'var(--ds-text-muted)' }}>Resposta em até 24 horas</p>
                   </div>
                 </div>
@@ -2267,7 +2267,7 @@ const Home: React.FC = () => {
               <h4 className="text-[clamp(16px,1.3vw,18px)] font-semibold mb-4" style={{ color: 'var(--ds-neutral-100)' }}>Conecte-se</h4>
               <div className="flex gap-[var(--ds-spacing-md)]">
                 <a
-                  href="https://www.instagram.com/semviagemapp/"
+                  href="https://www.instagram.com/tripjuntoapp/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 flex items-center justify-center transition-all duration-200 hover:scale-110"
@@ -2281,7 +2281,7 @@ const Home: React.FC = () => {
                   </svg>
                 </a>
                 <a
-                  href="https://www.facebook.com/semviagem"
+                  href="https://www.facebook.com/tripjunto"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 flex items-center justify-center transition-all duration-200 hover:scale-110"
@@ -2295,7 +2295,7 @@ const Home: React.FC = () => {
                   </svg>
                 </a>
                 <a
-                  href="https://twitter.com/semviagem"
+                  href="https://twitter.com/tripjunto"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 flex items-center justify-center transition-all duration-200 hover:scale-110"
@@ -2309,7 +2309,7 @@ const Home: React.FC = () => {
                   </svg>
                 </a>
                 <a
-                  href="https://www.linkedin.com/company/semviagem"
+                  href="https://www.linkedin.com/company/tripjunto"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-12 h-12 flex items-center justify-center transition-all duration-200 hover:scale-110"
@@ -2328,7 +2328,7 @@ const Home: React.FC = () => {
           
           {/* Copyright */}
           <div className="text-center text-[clamp(12px,1vw,14px)]" style={{ color: 'rgba(255,255,255,0.7)' }}>
-            <p>&copy; 2025 SemViagem. Todos os direitos reservados. Viaje com propósito e impacto social positivo.</p>
+            <p>&copy; 2025 TripJunto. Todos os direitos reservados. Viaje com propósito e impacto social positivo.</p>
           </div>
         </div>
       </footer>

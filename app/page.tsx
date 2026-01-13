@@ -30,7 +30,7 @@ export default function FlightSearchSite() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Plane className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">SemViagem</span>
+              <span className="text-2xl font-bold text-gray-900">TripJunto</span>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
               <a href="#buscar" className="text-gray-600 hover:text-blue-600 transition-colors">
@@ -96,7 +96,7 @@ export default function FlightSearchSite() {
                 </span>
               </h1>
               <p className="text-lg text-gray-200 mb-8 mx-auto">
-                SemViagem, sem truques, sem tarifas escondidas. Nosso propósito é simples: democratizar viagens, com
+                TripJunto, sem truques, sem tarifas escondidas. Nosso propósito é simples: democratizar viagens, com
                 transparência total, preço honesto e impacto social positivo para todos os brasileiros.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -187,11 +187,11 @@ export default function FlightSearchSite() {
               <div className="p-8 md:p-12">
                 <h2 className="text-3xl font-bold mb-4 flex items-center">
                   <Sparkles className="h-8 w-8 text-yellow-400 mr-3" />
-                  Conta PRO SemViagem
+                  Conta PRO TripJunto
                 </h2>
                 <div className="text-gray-300 mb-6">
                   <h3 className="text-xl font-semibold text-white mb-3">Assine a Conta PRO – R$29,99/mês</h3>
-                  <p className="mb-4">Apoie o desenvolvimento do SemViagem e desbloqueie benefícios exclusivos:</p>
+                  <p className="mb-4">Apoie o desenvolvimento do TripJunto e desbloqueie benefícios exclusivos:</p>
                   <ul className="space-y-2 text-gray-300">
                     <li className="flex items-start">
                       <span className="text-yellow-400 mr-2">•</span>
@@ -213,8 +213,8 @@ export default function FlightSearchSite() {
               </div>
               <div className="hidden md:block relative h-full">
                 <Image
-                  src="https://toogood.tech/wp-content/uploads/2025/08/semviagem_plano_pro_classe_executiva.png"
-                  alt="SemViagem Pro Account - Classe Executiva"
+                  src="https://toogood.tech/wp-content/uploads/2025/08/tripjunto_plano_pro_classe_executiva.png"
+                  alt="TripJunto Pro Account - Classe Executiva"
                   layout="fill"
                   objectFit="cover"
                   className="opacity-90"
@@ -304,14 +304,14 @@ export default function FlightSearchSite() {
       <section id="faq" className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">FAQ Atualizado – SemViagem</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">FAQ Atualizado – TripJunto</h2>
             <p className="text-xl text-gray-600">Tire suas dúvidas sobre nossa plataforma e serviços</p>
           </div>
 
           <Accordion type="single" collapsible className="w-full space-y-4">
             <AccordionItem value="item-1" className="border border-gray-200 rounded-lg px-6">
               <AccordionTrigger className="text-left font-semibold text-gray-900 hover:text-blue-600">
-                O que é a Conta PRO SemViagem?
+                O que é a Conta PRO TripJunto?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 pt-2">
                 É uma assinatura mensal de R$29,99 que dá acesso a resultados ilimitados, alertas inteligentes e
@@ -321,11 +321,11 @@ export default function FlightSearchSite() {
 
             <AccordionItem value="item-2" className="border border-gray-200 rounded-lg px-6">
               <AccordionTrigger className="text-left font-semibold text-gray-900 hover:text-blue-600">
-                Como funciona o SemViagem?
+                Como funciona o TripJunto?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 pt-2">
                 <p className="mb-3">
-                  O SemViagem coleta dados de tráfego aéreo mundial em tempo real e disponibiliza passagens a preços
+                  O TripJunto coleta dados de tráfego aéreo mundial em tempo real e disponibiliza passagens a preços
                   realmente baixos.
                 </p>
                 <p className="mb-3">
@@ -441,7 +441,7 @@ export default function FlightSearchSite() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Plane className="h-6 w-6" />
-                <span className="text-xl font-bold">SemViagem</span>
+                <span className="text-xl font-bold">TripJunto</span>
               </div>
               <p className="text-gray-400">Revolucionando o modo de viajar com impacto social positivo.</p>
             </div>
@@ -499,7 +499,7 @@ export default function FlightSearchSite() {
           </div>
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 SemViagem. Todos os direitos reservados. sucessodocliente@semviagem.com</p>
+            <p>&copy; 2024 TripJunto. Todos os direitos reservados. sucessodocliente@tripjunto.com</p>
           </div>
         </div>
       </footer>

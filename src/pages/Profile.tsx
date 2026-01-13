@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { CheckCircle2 } from "lucide-react"
-import { useAuth } from "../context/AuthContext"
+import { CheckCircle2, Phone } from "lucide-react"
+import { useUser } from "../context/UserContext"
 import { airportsByCountry } from "../data/airports"
 import CustomCalendar from "../components/CustomCalendar"
 import AlertConfigSection from "../components/alerts/AlertConfigSection"
 import { designSystem, componentClasses } from "../styles/designSystem"
+import { updateUserWhatsApp } from "../lib/supabase"
+import { formatWhatsAppNumber, isValidWhatsAppNumber } from "../services/whatsappService"
 
 const formatCountryLabel = (country: string) =>
   country
@@ -51,11 +53,11 @@ const defaultPreferences: PreferencesState = {
 }
 
 const Profile: React.FC = () => {
-  const { user } = useAuth()
+  const { user, auth0User, subscription_status } = useUser()
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [formState, setFormState] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
+    name: auth0User?.name || "",
+    email: auth0User?.email || "",
     phone: "",
   })
   const [preferences, setPreferences] = useState<PreferencesState>(defaultPreferences)
@@ -68,14 +70,14 @@ const Profile: React.FC = () => {
   // Carregar dados do perfil do Supabase
   useEffect(() => {
     const loadProfileData = async () => {
-      if (!user?.sub) {
+      if (!auth0User?.sub) {
         setIsLoadingProfile(false)
         return
       }
 
       try {
         console.log('Carregando perfil do Supabase...')
-        const response = await fetch(`/.netlify/functions/load-user-profile?auth0_id=${user.sub}`)
+        const response = await fetch(`/.netlify/functions/load-user-profile?auth0_id=${auth0User.sub}`)
         const data = await response.json()
 
         if (data.success && data.profile) {
@@ -104,7 +106,7 @@ const Profile: React.FC = () => {
     }
 
     loadProfileData()
-  }, [user?.sub])
+  }, [auth0User?.sub])
 
   // Carregar dados do localStorage (fallback)
   useEffect(() => {
@@ -142,7 +144,7 @@ const Profile: React.FC = () => {
       return
     }
 
-    if (!user?.sub) {
+    if (!auth0User?.sub) {
       return
     }
 
@@ -153,7 +155,7 @@ const Profile: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userData: {
-            sub: user.sub,
+            sub: auth0User.sub,
             name: formState.name.trim(),
             email: formState.email.trim().toLowerCase(),
           },
@@ -170,7 +172,7 @@ const Profile: React.FC = () => {
     } finally {
       setIsSaving(false)
     }
-  }, [formState, preferences.instagram, user])
+  }, [formState, preferences.instagram, auth0User])
 
   // Debounced auto-save
   const scheduleAutoSave = useCallback(() => {
@@ -243,12 +245,12 @@ const Profile: React.FC = () => {
             <label className="relative w-32 h-32 rounded-3xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 shadow-lg cursor-pointer group">
               <Avatar className="w-full h-full rounded-3xl">
                 <AvatarImage
-                  src={avatarPreview || user?.picture}
-                  alt={user?.name || "Avatar"}
+                  src={avatarPreview || auth0User?.picture}
+                  alt={auth0User?.name || "Avatar"}
                   className="object-cover"
                 />
                 <AvatarFallback className="text-3xl font-bold rounded-3xl" style={{ backgroundColor: designSystem.colors.accent, color: designSystem.colors.textPrimary }}>
-                  {user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
+                  {auth0User?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
                 </AvatarFallback>
               </Avatar>
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-200 flex items-center justify-center">
@@ -261,7 +263,7 @@ const Profile: React.FC = () => {
             <div className="flex-1 space-y-4">
               <div>
                 <p className="text-sm" style={{ color: designSystem.colors.textMuted }}>Logado como</p>
-                <p className="text-lg font-semibold" style={{ color: designSystem.colors.textPrimary }}>{user?.email || "Conta autenticada"}</p>
+                <p className="text-lg font-semibold" style={{ color: designSystem.colors.textPrimary }}>{auth0User?.email || "Conta autenticada"}</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -294,19 +296,32 @@ const Profile: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="profile-phone" className="text-sm font-medium" style={{ color: designSystem.colors.textPrimary }}>
-                    WhatsApp
+                  <Label htmlFor="profile-phone" className="text-sm font-medium flex items-center gap-2" style={{ color: designSystem.colors.textPrimary }}>
+                    <Phone className="w-4 h-4 text-green-600" />
+                    WhatsApp (para alertas)
                   </Label>
                   <Input
                     id="profile-phone"
                     value={formState.phone}
-                    onChange={(event) => {
-                      setFormState((prev) => ({ ...prev, phone: formatPhone(event.target.value) }))
+                    onChange={async (event) => {
+                      const formatted = formatPhone(event.target.value)
+                      setFormState((prev) => ({ ...prev, phone: formatted }))
                       scheduleAutoSave()
+
+                      // Also save to Supabase if user is logged in and number is valid
+                      if (user?.id && formatted.replace(/\D/g, '').length >= 10) {
+                        const whatsappFormatted = formatWhatsAppNumber(formatted)
+                        if (isValidWhatsAppNumber(whatsappFormatted)) {
+                          await updateUserWhatsApp(user.id, whatsappFormatted)
+                        }
+                      }
                     }}
                     placeholder="(31) 99999-9999"
                     className={componentClasses.input.base}
                   />
+                  <p className="text-xs" style={{ color: designSystem.colors.textMuted }}>
+                    Este número será usado para receber alertas de preço via WhatsApp
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="profile-instagram" className="text-sm font-medium" style={{ color: designSystem.colors.textPrimary }}>

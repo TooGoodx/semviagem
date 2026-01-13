@@ -1,35 +1,62 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '../context/AuthContext';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useUser } from '../context/UserContext';
+import { usePermissions } from '../hooks/usePermissions';
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated, isLoading, signOut } = useAuth();
+  // Use Auth0 for logout
+  const { logout } = useAuth0();
+  // Use UserContext for user data and Supabase sync
+  const { auth0User, user: supabaseUser, isAuthenticated, isLoading, subscription_status } = useUser();
+  const permissions = usePermissions();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
-  // User profile computed values
+  // User profile computed values - prioritize Auth0 data for display
   const userProfile = {
-    name: user?.name || user?.email?.split('@')[0] || '',
-    email: user?.email || ''
+    name: auth0User?.name || auth0User?.email?.split('@')[0] || supabaseUser?.full_name || '',
+    email: auth0User?.email || supabaseUser?.email || ''
   };
 
-  const userAvatar = (user as any)?.picture as string | undefined;
+  // Get user avatar from Auth0 (has picture field)
+  const userAvatar = auth0User?.picture as string | undefined;
   const displayLabel = isLoading ? 'Carregando...' : (userProfile.email || userProfile.name || 'Conta autenticada');
+
+  // Debug logging to diagnose issues
+  if (import.meta.env.DEV && auth0User) {
+    console.log('🖼️ Navbar User Data:', {
+      hasAuth0User: !!auth0User,
+      hasSupabaseUser: !!supabaseUser,
+      userAvatar,
+      email: userProfile.email,
+      name: userProfile.name
+    });
+  }
 
   // Generate user initials for avatar
 
   const closeUserMenu = () => setIsUserMenuOpen(false);
 
-  const menuLinks = [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Buscar voos', path: '/buscarvoos' },
-    { label: 'Perfil & Alertas', path: '/profile' },
-  ];
+  // Permission-based menu links
+  const menuLinks = React.useMemo(() => {
+    const links = [
+      { label: 'Buscar voos', path: '/buscarvoos' },
+      { label: 'Perfil & Alertas', path: '/profile' },
+    ];
+
+    // Only show Dashboard for Alertas Inteligentes users
+    if (permissions.canAccessDashboard) {
+      links.unshift({ label: 'Dashboard 📊', path: '/dashboard' });
+    }
+
+    return links;
+  }, [permissions.canAccessDashboard]);
 
   const userInitials = React.useMemo(() => {
     if (userProfile.name) {
@@ -49,12 +76,16 @@ const Navbar: React.FC = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      await signOut();
+      console.log('🚪 Navbar - Initiating Auth0 logout...');
+      logout({
+        logoutParams: {
+          returnTo: window.location.origin
+        }
+      });
       setMobileMenuOpen(false);
       closeUserMenu();
-      navigate('/');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
@@ -130,7 +161,7 @@ const Navbar: React.FC = () => {
                 }
               }}
             >
-              <img src="/logo-nova.svg" alt="SemViagem" className="h-12 w-auto" />
+              <img src="/logo-nova.svg" alt="TripJunto" className="h-12 w-auto" />
             </Link>
           </div>
 
@@ -303,6 +334,37 @@ const Navbar: React.FC = () => {
                           <p className="text-xs uppercase tracking-wider text-gray-400">Sessão ativa</p>
                           <p className="text-sm font-medium text-gray-900 truncate">{displayLabel}</p>
                         </div>
+
+                        {/* Subscription Status */}
+                        <div className="border-b border-gray-100 px-4 py-3 bg-gray-50">
+                          <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">Plano Atual</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-gray-900">
+                              {subscription_status === 'alertas_inteligentes' ? '⭐ Alertas Inteligentes' :
+                               subscription_status === 'busca_ilimitada' ? '🚀 Busca Ilimitada' :
+                               '🆓 Gratuito'}
+                            </span>
+                            {subscription_status !== 'alertas_inteligentes' && (
+                              <button
+                                onClick={() => {
+                                  closeUserMenu();
+                                  window.location.href = subscription_status === 'busca_ilimitada'
+                                    ? 'https://buy.stripe.com/bJe14pgIRbhx6MT9gtdMI02'
+                                    : 'https://buy.stripe.com/cNibJ3eAJetJ0ovfERdMI05';
+                                }}
+                                className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                              >
+                                Upgrade
+                              </button>
+                            )}
+                          </div>
+                          {permissions.searchDayLimit && (
+                            <p className="text-xs text-gray-600 mt-1">
+                              Limite: {permissions.searchDayLimit} dias
+                            </p>
+                          )}
+                        </div>
+
                         <div className="py-2">
                           {menuLinks.map((item) => (
                             <button

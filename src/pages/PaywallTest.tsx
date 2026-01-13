@@ -22,7 +22,7 @@ function TestContent() {
             color: '#4896C7'
           }}
         >
-          SemViagem Paywall Test
+          TripJunto Paywall Test
         </h1>
         <p className="text-center text-gray-600 italic">
           Design System Compliance Review

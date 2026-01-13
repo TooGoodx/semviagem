@@ -23,6 +23,8 @@ import { PaywallOverlay } from './paywall';
 import ReturnFlightModal from './ReturnFlightModal';
 import SelectionModal from './SelectionModal';
 import { UpgradePrompt } from './paywall';
+import { SearchDateGate, AlertsGate } from './auth/AuthorizedFeature';
+import { usePermissions } from '../hooks/usePermissions';
 
 // Interfaces
 interface Airport {
@@ -128,11 +130,33 @@ const FlightResults: React.FC<FlightResultsProps> = ({
     subscriptionRules
   } = usePaywall();
 
+  // Permission system hook
+  const permissions = usePermissions();
+
   // Create search dates object for paywall checks
   const searchDates = {
     ida: searchParams.ida,
     volta: searchParams.volta
   };
+
+  // Date validation logging
+  useEffect(() => {
+    if (permissions.searchDayLimit) {
+      const searchDate = new Date(searchParams.ida);
+      const today = new Date();
+      const diffTime = Math.abs(searchDate.getTime() - today.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      console.log('📅 Search date validation:', {
+        searchDate: searchParams.ida,
+        daysFromToday: diffDays,
+        userLimit: permissions.searchDayLimit,
+        isWithinLimit: diffDays <= permissions.searchDayLimit,
+        subscriptionRequired: diffDays > permissions.searchDayLimit ? 'busca_ilimitada' : 'none'
+      });
+    }
+  }, [searchParams.ida, permissions.searchDayLimit]);
+
 
   // 🆕 STATE MACHINE - Determina automaticamente qual etapa estamos e quais voos mostrar
   const flightState = useMemo(() => {
@@ -1224,6 +1248,31 @@ const FlightResults: React.FC<FlightResultsProps> = ({
           flights={enableAirlineFilter ? flights : undefined}
         />
 
+        {/* Search limit indicator for free users */}
+        {permissions.searchDayLimit && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm text-blue-800">
+                  <span className="font-semibold">ℹ️ Plano Grátis:</span> Você pode buscar voos até {permissions.searchDayLimit} dias a partir de hoje.
+                </p>
+                <p className="text-xs text-blue-700 mt-1">
+                  Upgrade para buscar em qualquer data, até 365 dias no futuro.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  console.log('🔗 Upgrade link clicked from search limit banner');
+                  window.location.href = 'https://buy.stripe.com/cNibJ3eAJetJ0ovfERdMI05';
+                }}
+                className="ml-4 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+              >
+                Busca Ilimitada - R$ 19,90/mês
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Header com resumo dos resultados */}
         <div className="bg-white p-6 mb-6">
           {/* Progresso da seleção (para ida e volta) */}
@@ -1249,6 +1298,8 @@ const FlightResults: React.FC<FlightResultsProps> = ({
             </div>
           )}
 
+          {/* Wrap all flight results with SearchDateGate for permission validation */}
+          <SearchDateGate searchDate={searchParams.ida}>
           {flightState.showSummary ? (
             <>
               <div
@@ -1367,6 +1418,33 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                   </div>
 
                 </div>
+
+                {/* Alert creation button for premium users */}
+                {selectedFlights.outbound && selectedFlights.return && (
+                  <AlertsGate>
+                    <div className="mt-6 text-center">
+                      <button
+                        onClick={() => {
+                          console.log('🔔 Create alert clicked', {
+                            origem: searchParams.origem,
+                            destino: searchParams.destino,
+                            ida: searchParams.ida,
+                            volta: searchParams.volta
+                          });
+                          // TODO: Implement alert creation logic
+                          alert('Funcionalidade de alertas em desenvolvimento. Você será notificado quando o preço deste voo cair!');
+                        }}
+                        className="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold rounded-lg transition-colors shadow-md inline-flex items-center space-x-2"
+                      >
+                        <span>🔔</span>
+                        <span>Criar Alerta de Preço</span>
+                      </button>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Seja notificado quando o preço deste voo cair
+                      </p>
+                    </div>
+                  </AlertsGate>
+                )}
 
                 {/* Info text below cards */}
                 <div className="text-center mt-6">
@@ -1641,6 +1719,7 @@ const FlightResults: React.FC<FlightResultsProps> = ({
                   </div>
             </>
           )}
+          </SearchDateGate>
 
         {/* Modais */}
         <SelectionModal

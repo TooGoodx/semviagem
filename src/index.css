@@ -1,10 +1,10 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
-/* Global styles - Sem Viagem Brand Colors */
+/* Global styles - TripJunto Brand Colors */
 :root {
   /* ========================================
-     DESIGN SYSTEM V2 - SemViagem
+     DESIGN SYSTEM V2 - TripJunto
      Navy (#060D1C) = PRIMARY CTA
      Yellow (#F0C72F) = ACCENT only (badges, bullets)
      ======================================== */

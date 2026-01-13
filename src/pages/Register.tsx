@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import toast from 'react-hot-toast';
-import SemViagemIcon from '../components/SemViagemIcon';
+import TripJuntoIcon from '../components/TripJuntoIcon';
 import AuthTabs from '../components/auth/AuthTabs';
 import { designSystem } from '../styles/designSystem';
 
@@ -89,11 +89,11 @@ const Register: React.FC = () => {
       <div className="w-full max-w-xl space-y-8">
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <SemViagemIcon size={72} />
+            <TripJuntoIcon size={72} />
           </div>
           <h1 className="text-3xl font-bold" style={{ color: designSystem.colors.primary }}>
-            <span style={{ color: designSystem.colors.primary }}>Sem</span>
-            <span style={{ color: designSystem.colors.accent }}>Viagem</span>
+            <span style={{ color: designSystem.colors.primary }}>Trip</span>
+            <span style={{ color: designSystem.colors.accent }}>Junto</span>
           </h1>
           <p className="text-sm opacity-80" style={{ color: designSystem.colors.textPrimary }}>
             Crie sua conta gratuita e receba alertas personalizados no WhatsApp.

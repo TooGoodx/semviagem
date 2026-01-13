@@ -1,5 +1,5 @@
 // ESM export of airline booking links
-// Following SemViagem ESM architecture standard
+// Following TripJunto ESM architecture standard
 
 export const AIRLINE_LINKS = {
   "LATAM Airlines": {

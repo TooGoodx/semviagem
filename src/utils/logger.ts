@@ -1,5 +1,5 @@
 /**
- * Sistema de Logging Centralizado - SemViagem
+ * Sistema de Logging Centralizado - TripJunto
  *
  * Substitui console.logs diretos por um sistema centralizado
  * que só exibe logs em desenvolvimento
