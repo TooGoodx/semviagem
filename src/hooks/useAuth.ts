@@ -49,24 +49,39 @@ export function useAuth() {
       }
 
       if (!existingUser) {
-        // User is NOT registered - block access
-        console.log('🚫 User not registered in system')
+        // User is NOT registered - CREATE AUTOMATICALLY
+        console.log('🆕 User not registered - creating automatically...')
         console.log('   Email:', auth0User.email)
-        console.log('   Action: Blocking access, redirecting to registration')
+        console.log('   Auth0 ID:', auth0User.sub)
 
-        // Set special error state to trigger registration flow
-        setError('USER_NOT_REGISTERED')
-        setUser(null)
+        // Create new user in Supabase
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({
+            auth0_id: auth0User.sub,
+            email: auth0User.email,
+            full_name: auth0User.name || auth0User.email?.split('@')[0] || 'Usuário',
+            whatsapp: auth0User.phone_number || null, // Se Auth0 tiver phone
+            subscription_status: 'free',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single()
 
-        // Store Auth0 user data for registration form pre-fill
-        sessionStorage.setItem('pendingRegistration', JSON.stringify({
-          email: auth0User.email,
-          name: auth0User.name,
-          auth0_id: auth0User.sub,
-          picture: auth0User.picture
-        }))
+        if (createError) {
+          console.error('❌ Failed to create user:', createError)
+          throw new Error('Não foi possível criar sua conta. Tente novamente.')
+        }
 
-        return // Exit without setting user
+        console.log('✅ New user created successfully:', {
+          id: newUser.id,
+          email: newUser.email,
+          subscription_status: newUser.subscription_status
+        })
+
+        setUser(newUser)
+        return
       }
 
       // User exists - allow access
@@ -157,9 +172,9 @@ export function useAuth() {
     refetch: forceSync,
     // Expose Auth0 user for accessing picture, name, etc.
     auth0User,
-    // Registration state
-    needsRegistration: error === 'USER_NOT_REGISTERED',
-    pendingUserData: error === 'USER_NOT_REGISTERED' ? auth0User : null,
+    // Registration state - REMOVED: Auto-creation eliminates need for this
+    needsRegistration: false, // Always false now
+    pendingUserData: null, // Always null now
     // Development utilities (only available in dev mode)
     ...(import.meta.env.DEV && {
       forceSync,

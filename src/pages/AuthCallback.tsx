@@ -5,7 +5,8 @@ import toast from 'react-hot-toast';
 
 /**
  * Página de callback do Auth0
- * Processa o retorno da autenticação e redireciona para o dashboard
+ * SIMPLIFICADO: useAuth cria o usuário automaticamente no Supabase
+ * Esta página apenas aguarda e redireciona para o dashboard
  */
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const AuthCallback: React.FC = () => {
     const processCallback = async () => {
       // Se houver erro na autenticação
       if (error) {
-        console.error('Erro no Auth0:', error);
+        console.error('❌ Erro no Auth0:', error);
         toast.error('Erro ao fazer login. Tente novamente.');
         navigate('/login', { replace: true });
         return;
@@ -28,188 +29,24 @@ const AuthCallback: React.FC = () => {
 
       // Se não autenticado após loading, redireciona
       if (!isAuthenticated || !user) {
+        console.error('❌ Não autenticado após callback');
         toast.error('Não foi possível completar o login.');
         navigate('/login', { replace: true });
         return;
       }
 
-      // Se autenticado com sucesso
-      try {
-        let userName = user.name || user.given_name || user.nickname || user.email?.split('@')[0];
-        let isNewRegistration = false;
+      // Auth0 OK - useAuth criará o usuário no Supabase automaticamente
+      console.log('✅ Auth0 callback completo');
+      console.log('   Email:', user.email);
+      console.log('   Nome:', user.name);
+      console.log('→ Redirecionando para dashboard (useAuth cria usuário se necessário)');
 
-        // PASSO 1: Processa dados de registro pendente (se houver)
-        const pendingData = localStorage.getItem('pendingRegistration');
-        const pendingSocialData = localStorage.getItem('pendingSocialLogin');
+      // Limpa qualquer dado pendente antigo
+      localStorage.removeItem('pendingRegistration');
+      localStorage.removeItem('pendingSocialLogin');
 
-        // Prepara dados do usuário para salvar no Supabase
-        let userData: any = {
-          auth0_id: user.sub,
-          email: user.email,
-          name: userName,
-        };
-
-        if (pendingData) {
-          // Registro com formulário preenchido (email/password registration)
-          try {
-            const registrationData = JSON.parse(pendingData);
-            console.log('📝 Processando registro com formulário:', registrationData);
-
-            userData = {
-              ...userData,
-              name: registrationData.name || userName,
-              phone: registrationData.phone,
-              instagram: registrationData.instagram,
-              accept_marketing: registrationData.acceptMarketing,
-            };
-
-            userName = registrationData.name || userName;
-            isNewRegistration = true;
-
-            // Limpa registro pendente
-            localStorage.removeItem('pendingRegistration');
-          } catch (err) {
-            console.error('Erro ao processar dados de registro:', err);
-          }
-        } else if (pendingSocialData) {
-          // Login social com dados do modal de WhatsApp
-          try {
-            const socialData = JSON.parse(pendingSocialData);
-            console.log('📱 Processando login social com WhatsApp:', {
-              provider: socialData.provider,
-              hasPhone: !!socialData.phone,
-              hasInstagram: !!socialData.instagram
-            });
-
-            userData = {
-              ...userData,
-              phone: socialData.phone,
-              instagram: socialData.instagram,
-              accept_marketing: socialData.acceptMarketing,
-            };
-
-            // Para Google SSO, pega dados adicionais do perfil Auth0 se disponível
-            if (user.given_name || user.family_name) {
-              userData.name = `${user.given_name || ''} ${user.family_name || ''}`.trim() || userName;
-            }
-
-            isNewRegistration = true;
-
-            // Limpa dados do social login
-            localStorage.removeItem('pendingSocialLogin');
-          } catch (err) {
-            console.error('Erro ao processar dados de social login:', err);
-          }
-        } else {
-          // Login normal sem dados pendentes (usuário existente retornando)
-          console.log('🔐 Login de usuário existente (sem dados pendentes)');
-
-          // Para Google SSO, pega dados adicionais do perfil Auth0 se disponível
-          if (user.given_name || user.family_name) {
-            userData.name = `${user.given_name || ''} ${user.family_name || ''}`.trim() || userName;
-          }
-        }
-
-        // SEMPRE salva/atualiza o usuário no Supabase (upsert)
-        // Isso garante que usuários de Google SSO também sejam salvos
-        try {
-          console.log('💾 Salvando/atualizando usuário no Supabase:', {
-            auth0_id: userData.auth0_id,
-            email: userData.email,
-            hasPhone: !!userData.phone
-          });
-
-          const saveResponse = await fetch('/.netlify/functions/save-user-data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-          });
-
-          if (!saveResponse.ok) {
-            const errorText = await saveResponse.text();
-            console.error('❌ Erro ao salvar dados do usuário:', errorText);
-            // Continua mesmo com erro - não bloqueia o login
-          } else {
-            console.log('✅ Usuário salvo/atualizado com sucesso no Supabase');
-          }
-        } catch (saveError) {
-          console.error('❌ Erro ao salvar usuário:', saveError);
-          // Continua mesmo com erro - não bloqueia o login
-        }
-
-        // Mostra mensagem apropriada (removido para UX mais limpa)
-        // if (isNewRegistration) {
-        //   toast.success(`Bem-vindo, ${userName}! 🎉`);
-        // } else {
-        //   toast.success(`Bem-vindo de volta, ${userName}! 👋`);
-        // }
-
-        // PASSO 2: Verifica status da assinatura (sem forçar modal)
-        try {
-          console.log('🔍 Verificando status de assinatura...');
-
-          const subscriptionResponse = await fetch(
-            `/.netlify/functions/check-subscription?auth0_id=${encodeURIComponent(user.sub)}`
-          );
-
-          if (subscriptionResponse.ok) {
-            const subscriptionData = await subscriptionResponse.json();
-            const hasSubscription = subscriptionData.hasSubscription || subscriptionData.hasActiveSubscription || false;
-
-            console.log('📊 Status de assinatura:', {
-              hasSubscription,
-              status: subscriptionData.subscription_status || 'free',
-              response: subscriptionData
-            });
-
-            // Armazena status para uso dos componentes
-            sessionStorage.setItem('subscription_status', JSON.stringify({
-              hasSubscription,
-              checkedAt: new Date().toISOString(),
-              status: subscriptionData.subscription_status || 'free'
-            }));
-
-            // Se não tem assinatura, marca para mostrar banner discreto (não modal)
-            if (!hasSubscription) {
-              sessionStorage.setItem('show_subscription_banner', 'true');
-              console.log('ℹ️ Usuário sem assinatura Premium (free tier)');
-            } else {
-              console.log('⭐ Usuário Premium ativo');
-            }
-          } else {
-            const errorText = await subscriptionResponse.text();
-            console.warn('⚠️ Erro ao verificar assinatura:', subscriptionResponse.status, errorText);
-
-            // Define como free por padrão em caso de erro
-            sessionStorage.setItem('subscription_status', JSON.stringify({
-              hasSubscription: false,
-              checkedAt: new Date().toISOString(),
-              status: 'free'
-            }));
-          }
-        } catch (subError) {
-          console.error('❌ Erro ao verificar assinatura:', subError);
-
-          // Define como free por padrão em caso de erro
-          sessionStorage.setItem('subscription_status', JSON.stringify({
-            hasSubscription: false,
-            checkedAt: new Date().toISOString(),
-            status: 'free'
-          }));
-
-          // Continua mesmo com erro - não bloqueia o acesso
-        }
-
-        // PASSO 3: Redireciona para dashboard
-        console.log('✅ Autenticação completa, redirecionando para /dashboard');
-        navigate('/dashboard', { replace: true });
-
-      } catch (err) {
-        console.error('Erro inesperado no callback:', err);
-        toast.error('Ocorreu um erro, mas você foi autenticado.');
-        // Mesmo com erro, redireciona para dashboard
-        navigate('/dashboard', { replace: true });
-      }
+      // Redireciona direto para dashboard
+      navigate('/dashboard', { replace: true });
     };
 
     processCallback();

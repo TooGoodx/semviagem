@@ -5,7 +5,6 @@ import { AuthProvider } from './context/AuthContext';
 import { UserProvider, useUser } from './context/UserContext';
 import { SelectionProvider } from './context/SelectionContext';
 import { PaywallProvider } from './components/paywall';
-import { RegistrationRequired } from './components/auth/RegistrationRequired';
 import Navbar from './components/Navbar';
 import AppRoutes from './routes/AppRoutes';
 
@@ -27,26 +26,21 @@ function Layout() {
 }
 
 function AppContent() {
-  const { needsRegistration, pendingUserData, isLoading } = useUser();
+  const { isLoading } = useUser();
 
-  // Show registration required screen
-  if (needsRegistration && pendingUserData) {
-    return <RegistrationRequired pendingUserData={pendingUserData} />;
-  }
-
-  // Show loading state
+  // Show loading state only during initial auth check
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: '#060D1C' }}></div>
-          <p className="text-gray-600">Verificando autenticação...</p>
+          <p className="text-gray-600">Carregando...</p>
         </div>
       </div>
     );
   }
 
-  // Normal app routing
+  // Normal app routing - NO BLOCKING SCREENS
   return (
     <Router>
       <Routes>
